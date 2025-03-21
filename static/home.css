@@ -1,0 +1,22 @@
+/* static/home.css */
+.content {
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 600px;
+}
+
+h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    color: #5D4C3A; /* Насыщенный серо-коричневый */
+}
+
+.subtitle {
+    font-size: 1.2em;
+    margin-top: 10px;
+    color: #5D4C3A;
+}

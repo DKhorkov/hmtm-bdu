@@ -19,7 +19,7 @@ To run application via source files, use next commands:
 ```shell
 task -d scripts local -v
 ```
-# TODO переделать на питон
+# To-do:
 2) Run application:
 ```shell
 go run ./cmd/server/server.go
@@ -29,13 +29,16 @@ go run ./cmd/server/server.go
 
 To run linters, use next command:
 ```shell
-task -d scripts linters -v
+flake8 ./
+```
+
+## Typiziter
+```shell
+mypy ./
 ```
 
 ## Tests
 
-To run test, use next commands.Coverage docs will be
-recorded to ```coverage``` folder:
 ```shell
-task -d scripts tests -v
+pytest -v
 ```

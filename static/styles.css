@@ -1,0 +1,297 @@
+/* static/styles.css */
+
+/* Общие стили */
+* {
+    box-sizing: border-box; /* Оставляем для единообразия */
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #EDE0D4;
+    color: #5D4C3A;
+    height: 100vh;
+    overflow: auto;
+    line-height: 1.6;
+}
+
+.container {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 100px;
+    box-sizing: border-box;
+}
+
+/* Темная навигационная панель */
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #4A4035;
+    padding: 15px 0;
+    border-bottom: 2px solid #3A332B;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: flex;
+    transition: all 0.3s ease;
+}
+
+.top-nav-container {
+    width: 100%;
+    padding: 0 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Контейнер для иконки и надписи */
+.nav-left {
+    display: flex;
+    align-items: center; /* Выравниваем по центру по вертикали */
+}
+
+/* Группа для кнопок навигации */
+.nav-buttons {
+    display: flex;
+    gap: 20px;
+}
+
+/* Иконка */
+.nav-icon {
+    width: 40px;
+    height: 40px;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    filter: invert(90%) brightness(120%);
+    text-decoration: none;
+}
+
+.nav-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.nav-icon:hover {
+    transform: scale(1.05); /* Уменьшенное увеличение */
+    filter: invert(100%) brightness(150%);
+}
+
+/* Надпись как отдельный элемент */
+.nav-title-link {
+    display: inline-block;
+    margin-left: 15px;
+    transition: transform 0.3s ease; /* Добавляем transition для анимации */
+    text-decoration: none; /* Убираем стандартное подчёркивание ссылки */
+}
+
+.nav-title {
+    color: #FFFFFF; /* Белый цвет */
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.nav-title-link:hover {
+    transform: scale(1.05); /* Уменьшенное увеличение */
+}
+
+/* Убираем стандартное оформление ссылки */
+.nav-title-link, .nav-title-link:visited, .nav-title-link:hover, .nav-title-link:active {
+    color: #FFFFFF; /* Цвет надписи всегда белый */
+    text-decoration: none; /* Убираем подчёркивание */
+}
+
+/* Кнопки */
+.btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: #5D4C3A;
+    color: #F5EDE4 !important;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none !important;
+    box-shadow: 0 4px 12px rgba(93, 76, 58, 0.25);
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background: #3A332B;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(93, 76, 58, 0.35);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+/* Формы */
+.form-box {
+    background: #DBCBB9;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 420px;
+    margin: 20px auto;
+    border: 2px solid #C9B09E;
+    text-align: center;
+}
+
+.form-box h2 {
+    color: #4A4035;
+    font-size: 1.8em;
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.form-box h2:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: #5D4C3A;
+}
+
+/* Контейнер для действий (кнопки и ссылки) */
+.form-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Поля ввода */
+input {
+    width: 100%;
+    padding: 12px 18px;
+    margin: 20px 0;
+    border: 2px solid #C9B09E;
+    border-radius: 8px;
+    background: #F5EDE4;
+    font-size: 15px;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    border-color: #5D4C3A;
+    outline: none;
+    box-shadow: 0 0 8px rgba(93, 76, 58, 0.2);
+}
+
+/* Ссылки */
+.link {
+    color: #5D4C3A;
+    font-weight: 500;
+    text-decoration: none;
+    position: relative;
+    display: inline-block;
+    margin-top: 15px;
+}
+
+.link:hover:after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #5D4C3A;
+}
+
+/* Сообщения */
+.error {
+    color: #C99D9D;
+    background: #F5EDE4;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin: 15px 0;
+}
+
+.message {
+    color: #9DB09D;
+    background: #F5EDE4;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin: 15px 0;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .top-nav-container {
+        padding: 0 30px;
+    }
+
+    .nav-buttons {
+        gap: 15px;
+    }
+
+    .nav-title {
+        font-size: 16px;
+    }
+
+    .nav-title-link {
+        margin-left: 10px;
+    }
+
+    .form-box {
+        padding: 30px;
+        margin: 15px;
+    }
+
+    input {
+        padding: 10px 15px;
+        margin: 15px 0;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .form-actions {
+        margin-top: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-box h2 {
+        font-size: 1.5em;
+    }
+
+    .nav-icon {
+        width: 35px;
+        height: 35px;
+    }
+
+    .nav-icon img {
+        width: 100%;
+        height: 100%;
+    }
+
+    .nav-buttons {
+        gap: 15px;
+    }
+
+    .nav-title {
+        font-size: 14px;
+    }
+
+    .nav-title-link {
+        margin-left: 8px;
+    }
+
+    .form-actions {
+        margin-top: 10px;
+    }
+}

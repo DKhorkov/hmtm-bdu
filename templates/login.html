@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-box">
+        <h2>Вход</h2>
+        {% if message %}
+        <p class="message">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+        {% if errors %}
+        {% for error in errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+        {% endif %}
+        <form action="{{ url_for('login') }}" method="post">
+            <input type="email" name="email" placeholder="Электронная почта" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <div class="form-actions">
+                <button type="submit" class="btn">Войти</button>
+                <p>Нет аккаунта? <a href="{{ url_for('register') }}" class="link">Зарегистрироваться</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

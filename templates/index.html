@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Главная страница{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', path='/home.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h1>Добро пожаловать на главную страницу!</h1>
+    <p class="subtitle">Здесь вы можете начать работу с нашим приложением.</p>
+{% endblock %}
