@@ -2,7 +2,7 @@ import pytest
 
 from unittest.mock import AsyncMock, patch
 from graphql import DocumentNode
-from typing import Generator
+from typing import Generator, Optional, Dict
 
 from src.sso.dependencies import (
     process_register,
@@ -23,10 +23,10 @@ class TestProcessRegisterDependency:
 
     @pytest.mark.asyncio
     async def test_process_register_success(self, mock_gql_client: AsyncMock) -> None:
-        """МОКаем возвращаемое значение через return_value"""
+        """Мокаем возвращаемое значение через return_value"""
         mock_gql_client.return_value = {"registerUser": "123"}
 
-        result = await process_register(
+        result: Optional[str] = await process_register(
             email="test@example.com",
             password="password123",
             display_name="Test User"
@@ -39,7 +39,7 @@ class TestProcessRegisterDependency:
         mock_gql_client.assert_called_once()
 
         """Получаем kwargs-аргументы из метода"""
-        call_kwargs = mock_gql_client.call_args.kwargs
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
 
         """Сверяем, что запрос(query) является типом DocumentNode"""
         assert isinstance(call_kwargs["query"], DocumentNode)
@@ -55,12 +55,12 @@ class TestProcessRegisterDependency:
 
     @pytest.mark.asyncio
     async def test_process_register_failure(self, mock_gql_client: AsyncMock):
-        """МОКаем возвращаемую ошибку через side_effect"""
+        """Мокаем возвращаемую ошибку через side_effect"""
         mock_gql_client.side_effect = Exception(
             {"message": "rpc error: code = Internal desc = password does not meet the requirements"}
         )
 
-        result = await process_register(
+        result: Optional[str] = await process_register(
             email="test@example.com",
             password="",
             display_name="Test_User"
@@ -78,7 +78,7 @@ class TestProcessLoginDependency:
     async def test_login_success(self, mock_gql_client: AsyncMock):
         mock_gql_client.return_value = {"loginUser": True}
 
-        result = await process_login(
+        result: Optional[str] = await process_login(
             email="test@example.com",
             password="Valid_password"
         )
@@ -86,7 +86,7 @@ class TestProcessLoginDependency:
         assert result is None
 
         mock_gql_client.assert_called_once()
-        call_kwargs = mock_gql_client.call_args.kwargs
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
 
         assert isinstance(call_kwargs["query"], DocumentNode)
         assert call_kwargs["variable_values"] == {
@@ -102,7 +102,7 @@ class TestProcessLoginDependency:
             {"message": "rpc error: code = Internal desc = user with provided email already exists"}
         )
 
-        result = await process_login(
+        result: Optional[str] = await process_login(
             email="unvalid_email@abc.com",
             password="Valid_password"
         )
@@ -118,14 +118,14 @@ class TestVerifyEmailDependency:
     async def test_verify_email_success(self, mock_gql_client: AsyncMock):
         mock_gql_client.return_value = {"verifyEmail": True}
 
-        result = await verify_email(
+        result: Optional[str] = await verify_email(
             verify_email_token="Test-token-1",
         )
 
         assert result is None
 
         mock_gql_client.assert_called_once()
-        call_kwargs = mock_gql_client.call_args.kwargs
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
 
         assert isinstance(call_kwargs["query"], DocumentNode)
         assert call_kwargs["variable_values"] == {
@@ -140,7 +140,7 @@ class TestVerifyEmailDependency:
             {"message": "Ошибка подтверждения email"}
         )
 
-        result = await verify_email(
+        result: Optional[str] = await verify_email(
             verify_email_token="Test-token-1",
         )
 

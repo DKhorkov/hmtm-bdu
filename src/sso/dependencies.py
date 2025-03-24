@@ -9,9 +9,9 @@ from graphql_client import (
     UserLoginVariables,
     VerifyUserEmailVariables,
 
-    RegisterUserQuery,
-    LoginUserQuery,
-    VerifyUserEmailQuery,
+    RegisterUserMutation,
+    LoginUserMutation,
+    VerifyUserEmailMutation,
 
     extract_error_message
 )
@@ -24,7 +24,7 @@ async def process_register(  # type: ignore[return]
 ) -> Optional[str]:
     try:
         await config.graphql_client.gql_query(
-            query=RegisterUserQuery.mutation(),
+            query=RegisterUserMutation.to_gql(),
             variable_values=UserRegisterVariables(
                 display_name=display_name,
                 email=email,
@@ -48,7 +48,7 @@ async def process_login(  # type: ignore[return]
 ) -> Optional[str]:
     try:
         await config.graphql_client.gql_query(
-            query=LoginUserQuery.mutation(),
+            query=LoginUserMutation.to_gql(),
             variable_values=UserLoginVariables(
                 email=email,
                 password=password
@@ -70,7 +70,7 @@ async def verify_email(  # type: ignore[return]
 ) -> Optional[str]:
     try:
         await config.graphql_client.gql_query(
-            query=VerifyUserEmailQuery.mutation(),
+            query=VerifyUserEmailMutation.to_gql(),
             variable_values=VerifyUserEmailVariables(
                 verify_email_token=verify_email_token,
             ).to_dict()

@@ -1,6 +1,7 @@
 import pytest
 
 from fastapi.testclient import TestClient
+from httpx import Response as httpx_Response
 
 from src.main import app as fastapi_app
 
@@ -27,7 +28,7 @@ class TestPages:
             test_app: TestClient
     ) -> None:
         """Получаем ответ от тестового клиента"""
-        response = test_app.get(path)
+        response: httpx_Response = test_app.get(path)
 
         """Сверяем, что получили страницы корректно """
         assert response.status_code == status

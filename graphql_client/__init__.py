@@ -2,9 +2,9 @@ from .sso import (
     UserRegisterVariables,
     UserLoginVariables,
     VerifyUserEmailVariables,
-    RegisterUserQuery,
-    LoginUserQuery,
-    VerifyUserEmailQuery
+    RegisterUserMutation,
+    LoginUserMutation,
+    VerifyUserEmailMutation
 )
 
 from .client import GraphQLClient

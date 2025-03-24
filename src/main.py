@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Adding ./src to python path for running from console purpose:
+sys.path.append(os.getcwd())
+
 import uvicorn
 
 from fastapi import FastAPI

@@ -8,4 +8,4 @@ templates = Jinja2Templates(directory="templates")
 
 @main_router.get("/", response_class=HTMLResponse, name="home_page")
 async def home_page(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
+    return templates.TemplateResponse(request=request, name="homepage.html")

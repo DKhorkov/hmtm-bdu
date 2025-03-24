@@ -1,2 +1,2 @@
-from .mutations import RegisterUserQuery, LoginUserQuery, VerifyUserEmailQuery
+from .mutations import RegisterUserMutation, LoginUserMutation, VerifyUserEmailMutation
 from .variables import UserRegisterVariables, UserLoginVariables, VerifyUserEmailVariables

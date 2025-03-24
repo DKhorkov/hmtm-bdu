@@ -1,7 +1,7 @@
 from typing import Optional
 
-from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, Depends, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from src.sso.dependencies import (
@@ -25,7 +25,7 @@ async def process_register(
         error: Optional[str] = Depends(process_register_dependency)
 ):
     if error is None:
-        return templates.TemplateResponse(request=request, name="login.html")
+        return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(request=request, name="register.html", context={"error": error})
 
@@ -41,8 +41,7 @@ async def process_login(
         error: Optional[str] = Depends(process_login_dependency)
 ):
     if error is None:
-        return templates.TemplateResponse(request=request, name="index.html")
-
+        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse(request=request, name="login.html", context={"error": error})
 
 
@@ -52,6 +51,6 @@ async def verify_email(
         error: Optional[str] = Depends(verify_email_dependency)
 ):
     if error is None:
-        return templates.TemplateResponse(request=request, name="login.html")
+        return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(request=request, name="login.html", context={"error": error})

@@ -2,19 +2,19 @@ from gql import gql
 from graphql import DocumentNode
 
 
-class RegisterUserQuery:
+class RegisterUserMutation:
     @staticmethod
-    def mutation() -> DocumentNode:
+    def to_gql() -> DocumentNode:
         return gql("mutation RegisterUser($input: RegisterUserInput!) {registerUser(input: $input)}")
 
 
-class LoginUserQuery:
+class LoginUserMutation:
     @staticmethod
-    def mutation() -> DocumentNode:
+    def to_gql() -> DocumentNode:
         return gql("mutation LoginUser($input: LoginUserInput!) {loginUser(input: $input)}")
 
 
-class VerifyUserEmailQuery:
+class VerifyUserEmailMutation:
     @staticmethod
-    def mutation() -> DocumentNode:
+    def to_gql() -> DocumentNode:
         return gql("mutation VerifyUserEmail($input: VerifyUserEmailInput!) {verifyUserEmail(input: $input)}")

@@ -1,5 +1,7 @@
 from typing import Protocol, Dict, Any, runtime_checkable
-from graphql import DocumentNode, ExecutionResult
+from graphql import DocumentNode
+
+from graphql_client.dto import GQLResponse
 
 
 @runtime_checkable
@@ -8,6 +10,6 @@ class GraphQLInterface(Protocol):
             self,
             query: DocumentNode,
             variable_values: Dict[str, Any]
-    ) -> Dict[str, Any] | ExecutionResult:
+    ) -> GQLResponse:
         """Реализация запроса через клиент"""
         pass

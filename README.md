@@ -12,21 +12,19 @@ To run app and it's dependencies in docker, use next command:
 task -d scripts prod -v
 ```
 
-### Run via source files:
+### Quick start:
 
-To run application via source files, use next commands:
-1) Run all application dependencies:
+1) Install requirements:
 ```shell
-task -d scripts local -v
+pip install -r requirements.txt
 ```
-# To-do:
-2) Run application:
+
+2) Start:
 ```shell
-go run ./cmd/server/server.go
+python src/main.py
 ```
 
 ## Linters
-
 To run linters, use next command:
 ```shell
 flake8 ./
