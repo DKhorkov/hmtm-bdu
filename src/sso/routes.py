@@ -42,6 +42,7 @@ async def process_login(
 ):
     if error is None:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+
     return templates.TemplateResponse(request=request, name="login.html", context={"error": error})
 
 

@@ -5,9 +5,9 @@ from src.config import config
 from src.sso.constants import ERRORS_MAPPING
 from src.constants import DEFAULT_ERROR_MESSAGE
 from graphql_client import (
-    UserRegisterVariables,
-    UserLoginVariables,
-    VerifyUserEmailVariables,
+    RegisterUserVariables,
+    LoginUserVariables,
+    UserVerifyEmailVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -25,7 +25,7 @@ async def process_register(  # type: ignore[return]
     try:
         await config.graphql_client.gql_query(
             query=RegisterUserMutation.to_gql(),
-            variable_values=UserRegisterVariables(
+            variable_values=RegisterUserVariables(
                 display_name=display_name,
                 email=email,
                 password=password
@@ -49,7 +49,7 @@ async def process_login(  # type: ignore[return]
     try:
         await config.graphql_client.gql_query(
             query=LoginUserMutation.to_gql(),
-            variable_values=UserLoginVariables(
+            variable_values=LoginUserVariables(
                 email=email,
                 password=password
             ).to_dict()
@@ -71,7 +71,7 @@ async def verify_email(  # type: ignore[return]
     try:
         await config.graphql_client.gql_query(
             query=VerifyUserEmailMutation.to_gql(),
-            variable_values=VerifyUserEmailVariables(
+            variable_values=UserVerifyEmailVariables(
                 verify_email_token=verify_email_token,
             ).to_dict()
         )

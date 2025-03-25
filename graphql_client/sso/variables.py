@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class UserRegisterVariables:
+class RegisterUserVariables:
     display_name: str
     email: str
     password: str
@@ -20,7 +20,7 @@ class UserRegisterVariables:
 
 
 @dataclass(frozen=True)
-class UserLoginVariables:
+class LoginUserVariables:
     email: str
     password: str
 
@@ -34,7 +34,7 @@ class UserLoginVariables:
 
 
 @dataclass(frozen=True)
-class VerifyUserEmailVariables:
+class UserVerifyEmailVariables:
     verify_email_token: str
 
     def to_dict(self) -> Dict[str, Dict[str, str]]:

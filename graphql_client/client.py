@@ -9,8 +9,8 @@ from graphql_client.dto import GQLResponse
 
 class GraphQLClient:
     def __init__(self, url: str):
-        self.__transport = AIOHTTPTransport(url=url)
-        self.__client = Client(transport=self.__transport)
+        self.__transport: AIOHTTPTransport = AIOHTTPTransport(url=url)
+        self.__client: Client = Client(transport=self.__transport)
 
     async def gql_query(
             self,
@@ -22,6 +22,7 @@ class GraphQLClient:
                 document=query,
                 variable_values=variable_values
             )
+
             return GQLResponse(
                 result=result,
                 headers=self.__transport.response_headers
