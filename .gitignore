@@ -8,6 +8,10 @@
 *.so
 *.dylib
 
+# Pycache:
+*.pyc
+*.tmp
+
 # Test binary, built with "go test -c"
 *.test
 
@@ -26,12 +30,14 @@ go.work.sum
 .env
 .env.local
 .env.example
+.env.test
 
 # Local files^
 *.log
 logs/
 *.db
 bench.txt
+changes.txt
 
 # Environments
 .venv
