@@ -1,7 +1,7 @@
 from .sso import (
     RegisterUserVariables,
     LoginUserVariables,
-    UserVerifyEmailVariables,
+    VerifyUserEmailVariables,
     RegisterUserMutation,
     LoginUserMutation,
     VerifyUserEmailMutation

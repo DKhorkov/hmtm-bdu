@@ -7,7 +7,7 @@ from src.constants import DEFAULT_ERROR_MESSAGE
 from graphql_client import (
     RegisterUserVariables,
     LoginUserVariables,
-    UserVerifyEmailVariables,
+    VerifyUserEmailVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -71,7 +71,7 @@ async def verify_email(  # type: ignore[return]
     try:
         await config.graphql_client.gql_query(
             query=VerifyUserEmailMutation.to_gql(),
-            variable_values=UserVerifyEmailVariables(
+            variable_values=VerifyUserEmailVariables(
                 verify_email_token=verify_email_token,
             ).to_dict()
         )

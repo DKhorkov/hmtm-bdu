@@ -37,6 +37,7 @@ go.work.sum
 logs/
 *.db
 bench.txt
+changes.txt
 
 # Environments
 .venv

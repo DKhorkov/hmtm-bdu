@@ -34,7 +34,7 @@ class LoginUserVariables:
 
 
 @dataclass(frozen=True)
-class UserVerifyEmailVariables:
+class VerifyUserEmailVariables:
     verify_email_token: str
 
     def to_dict(self) -> Dict[str, Dict[str, str]]:
