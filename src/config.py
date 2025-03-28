@@ -29,6 +29,6 @@ elif ENVIRONMENT == Environments.DEVELOPMENT:
 else:
     config = Config(
         graphql_client=GraphQLClient(
-            url=getenv("GRAPHQL_URL", default="")
+            url=getenv("GRAPHQL_URL", default="http://localhost:8080/query"),
         )
     )
