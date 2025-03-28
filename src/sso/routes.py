@@ -7,8 +7,10 @@ from fastapi.templating import Jinja2Templates
 from src.sso.dependencies import (
     process_register as process_register_dependency,
     process_login as process_login_dependency,
-    verify_email as verify_email_dependency
+    verify_email as verify_email_dependency,
+    get_me as get_me_dependency,
 )
+
 
 router = APIRouter(prefix="/sso", tags=["SSO"])
 templates = Jinja2Templates(directory="templates")
@@ -45,7 +47,6 @@ async def process_login(
 
     return templates.TemplateResponse(request=request, name="login.html", context={"error": error})
 
-
 @router.get("/verify-email/{verify_email_token}", response_class=HTMLResponse, name="verify_email")
 async def verify_email(
         request: Request,
@@ -55,3 +56,8 @@ async def verify_email(
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(request=request, name="login.html", context={"error": error})
+
+
+@router.get("/profile", response_class=HTMLResponse, name="profile")
+async def profile_page(request: Request):
+    return templates.TemplateResponse(request=request, name="profile.html")

@@ -4,7 +4,8 @@ from .sso import (
     VerifyUserEmailVariables,
     RegisterUserMutation,
     LoginUserMutation,
-    VerifyUserEmailMutation
+    VerifyUserEmailMutation,
+    GetMeQuery
 )
 
 from .client import GraphQLClient
