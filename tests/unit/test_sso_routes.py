@@ -1,26 +1,52 @@
 import pytest
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 from graphql import DocumentNode
 from typing import Generator, Optional, Dict
+from multidict import CIMultiDictProxy, CIMultiDict
+from fastapi.requests import Request
 
 from src.sso.dependencies import (
     process_register,
     process_login,
-    verify_email
+    verify_email,
+    get_me
 )
 from graphql_client.client import GraphQLClient
+from graphql_client.dto import GQLResponse
+from src.sso.dto import LoginResponse, GetMeResponse
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_gql_client() -> Generator[AsyncMock, None, None]:
     """Фикстура через декоратор @patch не работает из-за особенностей pytest-а"""
     with patch.object(target=GraphQLClient, attribute="gql_query", new_callable=AsyncMock) as mock:
         yield mock
 
 
-class TestProcessRegisterDependency:
+@pytest.fixture(scope="function")
+def mock_success_login_response() -> Generator[MagicMock, None, None]:
+    headers: CIMultiDict = CIMultiDict()
+    headers.add("Set-Cookie", "accessToken=3FG2gs...; Path=...; Expires=...")
+    headers_proxy = CIMultiDictProxy(headers)
 
+    mock: MagicMock = MagicMock(spec=GQLResponse)
+    mock.headers = headers_proxy
+    mock.result = {"loginUser": True}
+
+    yield mock
+
+
+@pytest.fixture(scope="function")
+def mock_failed_login_response() -> Generator[MagicMock, None, None]:
+    mock: MagicMock = MagicMock(spec=GQLResponse)
+    mock.headers = None
+    mock.result = False
+
+    yield mock
+
+
+class TestProcessRegisterDependency:
     @pytest.mark.asyncio
     async def test_process_register_success(self, mock_gql_client: AsyncMock) -> None:
         """Мокаем возвращаемое значение через return_value"""
@@ -54,7 +80,7 @@ class TestProcessRegisterDependency:
         }
 
     @pytest.mark.asyncio
-    async def test_process_register_failure(self, mock_gql_client: AsyncMock):
+    async def test_process_register_failure(self, mock_gql_client: AsyncMock) -> None:
         """Мокаем возвращаемую ошибку через side_effect"""
         mock_gql_client.side_effect = Exception(
             {"message": "rpc error: code = Internal desc = password does not meet the requirements"}
@@ -73,49 +99,52 @@ class TestProcessRegisterDependency:
 
 
 class TestProcessLoginDependency:
-
     @pytest.mark.asyncio
-    async def test_login_success(self, mock_gql_client: AsyncMock):
-        mock_gql_client.return_value = {"loginUser": True}
+    async def test_login_success(self, mock_gql_client: AsyncMock, mock_success_login_response: MagicMock) -> None:
+        mock_gql_client.return_value = mock_success_login_response
 
-        result: Optional[str] = await process_login(
+        result: LoginResponse = await process_login(
             email="test@example.com",
-            password="Valid_password"
+            password="password123",
         )
 
-        assert result is None
-
         mock_gql_client.assert_called_once()
-        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
 
+        assert result.error is None
+        assert result.result is True
+        assert result.headers == mock_success_login_response.headers
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
         assert isinstance(call_kwargs["query"], DocumentNode)
         assert call_kwargs["variable_values"] == {
             "input": {
                 "email": "test@example.com",
-                "password": "Valid_password"
+                "password": "password123"
             }
         }
 
     @pytest.mark.asyncio
-    async def test_login_failure(self, mock_gql_client: AsyncMock):
+    async def test_login_failure(self, mock_gql_client: AsyncMock, mock_failed_login_response: MagicMock) -> None:
         mock_gql_client.side_effect = Exception(
-            {"message": "rpc error: code = Internal desc = user with provided email already exists"}
+            {"message": "rpc error: code = NotFound desc = user not found"}
         )
 
-        result: Optional[str] = await process_login(
-            email="unvalid_email@abc.com",
-            password="Valid_password"
+        result: LoginResponse = await process_login(
+            email="test@example.com",
+            password="password123",
         )
-
-        assert result == "Пользователь с таким email уже существует"
 
         mock_gql_client.assert_called_once()
 
+        assert result.headers is None
+        assert result.result is False
+        assert result.cookies == []
+        assert result.error == "Пользователь не найден"
+
 
 class TestVerifyEmailDependency:
-
     @pytest.mark.asyncio
-    async def test_verify_email_success(self, mock_gql_client: AsyncMock):
+    async def test_verify_email_success(self, mock_gql_client: AsyncMock) -> None:
         mock_gql_client.return_value = {"verifyEmail": True}
 
         result: Optional[str] = await verify_email(
@@ -135,7 +164,7 @@ class TestVerifyEmailDependency:
         }
 
     @pytest.mark.asyncio
-    async def test_verify_email_failure(self, mock_gql_client):
+    async def test_verify_email_failure(self, mock_gql_client: AsyncMock) -> None:
         mock_gql_client.side_effect = Exception(
             {"message": "Ошибка подтверждения email"}
         )
@@ -147,3 +176,92 @@ class TestVerifyEmailDependency:
         assert result == "Ошибка подтверждения email"
 
         mock_gql_client.assert_called_once()
+
+
+class TestGetMeDependency:
+    @pytest.mark.asyncio
+    async def test_get_me_with_no_cookies(self) -> None:
+        """Случай, если cookies не найдены"""
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {}
+
+        result: GetMeResponse = await get_me(mock_request)
+
+        assert result.error == "AccessToken не найден"
+
+    @pytest.mark.asyncio
+    async def test_get_me_success(self, mock_gql_client: AsyncMock) -> None:
+        """Случай, если accessToken находится в cookies"""
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {"accessToken": "Afqg..."}
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {
+            "me": {
+                "id": 1,
+                "email": "test@example.com",
+                "displayName": "Test User",
+            }
+        }
+
+        mock_gql_client.return_value = mock_response
+
+        result: GetMeResponse = await get_me(mock_request)
+
+        assert result.error is None
+        assert result.user is not None
+        assert result.user.id == 1
+        assert result.user.email == "test@example.com"
+        assert result.user.display_name == "Test User"
+
+    @pytest.mark.asyncio
+    async def test_get_me_with_refresh_token(self, mock_gql_client: AsyncMock) -> None:
+        """Случай, если accessToken истек"""
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {"accessToken": "Expired"}
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {"error": "Token Expired"}
+
+        refresh_response: MagicMock = MagicMock(spec=GQLResponse)
+        refresh_response.result = {"refreshToken": "FFsg32g..."}
+        refresh_response.headers = CIMultiDictProxy(CIMultiDict({"Set-Cookie": "accessToken=new_token"}))
+
+        success_response: MagicMock = MagicMock(spec=GQLResponse)
+        success_response.result = {
+            "me": {
+                "id": 2,
+                "email": "refresh@example.com",
+                "displayName": "Refreshed User"
+            }
+        }
+
+        mock_gql_client.side_effect = [mock_response, refresh_response, success_response]
+
+        result: GetMeResponse = await get_me(mock_request)
+
+        assert result.error is None
+        assert result.user is not None
+        assert result.user.id == 2
+        assert result.user.email == "refresh@example.com"
+        assert result.user.display_name == "Refreshed User"
+        assert any(cookie.KEY == "accessToken" for cookie in result.cookies)
+
+    @pytest.mark.asyncio
+    async def test_get_me_with_refresh_token_failure(self, mock_gql_client: AsyncMock) -> None:
+        """Случай, где оба запроса завершаются ошибкой"""
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {"access_token": "Expired"}
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {"error": "Token Expired"}
+
+        refresh_response: MagicMock = MagicMock(spec=GQLResponse)
+        refresh_response.result = {"errors": [{"message": "Refresh token invalid"}]}
+
+        mock_gql_client.side_effect = [mock_response, refresh_response]
+
+        result: GetMeResponse = await get_me(mock_request)
+
+        assert result.error == "Refresh token invalid"
+        assert result.user is None

@@ -1,17 +1,15 @@
-from dataclasses import dataclass, field
-from typing import Optional, Dict, List
-from src.cookies import CookiesConfig
+from dataclasses import dataclass
+from typing import Optional
+
 from src.sso.models import User
+from src.dto import BaseResponse
 
 
 @dataclass
-class LoginResponse:
+class LoginResponse(BaseResponse):
     result: bool = False
-    headers: Optional[Dict[str, str]] = None
-    cookies: List[CookiesConfig] = field(default_factory=list)
-    error: Optional[str] = None
+
 
 @dataclass
-class GetMeResponse:
+class GetMeResponse(BaseResponse):
     user: Optional[User] = None
-    error: Optional[str] = None

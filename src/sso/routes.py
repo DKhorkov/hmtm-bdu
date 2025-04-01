@@ -3,7 +3,6 @@ from typing import Optional
 from fastapi import APIRouter, Request, Depends, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
-from starlette.responses import JSONResponse
 
 from src.cookies import set_cookie
 from src.sso.dependencies import (
@@ -47,11 +46,12 @@ async def process_login(
     if result.error is not None:
         return templates.TemplateResponse(request=request, name="login.html", context={"error": result.error})
 
-    response: Response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response: Response = RedirectResponse(url="/sso/profile", status_code=status.HTTP_303_SEE_OTHER)
     for cookie in result.cookies:
         response = set_cookie(response, cookie)
 
     return response
+
 
 @router.get("/verify-email/{verify_email_token}", response_class=HTMLResponse, name="verify_email")
 async def verify_email(
@@ -65,10 +65,26 @@ async def verify_email(
 
 
 @router.get("/profile", response_class=HTMLResponse, name="profile")
-async def profile_page(request: Request):
-    return templates.TemplateResponse(request=request, name="profile.html")
+async def profile_page(request: Request, current_user: GetMeResponse = Depends(get_me_dependency)):
+    if current_user.user is not None:
+        response: Response = templates.TemplateResponse(
+            request=request,
+            name="profile.html",
+            context={"user": current_user.user}
+        )
+
+        for cookie in current_user.cookies:
+            response = set_cookie(response, cookie)
+
+        return response
+
+    return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.get("/me", response_class=JSONResponse, name="me")
-async def get_me(result: GetMeResponse = Depends(get_me_dependency)):
-    return result
+@router.get("/logout", response_class=RedirectResponse, name="logout")
+async def logout():
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response.delete_cookie(key="accessToken")
+    response.delete_cookie(key="refreshToken")
+
+    return response

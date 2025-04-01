@@ -26,6 +26,7 @@ class GraphQLClient:
                 variable_values=variable_values
             )
 
+            assert isinstance(result, dict)
             return GQLResponse(
                 result=result,
                 headers=transport.response_headers

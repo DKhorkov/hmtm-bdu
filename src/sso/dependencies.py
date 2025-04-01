@@ -1,10 +1,9 @@
-from typing import Optional, Annotated, List
+from typing import Optional, Annotated, Dict
 
 from fastapi import Form, Request
 
-from graphql_client.cookie import Cookie as GQLCookie, CookiesParser
+from graphql_client.dto import GQLResponse
 from src.config import config
-from src.cookies import CookiesConfig
 from src.sso.constants import ERRORS_MAPPING
 from src.constants import DEFAULT_ERROR_MESSAGE
 from graphql_client import (
@@ -15,10 +14,13 @@ from graphql_client import (
     RegisterUserMutation,
     LoginUserMutation,
     VerifyUserEmailMutation,
+    RefreshTokenMutation,
 
     GetMeQuery,
 
-    extract_error_message
+    extract_error_message,
+
+    ResponseProcessor as GQLResponseProcessor
 )
 from src.sso.dto import LoginResponse, GetMeResponse
 from src.sso.models import User
@@ -64,27 +66,15 @@ async def process_login(  # type: ignore[return]
         )
 
         result.result = True
-        result.headers = gql_response.headers
+        result.headers = gql_response.headers  # type: ignore[assignment]
 
         if gql_response.headers is not None:
-            gql_cookies: List[GQLCookie] = CookiesParser.parse(gql_response.headers)
-            processed_cookies: List[CookiesConfig] = list()
-            for gql_cookie in gql_cookies:
-                cookie: CookiesConfig = CookiesConfig(
-                    KEY=gql_cookie.key,
-                    VALUE=gql_cookie.value,
-                    EXPIRES=gql_cookie.expires,
-                    PATH=gql_cookie.path,
-                )
+            result.cookies = GQLResponseProcessor(gql_response=gql_response).get_cookies()
 
-                processed_cookies.append(cookie)
-
-            result.cookies = processed_cookies
-
-    except Exception as error:
+    except Exception as err:
         error: str = ERRORS_MAPPING.get(
             extract_error_message(
-                error=str(error),
+                error=str(err),
                 default_message="Ошибка аутентификации"
             ),
             DEFAULT_ERROR_MESSAGE
@@ -122,36 +112,71 @@ async def get_me(
     result: GetMeResponse = GetMeResponse()
 
     if len(request.cookies) == 0:
-        result.error = "no accessToken cookie provided"
+        result.error = "AccessToken не найден"
         return result
 
     try:
         if request.cookies:
-            gql_response = await config.graphql_client.gql_query(
+            gql_response: GQLResponse = await config.graphql_client.gql_query(
                 query=GetMeQuery.to_gql(),
                 variable_values={},
                 cookies=request.cookies
             )
 
-            if gql_response.result["me"] != "null":
-                result.user = User(
-                    id=gql_response.result["me"]["id"],
-                    email=gql_response.result["me"]["email"],
-                    display_name=gql_response.result["me"]["displayName"],
-                )
+            if "errors" in gql_response.result:
+                raise Exception
 
-            if "error" in gql_response.result:
-                result.error = gql_response.result["error"]
+            result.user = User(
+                id=gql_response.result["me"]["id"],
+                email=gql_response.result["me"]["email"],
+                display_name=gql_response.result["me"]["displayName"],
+            )
 
-    except Exception as error:
-        error = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(error),
-                default_message="Ошибка получения данных о профиле"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
+    except Exception:
+        try:
+            gql_refresh_tokens: GQLResponse = await config.graphql_client.gql_query(
+                query=RefreshTokenMutation.to_gql(),
+                variable_values={},
+                cookies=request.cookies
+            )
 
-        result.error = error
+            if "errors" in gql_refresh_tokens.result:
+                result.error = gql_refresh_tokens.result["errors"][0]["message"]
+                return result
+
+            result.headers = gql_refresh_tokens.headers  # type: ignore[assignment]
+
+            if gql_refresh_tokens.headers is not None:
+                result.cookies = GQLResponseProcessor(gql_response=gql_refresh_tokens).get_cookies()
+
+            updated_cookies: Dict[str, str] = {}
+            for cookie in result.cookies:
+                updated_cookies[cookie.KEY] = cookie.VALUE
+
+            gql_get_me: GQLResponse = await config.graphql_client.gql_query(
+                query=GetMeQuery.to_gql(),
+                variable_values={},
+                cookies=updated_cookies
+            )
+
+            if "errors" in gql_get_me.result:
+                result.error = gql_get_me.result["errors"][0]["message"]
+                return result
+
+            result.user = User(
+                id=gql_get_me.result["me"]["id"],
+                email=gql_get_me.result["me"]["email"],
+                display_name=gql_get_me.result["me"]["displayName"],
+            )
+
+        except Exception as err:
+            error = ERRORS_MAPPING.get(
+                extract_error_message(
+                    error=str(err),
+                    default_message="Ошибка проверки cookies"
+                ),
+                DEFAULT_ERROR_MESSAGE
+            )
+            result.error = error
 
     return result

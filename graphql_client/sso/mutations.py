@@ -18,3 +18,9 @@ class VerifyUserEmailMutation:
     @staticmethod
     def to_gql() -> DocumentNode:
         return gql("mutation VerifyUserEmail($input: VerifyUserEmailInput!) {verifyUserEmail(input: $input)}")
+
+
+class RefreshTokenMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql("mutation { refreshTokens }")

@@ -1,3 +1,4 @@
+from typing import Literal
 from fastapi import Response
 from dataclasses import dataclass
 
@@ -9,7 +10,7 @@ class CookiesConfig:
     EXPIRES: str
     SECURE_COOKIES: bool = False
     HTTP_ONLY: bool = False
-    SAME_SITE: str = "lax"
+    SAME_SITE: Literal["lax", "strict", "none"] = "lax"
     PATH: str = "/"
 
 
