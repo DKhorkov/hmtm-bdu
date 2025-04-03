@@ -18,14 +18,14 @@ class CookiesParser:
     def parse(headers: CIMultiDictProxy[str]) -> List[Cookie]:
         """
         Итоговый Парсинг заголовков ответа транспорта имеет вид (Пример):
-        [
-        {
-        'accessToken': 'ppUm...', 'Path': '/', 'Expires': 'Thu, 27 Mar 2025 07:17:35 GMT'
-        },
-        {
-        'refreshToken': 'ZXlK..', 'Path': '/', 'Expires': 'Thu, 03 Apr 2025 07:02:35 GMT'
-        }
-        ]
+            [
+                {
+                    'accessToken': 'ppUm...', 'Path': '/', 'Expires': 'Thu, 27 Mar 2025 07:17:35 GMT'
+                },
+                {
+                    'refreshToken': 'ZXlK..', 'Path': '/', 'Expires': 'Thu, 03 Apr 2025 07:02:35 GMT'
+                }
+            ]
         """
         get_cookies: List[str] = headers.getall("Set-Cookie")
 

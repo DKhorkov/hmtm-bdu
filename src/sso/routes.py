@@ -82,9 +82,9 @@ async def profile_page(request: Request, current_user: GetMeResponse = Depends(g
 
 
 @router.get("/logout", response_class=RedirectResponse, name="logout")
-async def logout():
+async def logout(request: Request):
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    response.delete_cookie(key="accessToken")
-    response.delete_cookie(key="refreshToken")
+    for cookie in request.cookies:
+        response.delete_cookie(key=cookie)
 
     return response
