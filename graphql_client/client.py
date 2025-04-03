@@ -17,7 +17,7 @@ class GraphQLClient:
             variable_values: Optional[Dict[str, Any]],
             cookies: Optional[Dict[str, str]] = None
     ) -> GQLResponse:
-        cookies = cookies if cookies is not None else {}
+        cookies = cookies if cookies else {}
         transport = AIOHTTPTransport(url=self.__url, cookies=cookies)
 
         async with Client(transport=transport) as client:

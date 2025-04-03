@@ -14,7 +14,7 @@ from graphql_client import (
     RegisterUserMutation,
     LoginUserMutation,
     VerifyUserEmailMutation,
-    RefreshTokenMutation,
+    RefreshTokensMutation,
 
     GetMeQuery,
 
@@ -57,7 +57,7 @@ async def process_login(  # type: ignore[return]
 ) -> LoginResponse:
     result: LoginResponse = LoginResponse()
     try:
-        gql_response = await config.graphql_client.gql_query(
+        gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=LoginUserMutation.to_gql(),
             variable_values=LoginUserVariables(
                 email=email,
@@ -135,7 +135,7 @@ async def get_me(
     except Exception:
         try:
             gql_refresh_tokens: GQLResponse = await config.graphql_client.gql_query(
-                query=RefreshTokenMutation.to_gql(),
+                query=RefreshTokensMutation.to_gql(),
                 variable_values={},
                 cookies=request.cookies
             )

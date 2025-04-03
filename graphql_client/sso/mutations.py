@@ -20,7 +20,7 @@ class VerifyUserEmailMutation:
         return gql("mutation VerifyUserEmail($input: VerifyUserEmailInput!) {verifyUserEmail(input: $input)}")
 
 
-class RefreshTokenMutation:
+class RefreshTokensMutation:
     @staticmethod
     def to_gql() -> DocumentNode:
         return gql("mutation { refreshTokens }")

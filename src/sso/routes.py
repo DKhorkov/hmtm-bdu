@@ -46,7 +46,7 @@ async def process_login(
     if result.error is not None:
         return templates.TemplateResponse(request=request, name="login.html", context={"error": result.error})
 
-    response: Response = RedirectResponse(url="/sso/profile", status_code=status.HTTP_303_SEE_OTHER)
+    response: Response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     for cookie in result.cookies:
         response = set_cookie(response, cookie)
 
