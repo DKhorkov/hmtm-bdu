@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-box">
+        <h2>Профиль пользователя</h2>
+        {% if user %}
+            <p>Добро пожаловать, {{ user.display_name }}!</p>
+            <!-- Здесь можно добавить дополнительную информацию о профиле -->
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -18,6 +18,7 @@ class TestPages:
             ("/", 200, "text/html"),  # Test: homepage
             ("/sso/register", 200, "text/html"),  # Test: register_page
             ("/sso/login", 200, "text/html"),  # Test: login_page
+            ("/sso/profile", 200, "text/html"),  # Test: prolile_page
         ]
     )
     def test_get_routers(

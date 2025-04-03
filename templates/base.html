@@ -8,24 +8,29 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="top-nav">
-        <div class="top-nav-container">
-            <div class="nav-left">
-                <a href="{{ url_for('home_page') }}" class="nav-icon">
-                    <img src="{{ url_for('static', path='/images/teddy_bear.png') }}" alt="Teddy Bear Icon">
-                </a>
-                <a href="{{ url_for('home_page') }}" class="nav-title-link">
-                    <span class="nav-title">Handmade Toys Marketplace</span>
-                </a>
-            </div>
-            <div class="nav-buttons">
-                <a href="{{ url_for('register') }}" class="btn">Регистрация</a>
-                <a href="{{ url_for('login') }}" class="btn">Вход</a>
-            </div>
+<nav class="top-nav">
+    <div class="top-nav-container">
+        <div class="nav-left">
+            <a href="{{ url_for('home_page') }}" class="nav-icon">
+                <img src="{{ url_for('static', path='/images/teddy_bear.png') }}" alt="Teddy Bear Icon">
+            </a>
+            <a href="{{ url_for('home_page') }}" class="nav-title-link">
+                <span class="nav-title">Handmade Toys Marketplace</span>
+            </a>
         </div>
-    </nav>
-    <div class="content">
-        {% block content %}{% endblock %}
+        <div class="nav-buttons">
+            {% if user %}
+            <a href="{{ url_for('profile') }}" class="btn">Профиль</a>
+            <a href="{{ url_for('logout') }}" class="btn">Выйти</a>
+            {% else %}
+            <a href="{{ url_for('register') }}" class="btn">Регистрация</a>
+            <a href="{{ url_for('login') }}" class="btn">Вход</a>
+            {% endif %}
+        </div>
     </div>
+</nav>
+<div class="content">
+    {% block content %}{% endblock %}
+</div>
 </body>
 </html>
