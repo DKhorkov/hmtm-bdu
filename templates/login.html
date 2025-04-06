@@ -22,7 +22,15 @@
             <input type="password" name="password" placeholder="Пароль" required>
             <div class="form-actions">
                 <button type="submit" class="btn">Войти</button>
-                <p>Нет аккаунта? <a href="{{ url_for('register') }}" class="link">Зарегистрироваться</a></p>
+                <p>Нет аккаунта?
+                    <a href="{{ url_for('register') }}" class="link link-underlined">Зарегистрироваться</a>
+                </p>
+                <p>Не пришло письмо?
+                    <a href="{{ url_for('verify-email-letter') }}" class="link link-underlined">Отправить повторно</a>
+                </p>
+                <p> Забыли пароль?
+                    <a href="{{ url_for('forget-pass-form') }}" class="link link-underlined">Восстановить</a>
+                </p>
             </div>
         </form>
     </div>

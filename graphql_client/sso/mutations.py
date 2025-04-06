@@ -24,3 +24,45 @@ class RefreshTokensMutation:
     @staticmethod
     def to_gql() -> DocumentNode:
         return gql("mutation { refreshTokens }")
+
+
+class SendVerifyEmailMessageMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                mutation SendVerifyEmailMessage($input: SendVerifyEmailMessageInput!)
+                {sendVerifyEmailMessage(input: $input)}
+            """
+        )
+
+
+class SendForgetPasswordMessageMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                mutation SendForgetPasswordMessage($input: SendForgetPasswordMessageInput!)
+                    {sendForgetPasswordMessage(input: $input)}
+            """
+        )
+
+
+class ChangePasswordMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                mutation ChangePassword($input: ChangePasswordInput!) {changePassword(input: $input)}
+            """
+        )
+
+
+class ChangeForgetPasswordMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                mutation ChangeForgetPassword($input: ForgetPasswordInput!) {forgetPassword(input: $input)}
+            """
+        )

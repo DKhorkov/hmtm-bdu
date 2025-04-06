@@ -6,7 +6,15 @@ from .sso import (
     LoginUserMutation,
     VerifyUserEmailMutation,
     GetMeQuery,
-    RefreshTokensMutation
+    RefreshTokensMutation,
+    SendVerifyEmailMessageVariables,
+    SendVerifyEmailMessageMutation,
+    SendForgetPasswordMessageVariables,
+    SendForgetPasswordMessageMutation,
+    ChangePasswordVariables,
+    ChangePasswordMutation,
+    ChangeForgetPasswordMutation,
+    ForgetPasswordVariables
 )
 
 from .client import GraphQLClient
