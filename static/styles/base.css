@@ -65,7 +65,7 @@ body {
 
 .form-actions {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 input {
@@ -91,7 +91,16 @@ input:focus {
     text-decoration: none;
     position: relative;
     display: inline-block;
-    margin-top: 15px;
+    margin-top: 0;
+}
+
+.link-underlined {
+    text-decoration: underline;
+    position: relative;
+}
+
+.link-underlined:hover {
+    text-decoration: none;
 }
 
 .link:hover:after {

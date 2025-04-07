@@ -2,7 +2,7 @@ import pytest
 
 from unittest.mock import AsyncMock, patch, MagicMock
 from graphql import DocumentNode
-from typing import Generator, Optional, Dict
+from typing import Generator, Dict
 from multidict import CIMultiDictProxy, CIMultiDict
 from fastapi.requests import Request
 
@@ -10,11 +10,13 @@ from src.sso.dependencies import (
     process_register,
     process_login,
     verify_email,
-    get_me
+    get_me,
+    change_forget_password,
 )
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
-from src.sso.dto import LoginResponse, GetMeResponse
+from src.sso.dto import LoginResponse, GetMeResponse, RegisterResponse, VerifyEmailResponse, \
+    ChangeForgetPasswordResponse
 
 
 @pytest.fixture(scope="function")
@@ -49,20 +51,27 @@ def mock_failed_login_response() -> Generator[MagicMock, None, None]:
 class TestProcessRegisterDependency:
     @pytest.mark.asyncio
     async def test_process_register_success(self, mock_gql_client: AsyncMock) -> None:
-        """Мокаем возвращаемое значение через return_value"""
-        mock_gql_client.return_value = {"registerUser": "123"}
+        """Мокаем возвращаемы dto-object из gql-клиента"""
+        mock_gql_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_gql_response.result = {"registerUser": True}
+        mock_gql_response.headers = {}
 
-        result: Optional[str] = await process_register(
+        """Мокаем возвращаемое значение через return_value"""
+        mock_gql_client.return_value = mock_gql_response
+
+        result: RegisterResponse = await process_register(
             email="test@example.com",
             password="password123",
             display_name="Test User"
         )
 
-        """Проверяем, что метод process_register отработала без ошибок"""
-        assert result is None
-
         """Проверяем, что метод был вызван один раз"""
         mock_gql_client.assert_called_once()
+
+        """Проверяем, что метод process_register отработала без ошибок"""
+        assert result.error is None
+        assert result.result is True
+        assert result.headers == mock_gql_response.headers
 
         """Получаем kwargs-аргументы из метода"""
         call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
@@ -83,17 +92,22 @@ class TestProcessRegisterDependency:
     async def test_process_register_failure(self, mock_gql_client: AsyncMock) -> None:
         """Мокаем возвращаемую ошибку через side_effect"""
         mock_gql_client.side_effect = Exception(
-            {"message": "rpc error: code = Internal desc = password does not meet the requirements"}
+            {"message": "rpc error: code = FailedPrecondition desc = password does not meet the requirements"}
         )
 
-        result: Optional[str] = await process_register(
+        result: RegisterResponse = await process_register(
             email="test@example.com",
             password="",
             display_name="Test_User"
         )
 
         """Сверяем, что результат функции выдает нужную ошибку по переданному ключу"""
-        assert result == "Пароль не соответствует требованиям: 8+ символов, A-Z, a-z, 0-9, спецсимвол."
+        assert result.error == "Пароль не соответствует требованиям: 8+ символов, A-Z, a-z, 0-9, спецсимвол."
+
+        """Сверяем остальные параметры"""
+        assert result.result is False
+        assert result.cookies == []
+        assert result.headers is None
 
         mock_gql_client.assert_called_once()
 
@@ -145,15 +159,22 @@ class TestProcessLoginDependency:
 class TestVerifyEmailDependency:
     @pytest.mark.asyncio
     async def test_verify_email_success(self, mock_gql_client: AsyncMock) -> None:
-        mock_gql_client.return_value = {"verifyEmail": True}
+        mock_gql_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_gql_response.result = {"verifyEmail": True}
+        mock_gql_response.headers = {"Cookie": "Sfqgreg..."}
 
-        result: Optional[str] = await verify_email(
+        mock_gql_client.return_value = mock_gql_response
+
+        result: VerifyEmailResponse = await verify_email(
             verify_email_token="Test-token-1",
         )
 
-        assert result is None
-
         mock_gql_client.assert_called_once()
+
+        assert result.error is None
+        assert result.result is True
+        assert result.headers == mock_gql_response.headers
+
         call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
 
         assert isinstance(call_kwargs["query"], DocumentNode)
@@ -169,11 +190,14 @@ class TestVerifyEmailDependency:
             {"message": "Ошибка подтверждения email"}
         )
 
-        result: Optional[str] = await verify_email(
+        result: VerifyEmailResponse = await verify_email(
             verify_email_token="Test-token-1",
         )
 
-        assert result == "Ошибка подтверждения email"
+        assert result.error == "Ошибка подтверждения email"
+        assert result.result is False
+        assert result.cookies == []
+        assert result.headers is None
 
         mock_gql_client.assert_called_once()
 
@@ -265,3 +289,54 @@ class TestGetMeDependency:
 
         assert result.error == "Refresh token invalid"
         assert result.user is None
+
+
+class TestChangeForgetPassword:
+    @pytest.mark.asyncio
+    async def test_change_forget_password_success(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {"forget_password_token": "test_change_pass_token"}
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.headers = {"forget_password_token": "test_change_pass_token"}
+
+        mock_gql_client.return_value = mock_response
+
+        result: ChangeForgetPasswordResponse = await change_forget_password(
+            request=mock_request,
+            new_password="Test_valid_pass"
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.error is None
+        assert result.headers == {"forget_password_token": "test_change_pass_token"}
+        assert result.result is True
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
+
+        assert isinstance(call_kwargs["query"], DocumentNode)
+        assert call_kwargs["variable_values"] == {
+            "input": {
+                "forgetPasswordToken": "test_change_pass_token",
+                "newPassword": "Test_valid_pass",
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test_change_forget_password_failure(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {"forget_password_token": "test_change_pass_token"}
+
+        mock_gql_client.side_effect = Exception(
+            {"message" : "rpc error: code = FailedPrecondition desc = New password can not be equal to old password"}
+        )
+
+        result: ChangeForgetPasswordResponse = await change_forget_password(
+            request=mock_request,
+            new_password="Unvalid_password"
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.error == "Новый пароль идентичен старому"

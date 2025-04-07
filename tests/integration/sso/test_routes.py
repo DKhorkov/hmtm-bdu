@@ -15,10 +15,12 @@ class TestPages:
     @pytest.mark.parametrize(
         "path, status, context",
         [
-            ("/", 200, "text/html"),  # Test: homepage
-            ("/sso/register", 200, "text/html"),  # Test: register_page
-            ("/sso/login", 200, "text/html"),  # Test: login_page
-            ("/sso/profile", 200, "text/html"),  # Test: prolile_page
+            ("/", 200, "text/html"),
+            ("/sso/register", 200, "text/html"),
+            ("/sso/login", 200, "text/html"),
+            ("/sso/profile", 200, "text/html"),
+            ("/sso/logout", 200, "text/html"),
+            ("/sso/verify-email-letter-form", 200, "text/html"),
         ]
     )
     def test_get_routers(
