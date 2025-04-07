@@ -1,4 +1,4 @@
-from typing import Annotated, Dict
+from typing import Annotated, Dict, Optional
 
 from fastapi import Form, Request
 
@@ -283,7 +283,7 @@ async def change_forget_password(
     result: ChangeForgetPasswordResponse = ChangeForgetPasswordResponse()
 
     try:
-        forget_password_token: str = request.cookies.get(FORGET_PASSWORD_TOKEN_NAME)
+        forget_password_token: Optional[str] = request.cookies.get(FORGET_PASSWORD_TOKEN_NAME)
         if forget_password_token is None:
             result.error = "Ошибка: Токен не найден, попробуйте перейти по ссылке из письма повторно"
             return result

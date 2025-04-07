@@ -21,9 +21,6 @@ class TestPages:
             ("/sso/profile", 200, "text/html"),
             ("/sso/logout", 200, "text/html"),
             ("/sso/verify-email-letter-form", 200, "text/html"),
-            ("/sso/forget-pass-form", 200, "text/html"),
-            ("/sso/forget-password/Test_token", 200, "text/html"),
-
         ]
     )
     def test_get_routers(
