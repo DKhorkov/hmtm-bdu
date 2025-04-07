@@ -149,19 +149,19 @@ async def process_verify_email_letter(
     )
 
 
-@router.get("/forget-pass-form", response_class=RedirectResponse, name="forget-pass-form")
-async def forgot_pass_form_page(
+@router.get("/forget-password-form", response_class=RedirectResponse, name="forget-password-form")
+async def forget_pass_form_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency)
 ):
     if current_user.user is not None:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
-    return templates.TemplateResponse(request=request, name="forget-pass-form.html")
+    return templates.TemplateResponse(request=request, name="forget-password-form.html")
 
 
-@router.post("/forget-pass-form", response_class=HTMLResponse, name="forget-pass")
-async def process_forgot_pass(
+@router.post("/forget-password-form", response_class=HTMLResponse, name="forget-password-form")
+async def process_forget_pass(
         request: Request,
         result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency)
 ):
@@ -174,7 +174,7 @@ async def process_forgot_pass(
 
     return templates.TemplateResponse(
         request=request,
-        name="forget-pass-form.html",
+        name="forget-password-form.html",
         context={"error": result.error}
     )
 

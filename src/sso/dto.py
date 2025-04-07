@@ -2,27 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from src.sso.models import User
-from src.dto import BaseResponse
-
-
-@dataclass
-class RegisterResponse(BaseResponse):
-    result: bool = False
-
-
-@dataclass
-class LoginResponse(BaseResponse):
-    result: bool = False
-
-
-@dataclass
-class VerifyEmailResponse(BaseResponse):
-    result: bool = False
-
-
-@dataclass
-class SendVerifyEmailMessageResponse(BaseResponse):
-    result: bool = False
+from src.dto import BaseResponse, BoolResponse
 
 
 @dataclass
@@ -31,15 +11,35 @@ class GetMeResponse(BaseResponse):
 
 
 @dataclass
-class SendForgetPasswordMessageResponse(BaseResponse):
-    result: bool = False
+class RegisterResponse(BoolResponse):
+    pass
 
 
 @dataclass
-class ChangePasswordResponse(BaseResponse):
-    result: bool = False
+class LoginResponse(BoolResponse):
+    pass
 
 
 @dataclass
-class ChangeForgetPasswordResponse(BaseResponse):
-    result: bool = False
+class VerifyEmailResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class SendVerifyEmailMessageResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class SendForgetPasswordMessageResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class ChangePasswordResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class ChangeForgetPasswordResponse(BoolResponse):
+    pass

@@ -34,6 +34,7 @@ ERRORS_MAPPING: Dict[str, str] = {
 
     "rpc error: code = FailedPrecondition desc = New password can not be equal to old password":
         "Новый пароль идентичен старому",
+
 }
 
 FORGET_PASSWORD_TOKEN_NAME = "forget_password_token"
