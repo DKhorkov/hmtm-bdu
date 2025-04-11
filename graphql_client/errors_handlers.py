@@ -10,5 +10,5 @@ def extract_error_message(error: str, default_message: str) -> str:
 
         return literal_eval(error)["message"]
 
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, SyntaxError):
         return default_message

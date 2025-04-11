@@ -14,7 +14,9 @@ from .sso import (
     ChangePasswordVariables,
     ChangePasswordMutation,
     ChangeForgetPasswordMutation,
-    ForgetPasswordVariables
+    ForgetPasswordVariables,
+    UpdateUserProfileMutation,
+    UpdateUserProfileVariables
 )
 
 from .client import GraphQLClient

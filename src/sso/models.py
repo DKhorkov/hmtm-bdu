@@ -1,11 +1,16 @@
 from dataclasses import dataclass
-import datetime
 
 
 @dataclass
 class User:
     id: int
-    email: str
     display_name: str
-    created_at: datetime.datetime = datetime.datetime.now()
-    updated_at: datetime.datetime = datetime.datetime.now()
+    email: str
+    email_confirmed: bool
+    phone: str
+    phone_confirmed: bool
+    telegram: str
+    telegram_confirmed: bool
+    avatar: str
+    created_at: str
+    updated_at: str

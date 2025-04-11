@@ -11,6 +11,14 @@ class GetMeQuery:
                     id
                     displayName
                     email
+                    emailConfirmed
+                    phone
+                    phoneConfirmed
+                    telegram
+                    telegramConfirmed
+                    avatar
+                    createdAt
+                    updatedAt
                     }
                 }
             """)

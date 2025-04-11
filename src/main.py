@@ -17,6 +17,7 @@ app = FastAPI()
 app.include_router(main_router)
 app.include_router(sso_router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/scripts", StaticFiles(directory="scripts/js"), name="scripts")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8090)

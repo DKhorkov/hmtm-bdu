@@ -223,8 +223,16 @@ class TestGetMeDependency:
         mock_response.result = {
             "me": {
                 "id": 1,
-                "email": "test@example.com",
                 "displayName": "Test User",
+                "email": "test@example.com",
+                "emailConfirmed": True,
+                "phone": None,
+                "phoneConfirmed": False,
+                "telegram": None,
+                "telegramConfirmed": False,
+                "avatar": None,
+                "createdAt": "2021-09-22T01:00:00",
+                "updatedAt": "2021-09-22T01:00:00",
             }
         }
 
@@ -256,7 +264,15 @@ class TestGetMeDependency:
             "me": {
                 "id": 2,
                 "email": "refresh@example.com",
-                "displayName": "Refreshed User"
+                "displayName": "Refreshed User",
+                "emailConfirmed": True,
+                "phone": None,
+                "phoneConfirmed": False,
+                "telegram": None,
+                "telegramConfirmed": False,
+                "avatar": None,
+                "createdAt": "2021-09-22T01:00:00",
+                "updatedAt": "2021-09-22T01:00:00",
             }
         }
 
@@ -329,7 +345,7 @@ class TestChangeForgetPassword:
         mock_request.cookies = {"forget_password_token": "test_change_pass_token"}
 
         mock_gql_client.side_effect = Exception(
-            {"message" : "rpc error: code = FailedPrecondition desc = New password can not be equal to old password"}
+            {"message": "rpc error: code = FailedPrecondition desc = New password can not be equal to old password"}
         )
 
         result: ChangeForgetPasswordResponse = await change_forget_password(

@@ -7,6 +7,7 @@ from .mutations import (
     SendForgetPasswordMessageMutation,
     ChangePasswordMutation,
     ChangeForgetPasswordMutation,
+    UpdateUserProfileMutation
 )
 from .variables import (
     RegisterUserVariables,
@@ -16,5 +17,6 @@ from .variables import (
     SendForgetPasswordMessageVariables,
     ChangePasswordVariables,
     ForgetPasswordVariables,
+    UpdateUserProfileVariables
 )
 from .queries import GetMeQuery

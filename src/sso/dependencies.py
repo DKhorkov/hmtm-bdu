@@ -1,6 +1,7 @@
-from typing import Annotated, Dict, Optional
+import io
 
-from fastapi import Form, Request
+from typing import Annotated, Dict, Optional, BinaryIO
+from fastapi import Form, Request, UploadFile, File
 
 from graphql_client.dto import GQLResponse
 from src.config import config
@@ -12,8 +13,9 @@ from graphql_client import (
     VerifyUserEmailVariables,
     SendVerifyEmailMessageVariables,
     SendForgetPasswordMessageVariables,
-    # ChangePasswordVariables,
+    ChangePasswordVariables,
     ForgetPasswordVariables,
+    UpdateUserProfileVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -21,8 +23,9 @@ from graphql_client import (
     RefreshTokensMutation,
     SendVerifyEmailMessageMutation,
     SendForgetPasswordMessageMutation,
-    # ChangePasswordMutation,
+    ChangePasswordMutation,
     ChangeForgetPasswordMutation,
+    UpdateUserProfileMutation,
 
     GetMeQuery,
 
@@ -37,8 +40,9 @@ from src.sso.dto import (
     VerifyEmailResponse,
     SendVerifyEmailMessageResponse,
     SendForgetPasswordMessageResponse,
-    # ChangePasswordResponse,
+    ChangePasswordResponse,
     ChangeForgetPasswordResponse,
+    UpdateUserProfileResponse
 )
 from src.sso.models import User
 
@@ -49,6 +53,7 @@ async def process_register(  # type: ignore[return]
         display_name: Annotated[str, Form()]
 ) -> RegisterResponse:
     result: RegisterResponse = RegisterResponse()
+
     try:
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=RegisterUserMutation.to_gql(),
@@ -81,6 +86,7 @@ async def process_login(  # type: ignore[return]
         password: Annotated[str, Form()],
 ) -> LoginResponse:
     result: LoginResponse = LoginResponse()
+
     try:
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=LoginUserMutation.to_gql(),
@@ -162,8 +168,16 @@ async def get_me(
 
             result.user = User(
                 id=gql_response.result["me"]["id"],
-                email=gql_response.result["me"]["email"],
                 display_name=gql_response.result["me"]["displayName"],
+                email=gql_response.result["me"]["email"],
+                email_confirmed=gql_response.result["me"]["emailConfirmed"],
+                phone=gql_response.result["me"]["phone"],
+                phone_confirmed=gql_response.result["me"]["phoneConfirmed"],
+                telegram=gql_response.result["me"]["telegram"],
+                telegram_confirmed=gql_response.result["me"]["telegramConfirmed"],
+                avatar=gql_response.result["me"]["avatar"],
+                created_at=gql_response.result["me"]["createdAt"],
+                updated_at=gql_response.result["me"]["updatedAt"],
             )
 
     except Exception:
@@ -199,8 +213,16 @@ async def get_me(
 
             result.user = User(
                 id=gql_get_me.result["me"]["id"],
-                email=gql_get_me.result["me"]["email"],
                 display_name=gql_get_me.result["me"]["displayName"],
+                email=gql_get_me.result["me"]["email"],
+                email_confirmed=gql_get_me.result["me"]["emailConfirmed"],
+                phone=gql_get_me.result["me"]["phone"],
+                phone_confirmed=gql_get_me.result["me"]["phoneConfirmed"],
+                telegram=gql_get_me.result["me"]["telegram"],
+                telegram_confirmed=gql_get_me.result["me"]["telegramConfirmed"],
+                avatar=gql_get_me.result["me"]["avatar"],
+                created_at=gql_get_me.result["me"]["createdAt"],
+                updated_at=gql_get_me.result["me"]["updatedAt"],
             )
 
         except Exception as err:
@@ -304,6 +326,84 @@ async def change_forget_password(
             extract_error_message(
                 error=str(err),
                 default_message="Ошибка отправки формы для смены забытого пароля"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.error = error
+
+    return result
+
+
+async def change_password(
+        request: Request,
+        old_password: Annotated[str, Form()],
+        new_password: Annotated[str, Form()]
+):
+    result: ChangePasswordResponse = ChangePasswordResponse()
+
+    try:
+        gql_response: GQLResponse = await config.graphql_client.gql_query(
+            query=ChangePasswordMutation().to_gql(),
+            variable_values=ChangePasswordVariables(
+                old_password=old_password,
+                new_password=new_password
+            ).to_dict(),
+            cookies=request.cookies
+        )
+
+        result.result = True
+        result.headers = gql_response.headers  # type: ignore[assignment]
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка отправки формы для смены пароля"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.error = error
+
+    return result
+
+
+async def update_user_profile(
+        request: Request,
+        username: Annotated[str, Form()],
+        phone: Annotated[str, Form()],
+        telegram: Annotated[str, Form()],
+        avatar: Annotated[UploadFile, File()],
+):
+    result: UpdateUserProfileResponse = UpdateUserProfileResponse()
+    upload_file: Optional[BinaryIO] = None
+
+    try:
+        if avatar and avatar.size > 0:
+            upload_file = io.BytesIO(await avatar.read())
+            upload_file.name = avatar.filename
+
+        gql_response: GQLResponse = await config.graphql_client.gql_query(
+            query=UpdateUserProfileMutation().to_gql(),
+            variable_values=UpdateUserProfileVariables(
+                display_name=username,
+                phone=phone,
+                telegram=telegram,
+                avatar=upload_file,
+            ).to_dict(),
+            upload_files=True,
+            cookies=request.cookies,
+        )
+
+        result.result = True
+        result.headers = gql_response.headers  # type: ignore[assignment]
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка изменения профиля"
             ),
             DEFAULT_ERROR_MESSAGE
         )

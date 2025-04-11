@@ -4,6 +4,12 @@ ERRORS_MAPPING: Dict[str, str] = {
     'rpc error: code = FailedPrecondition desc = password does not meet the requirements':
         "Пароль не соответствует требованиям: 8+ символов, A-Z, a-z, 0-9, спецсимвол.",
 
+    "rpc error: code = Internal desc = password does not meet the requirements":
+        "Пароль не соответствует требованиям: 8+ символов, A-Z, a-z, 0-9, спецсимвол.",
+
+    "rpc error: code = Internal desc = wrong password":
+        "Вы ввели неправильный текущий пароль",
+
     'rpc error: code = FailedPrecondition desc = email does not meet the requirements':
         "Некорректный email",
 
@@ -35,6 +41,8 @@ ERRORS_MAPPING: Dict[str, str] = {
     "rpc error: code = FailedPrecondition desc = New password can not be equal to old password":
         "Новый пароль идентичен старому",
 
+    "invalid file extension=.webp":
+        "Файл с расширением webp не поддерживается к загрузке"
 }
 
 FORGET_PASSWORD_TOKEN_NAME = "forget_password_token"
