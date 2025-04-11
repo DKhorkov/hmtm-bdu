@@ -388,8 +388,8 @@ async def update_user_profile(
             query=UpdateUserProfileMutation().to_gql(),
             variable_values=UpdateUserProfileVariables(
                 display_name=username,
-                phone=phone,
-                telegram=telegram,
+                phone=phone if (phone != "Отсутствует" and phone != "") else None,
+                telegram=telegram if (telegram != "Отсутствует" and telegram != "") else None,
                 avatar=upload_file,
             ).to_dict(),
             upload_files=True,
