@@ -18,7 +18,7 @@
         {% endfor %}
         {% endif %}
         <form action="{{ url_for('login') }}" method="post">
-            <input type="email" name="email" placeholder="Электронная почта" required>
+            <input type="email" name="email" placeholder="Электронная почта" value="{{ email }}" required>
             <input type="password" name="password" placeholder="Пароль" required>
             <div class="form-actions">
                 <button type="submit" class="btn">Войти</button>

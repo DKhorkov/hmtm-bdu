@@ -371,16 +371,16 @@ async def change_password(
 
 async def update_user_profile(
         request: Request,
-        username: Annotated[str, Form()],
-        phone: Annotated[str, Form()],
-        telegram: Annotated[str, Form()],
-        avatar: Annotated[UploadFile, File()],
+        username: Annotated[str | None, Form()],
+        phone: Annotated[str | None, Form()],
+        telegram: Annotated[str | None, Form()],
+        avatar: Annotated[UploadFile | None, File()],
 ):
     result: UpdateUserProfileResponse = UpdateUserProfileResponse()
     upload_file: Optional[BinaryIO] = None
 
     try:
-        if avatar and avatar.size > 0:
+        if avatar and avatar.size is not None and avatar.size > 0:
             upload_file = io.BytesIO(await avatar.read())
             upload_file.name = avatar.filename
 
@@ -388,8 +388,8 @@ async def update_user_profile(
             query=UpdateUserProfileMutation().to_gql(),
             variable_values=UpdateUserProfileVariables(
                 display_name=username,
-                phone=phone,
-                telegram=telegram,
+                phone=phone if (phone != "Отсутствует" and phone != "") else None,
+                telegram=telegram if (telegram != "Отсутствует" and telegram != "") else None,
                 avatar=upload_file,
             ).to_dict(),
             upload_files=True,

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, status
+from fastapi import APIRouter, Request, Depends, status, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
@@ -46,15 +46,27 @@ async def register_page(
 @router.post("/register", response_class=HTMLResponse, name="register")
 async def process_register(
         request: Request,
+        display_name: str = Form(...),
+        email: str = Form(...),
         result: RegisterResponse = Depends(process_register_dependency)
 ):
     if result.error is not None:
-        return templates.TemplateResponse(request=request, name="register.html", context={"error": result.error})
+        return templates.TemplateResponse(
+            request=request,
+            name="register.html",
+            context={
+                "error": result.error,
+                "display_name": display_name,
+                "email": email,
+            }
+        )
 
     return templates.TemplateResponse(
         request=request,
         name="login.html",
-        context={"message": "На ваш email отправлено письмо для подтверждения регистрации, пожалуйста проверьте"}
+        context={
+            "message": "На ваш email отправлено письмо для подтверждения регистрации, пожалуйста проверьте"
+        }
     )
 
 
@@ -72,10 +84,18 @@ async def login_page(
 @router.post("/login", response_class=HTMLResponse, name="login")
 async def process_login(
         request: Request,
+        email: str = Form(...),
         result: LoginResponse = Depends(process_login_dependency)
 ):
     if result.error is not None:
-        return templates.TemplateResponse(request=request, name="login.html", context={"error": result.error})
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={
+                "error": result.error,
+                "email": email,
+            }
+        )
 
     response: Response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     for cookie in result.cookies:
@@ -89,14 +109,14 @@ async def verify_email(
         request: Request,
         result: VerifyEmailResponse = Depends(verify_email_dependency)
 ):
-    if result.error is None:
-        return templates.TemplateResponse(
-            request=request,
-            name="login.html",
-            context={"message": "Ваша почта успешно подтверждена"}
-        )
+    if result.error is not None:
+        return templates.TemplateResponse(request=request, name="login.html", context={"error": result.error})
 
-    return templates.TemplateResponse(request=request, name="login.html", context={"error": result.error})
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"message": "Ваша почта успешно подтверждена"}
+    )
 
 
 @router.get("/profile", response_class=HTMLResponse, name="profile")
@@ -109,9 +129,8 @@ async def profile_page(
             request=request,
             name="profile.html",
             context={
-                "tab": "main",  # Вкладка
-                "user": current_user.user,  # Авторизация
-                "is_editing": False,
+                "tab": "main",  # Активная вкладка
+                "user": current_user.user,
                 # Основные параметры:
                 "username": current_user.user.display_name,
                 "email": current_user.user.email,
@@ -157,24 +176,28 @@ async def verify_email_letter_page(
 @router.post("/verify-email-letter-form", response_class=HTMLResponse, name="verify-email-letter")
 async def process_verify_email_letter(
         request: Request,
+        email: str = Form(...),
         result: SendVerifyEmailMessageResponse = Depends(send_verify_email_message_dependency)
 ):
     if result.error is None:
         return templates.TemplateResponse(
             request=request,
-            name="login.html",
-            context={"message": "Повторное письмо для подтверждения почты было отправлено"}
+            name="verify-email-letter-form.html",
+            context={
+                "error": result.error,
+                "email": email,
+            }
         )
 
     return templates.TemplateResponse(
         request=request,
-        name="verify-email-letter-form.html",
-        context={"error": result.error}
+        name="login.html",
+        context={"message": "Повторное письмо для подтверждения почты было отправлено"}
     )
 
 
 @router.get("/forget-password-form", response_class=RedirectResponse, name="forget-password-form")
-async def forget_pass_form_page(
+async def forget_password_form_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency)
 ):
@@ -185,21 +208,25 @@ async def forget_pass_form_page(
 
 
 @router.post("/forget-password-form", response_class=HTMLResponse, name="forget-password-form")
-async def process_forget_pass(
+async def process_send_forget_password_message(
         request: Request,
+        email: str = Form(...),
         result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency)
 ):
-    if result.error is None:
+    if result.error is not None:
         return templates.TemplateResponse(
             request=request,
-            name="login.html",
-            context={"message": "Письмо для смены пароля отправлено на электронную почту"}
+            name="forget-password-form.html",
+            context={
+                "error": result.error,
+                "email": email,
+            }
         )
 
     return templates.TemplateResponse(
         request=request,
-        name="forget-password-form.html",
-        context={"error": result.error}
+        name="login.html",
+        context={"message": "Письмо для смены пароля отправлено на электронную почту"}
     )
 
 
@@ -222,7 +249,7 @@ async def forget_password_page(
 
 
 @router.post("/forget-password", response_class=HTMLResponse, name="change-forget-password")
-async def process_forget_password(
+async def process_change_forget_password(
         request: Request,
         result: ChangeForgetPasswordResponse = Depends(change_forget_password_dependency)
 ):
@@ -249,97 +276,70 @@ async def process_change_password(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: ChangePasswordResponse = Depends(change_password_dependency)
 ):
+    if current_user.user is None:
+        return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    context = {
+        "user": current_user.user,
+        # Активная вкладка:
+        "tab": "security",
+        # Основные параметры:
+        "username": current_user.user.display_name,
+        "email": current_user.user.email,
+        "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
+        "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
+        "created_at": DatetimeParser.parse(current_user.user.created_at),
+        "avatar": current_user.user.avatar,
+        # Дополнительные параметры:
+        "email_verified": current_user.user.email_confirmed,
+        "phone_verified": current_user.user.phone_confirmed,
+        "telegram_verified": current_user.user.telegram_confirmed
+    }
+
     if result.error is None:
-        return templates.TemplateResponse(
-            request=request,
-            name="profile.html",
-            context={
-                "user": current_user.user,
-                "security_message": "Ваш пароль успешно обновлен",
-                # Активная вкладка:
-                "tab": "security",
-                # Основные параметры:
-                "username": current_user.user.display_name,
-                "email": current_user.user.email,
-                "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
-                "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
-                "created_at": DatetimeParser.parse(current_user.user.created_at),
-                "avatar": current_user.user.avatar,
-                # Дополнительные параметры:
-                "email_verified": current_user.user.email_confirmed,
-                "phone_verified": current_user.user.phone_confirmed,
-                "telegram_verified": current_user.user.telegram_confirmed
-            }
-        )
+        context["security_message"] = "Вы успешно поменяли пароль"
+
+    else:
+        context["security_error"] = result.error
 
     return templates.TemplateResponse(
         request=request,
         name="profile.html",
-        context={
-            "user": current_user.user,
-            "security_error": result.error,
-            # Активная вкладка:
-            "tab": "security",
-            # Основные параметры:
-            "username": current_user.user.display_name,
-            "email": current_user.user.email,
-            "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
-            "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
-            "created_at": DatetimeParser.parse(current_user.user.created_at),
-            "avatar": current_user.user.avatar,
-            # Дополнительные параметры:
-            "email_verified": current_user.user.email_confirmed,
-            "phone_verified": current_user.user.phone_confirmed,
-            "telegram_verified": current_user.user.telegram_confirmed
-        }
+        context=context
     )
 
 
 @router.post("/confirm-edit-profile", response_class=HTMLResponse, name="confirm-edit-profile")
 async def confirm_edit_profile(
         request: Request,
-        result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
         current_user: GetMeResponse = Depends(get_me_dependency),
+        result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
 ):
+    if current_user.user is None:
+        return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    context = {
+        "user": current_user.user,
+        "tab": "main",
+        # Основные параметры:
+        "username": current_user.user.display_name,
+        "email": current_user.user.email,
+        "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
+        "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
+        "created_at": DatetimeParser.parse(current_user.user.created_at),
+        "avatar": current_user.user.avatar,
+        # Дополнительные параметры:
+        "email_verified": current_user.user.email_confirmed,
+        "phone_verified": current_user.user.phone_confirmed,
+        "telegram_verified": current_user.user.telegram_confirmed
+    }
     if result.error is None:
-        return templates.TemplateResponse(
-            request=request,
-            name="profile.html",
-            context={
-                "user": current_user.user,
-                "tab": "main",
-                "main_message": "Вы успешно поменяли данные о профиле",
-                # Основные параметры:
-                "username": current_user.user.display_name,
-                "email": current_user.user.email,
-                "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
-                "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
-                "created_at": DatetimeParser.parse(current_user.user.created_at),
-                "avatar": current_user.user.avatar,
-                # Дополнительные параметры:
-                "email_verified": current_user.user.email_confirmed,
-                "phone_verified": current_user.user.phone_confirmed,
-                "telegram_verified": current_user.user.telegram_confirmed
-            }
-        )
+        context["main_message"] = "Вы успешно поменяли данные о профиле"
+    else:
+        context["main_error"] = result.error
 
     return templates.TemplateResponse(
         request=request,
         name="profile.html",
-        context={
-            "user": current_user.user,
-            "tab": "main",
-            "main_error": result.error,
-            # Основные параметры:
-            "username": current_user.user.display_name,
-            "email": current_user.user.email,
-            "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
-            "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
-            "created_at": DatetimeParser.parse(current_user.user.created_at),
-            "avatar": current_user.user.avatar,
-            # Дополнительные параметры:
-            "email_verified": current_user.user.email_confirmed,
-            "phone_verified": current_user.user.phone_confirmed,
-            "telegram_verified": current_user.user.telegram_confirmed
-        }
+        context=context
     )

@@ -15,9 +15,26 @@
         {% endfor %}
         {% endif %}
         <form action="{{ url_for('register') }}" method="post">
-            <input type="text" name="display_name" placeholder="Имя пользователя" required>
-            <input type="email" name="email" placeholder="Электронная почта" required>
-            <input type="password" name="password" placeholder="Пароль" required>
+            <input
+                    type="text"
+                    name="display_name"
+                    placeholder="Имя пользователя"
+                    value="{{ display_name }}"
+                    required
+            >
+            <input
+                    type="email"
+                    name="email"
+                    placeholder="Электронная почта"
+                    value="{{ email }}"
+                    required
+            >
+            <input
+                    type="password"
+                    name="password"
+                    placeholder="Пароль"
+                    required
+            >
             <div class="form-actions">
                 <button type="submit" class="btn">Зарегистрироваться</button>
                 <p>Уже есть аккаунт? <a href="{{ url_for('login') }}" class="link link-underlined">Войти</a></p>

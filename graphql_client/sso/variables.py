@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, BinaryIO
 from pydantic import EmailStr
 from dataclasses import dataclass
 
@@ -99,12 +99,12 @@ class ForgetPasswordVariables:
 
 @dataclass(frozen=True)
 class UpdateUserProfileVariables:
-    display_name: str
-    phone: str
-    telegram: str
-    avatar: Optional[Any]
+    display_name: Optional[str]
+    phone: Optional[str]
+    telegram: Optional[str]
+    avatar: Optional[BinaryIO]
 
-    def to_dict(self) -> Dict[str, Dict[str, str | Any]]:
+    def to_dict(self) -> Dict[str, Dict[str, Optional[str | BinaryIO]]]:
         return {
             "input": {
                 "displayName": self.display_name,

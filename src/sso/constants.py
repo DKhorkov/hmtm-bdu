@@ -45,4 +45,4 @@ ERRORS_MAPPING: Dict[str, str] = {
         "Файл с расширением webp не поддерживается к загрузке"
 }
 
-FORGET_PASSWORD_TOKEN_NAME = "forget_password_token"
+FORGET_PASSWORD_TOKEN_NAME: str = "forget_password_token"

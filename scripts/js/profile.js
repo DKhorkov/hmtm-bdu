@@ -7,10 +7,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const profileFields = document.querySelectorAll('.profile-field');
     const staticFields = document.querySelector('.static-fields');
     const editableFields = document.querySelector('.editable-fields');
+    const avatarUploadField = document.getElementById('avatar-upload-field');
     const avatarField = document.querySelector('.profile-field[data-field="avatar"]');
     const fileUploadArea = document.querySelector('.file-upload');
     const fileUploadText = document.querySelector('.file-upload-text');
     const avatarInput = document.querySelector('input[name="avatar"]');
+
+    // Начальное состояние: скрываем поле "Аватар" при загрузке страницы + поле для загрузке файла
+    if (avatarUploadField) {
+        avatarUploadField.style.display = 'none';
+    }
+
+    if (avatarField) {
+        avatarField.style.display = 'none';
+    }
 
     let isEditing = false;
 
@@ -29,23 +39,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (fieldValue) fieldValue.style.display = 'inline';
                 if (status) status.style.display = 'inline';
-                editField.style.display = 'none';
 
+                editField.style.display = 'none';
                 if (field.dataset.field === 'avatar') {
-                    field.classList.remove('edit-mode');
                     if (fileUploadText) fileUploadText.textContent = 'Выберите или перетащите изображение';
                     if (avatarInput) avatarInput.value = '';
+
+                    field.classList.remove('edit-mode'); // Убираем метку
+                    field.style.display = 'none';
                 }
             });
             editProfileBtn.textContent = 'Редактировать профиль';
             saveProfileBtn.style.display = 'none';
             editProfileBtn.style.display = 'block';
+            // Возвращаем порядок полей
             staticFields.style.order = '0';
             editableFields.style.order = '1';
             isEditing = false;
 
-            avatarUploadField = document.getElementById("avatar-upload-field")
-            avatarUploadField.display = "none"
+            avatarUploadField.style.display = 'none'
         }
     };
 
@@ -70,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     editProfileBtn.addEventListener('click', function () {
         if (!isEditing) {
+            // Включаем режим редактирования
             profileFields.forEach(field => {
                 const fieldValue = field.querySelector('.field-value');
                 const editField = field.querySelector('.edit-field');
@@ -77,22 +90,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (fieldValue) fieldValue.style.display = 'none';
                 if (status) status.style.display = 'none';
-                editField.style.display = 'inline-block';
 
+                editField.style.display = 'inline-block';
                 if (field.dataset.field === 'avatar') {
-                    field.classList.add('edit-mode');
+                    field.classList.add('edit-mode'); // Добавляем метку
+                    field.style.display = 'block';
                 }
             });
             this.textContent = 'Отменить редактирование';
             saveProfileBtn.style.display = 'block';
+            this.style.display = 'block';
+            // Перемещаем неизменяемые поля наверх
             staticFields.style.order = '-1';
             editableFields.style.order = '0';
             isEditing = true;
 
-
-            avatarUploadField = document.getElementById("avatar-upload-field")
-            avatarUploadField.style.display = "inline-block"
+            avatarUploadField.style.display = 'inline-block'
         } else {
+            // Отменяем редактирование
             resetEditForm();
         }
     });
@@ -142,5 +157,6 @@ document.addEventListener('DOMContentLoaded', function () {
         profileForm.submit();
     });
 
+    // Применяем начальное состояние формы
     resetEditForm();
 });

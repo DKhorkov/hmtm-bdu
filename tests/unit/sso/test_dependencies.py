@@ -1,6 +1,7 @@
 import pytest
 
 from unittest.mock import AsyncMock, patch, MagicMock
+
 from graphql import DocumentNode
 from typing import Generator, Dict
 from multidict import CIMultiDictProxy, CIMultiDict
@@ -12,11 +13,20 @@ from src.sso.dependencies import (
     verify_email,
     get_me,
     change_forget_password,
+    update_user_profile,
+    change_password,
 )
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
-from src.sso.dto import LoginResponse, GetMeResponse, RegisterResponse, VerifyEmailResponse, \
-    ChangeForgetPasswordResponse
+from src.sso.dto import (
+    LoginResponse,
+    GetMeResponse,
+    RegisterResponse,
+    VerifyEmailResponse,
+    ChangeForgetPasswordResponse,
+    UpdateUserProfileResponse,
+    ChangePasswordResponse
+)
 
 
 @pytest.fixture(scope="function")
@@ -356,3 +366,119 @@ class TestChangeForgetPassword:
         mock_gql_client.assert_called_once()
 
         assert result.error == "Новый пароль идентичен старому"
+
+
+class TestUpdateUserProfile:
+    @pytest.mark.asyncio
+    async def test_update_user_profile_success(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.headers = {"editProfileStatus": True}
+
+        mock_gql_client.return_value = mock_response
+
+        result: UpdateUserProfileResponse = await update_user_profile(
+            request=mock_request,
+            username="Correct_username",
+            phone="+79995554433",
+            telegram="@HMTMSupport",
+            avatar=None,
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.result is True
+        assert result.error is None
+        assert result.headers == mock_response.headers
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
+        assert isinstance(call_kwargs["query"], DocumentNode)
+        assert call_kwargs["variable_values"] == {
+            "input": {
+                "displayName": "Correct_username",
+                "phone": "+79995554433",
+                "telegram": "@HMTMSupport",
+                "avatar": None
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_user_profile_failure(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+
+        mock_gql_client.side_effect = Exception(
+            {"message": "rpc error: code = FailedPrecondition desc = display name not meet the requirements"}
+        )
+
+        result: UpdateUserProfileResponse = await update_user_profile(
+            request=mock_request,
+            username="Unc",
+            phone="+79995554433",
+            telegram="@HMTMSupport",
+            avatar=None,
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.result is False
+        assert result.headers is None
+        assert result.error == "Имя пользователя не может быть короче 4-х символов"
+
+
+class TestChangePassword:
+    @pytest.mark.asyncio
+    async def test_change_password_success(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.headers = {"changePasswordStatus": True}
+
+        mock_gql_client.return_value = mock_response
+
+        result: ChangePasswordResponse = await change_password(
+            request=mock_request,
+            old_password="old_password",
+            new_password="new_correct_password",
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.result is True
+        assert result.error is None
+        assert result.headers == mock_response.headers
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
+        assert isinstance(call_kwargs["query"], DocumentNode)
+        assert call_kwargs["variable_values"] == {
+            "input": {
+                "newPassword": "new_correct_password",
+                "oldPassword": "old_password",
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test_change_password_failure(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_gql_client.side_effect = Exception(
+            {"message": "rpc error: code = Internal desc = wrong password"}
+        )
+
+        result: ChangePasswordResponse = await change_password(
+            request=mock_request,
+            old_password="old_incorrect_password",
+            new_password="new_password",
+        )
+
+        mock_gql_client.assert_called_once()
+        assert result.result is False
+        assert result.headers is None
+        assert result.error == "Вы ввели неправильный текущий пароль"
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
+        assert isinstance(call_kwargs["query"], DocumentNode)
+        assert call_kwargs["variable_values"] == {
+            "input": {
+                "newPassword": "new_password",
+                "oldPassword": "old_incorrect_password",
+            }
+        }
