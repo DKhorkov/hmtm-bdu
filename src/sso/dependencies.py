@@ -300,10 +300,9 @@ async def send_forget_password_message(
 
 async def change_forget_password(
         request: Request,
-        new_password: Annotated[str, Form()]
+        new_password: Annotated[str, Form()],
 ):
     result: ChangeForgetPasswordResponse = ChangeForgetPasswordResponse()
-
     try:
         forget_password_token: Optional[str] = request.cookies.get(FORGET_PASSWORD_TOKEN_NAME)
         if forget_password_token is None:

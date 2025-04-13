@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileUploadText = document.querySelector('.file-upload-text');
     const avatarInput = document.querySelector('input[name="avatar"]');
 
-    // Начальное состояние: скрываем поле "Аватар" при загрузке страницы + поле для загрузке файла
+    // Начальное состояние: скрываем поле "Аватар" при загрузке страницы + поле для загрузки файла
     if (avatarUploadField) {
         avatarUploadField.style.display = 'none';
     }

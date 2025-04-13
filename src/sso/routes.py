@@ -37,6 +37,7 @@ async def register_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
 ):
+    """ Регистрация пользователя - Форма """
     if current_user.user is not None:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -50,6 +51,7 @@ async def process_register(
         email: str = Form(...),
         result: RegisterResponse = Depends(process_register_dependency)
 ):
+    """ Регистрация пользователя - Процесс """
     if result.error is not None:
         return templates.TemplateResponse(
             request=request,
@@ -75,6 +77,7 @@ async def login_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency)
 ):
+    """ Аутентификация пользователя - Форма """
     if current_user.user is not None:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -87,6 +90,7 @@ async def process_login(
         email: str = Form(...),
         result: LoginResponse = Depends(process_login_dependency)
 ):
+    """ Аутентификация пользователя - Процесс """
     if result.error is not None:
         return templates.TemplateResponse(
             request=request,
@@ -109,6 +113,7 @@ async def verify_email(
         request: Request,
         result: VerifyEmailResponse = Depends(verify_email_dependency)
 ):
+    """ Обработчик подтверждения почты пользователя """
     if result.error is not None:
         return templates.TemplateResponse(request=request, name="login.html", context={"error": result.error})
 
@@ -122,8 +127,9 @@ async def verify_email(
 @router.get("/profile", response_class=HTMLResponse, name="profile")
 async def profile_page(
         request: Request,
-        current_user: GetMeResponse = Depends(get_me_dependency)
+        current_user: GetMeResponse = Depends(get_me_dependency),
 ):
+    """ Отрисовка профиля пользователя """
     if current_user.user is not None:
         response: Response = templates.TemplateResponse(
             request=request,
@@ -155,6 +161,7 @@ async def profile_page(
 
 @router.get("/logout", response_class=RedirectResponse, name="logout")
 async def logout(request: Request):
+    """ Завершение сессии """
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     for cookie in request.cookies:
         response.delete_cookie(key=cookie)
@@ -167,6 +174,7 @@ async def verify_email_letter_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency)
 ):
+    """ Повторная отправка письма подтверждения почты - Форма """
     if current_user.user is not None:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -179,6 +187,7 @@ async def process_verify_email_letter(
         email: str = Form(...),
         result: SendVerifyEmailMessageResponse = Depends(send_verify_email_message_dependency)
 ):
+    """ Повторная отправка письма подтверждения почты - Процесс """
     if result.error is None:
         return templates.TemplateResponse(
             request=request,
@@ -201,6 +210,7 @@ async def forget_password_form_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency)
 ):
+    """ Восстановление пароля для не аутентифицированного пользователя - Форма """
     if current_user.user is not None:
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -213,6 +223,7 @@ async def process_send_forget_password_message(
         email: str = Form(...),
         result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency)
 ):
+    """ Восстановление пароля для не аутентифицированного пользователя - Процесс """
     if result.error is not None:
         return templates.TemplateResponse(
             request=request,
@@ -235,6 +246,7 @@ async def forget_password_page(
         request: Request,
         forget_password_token: str
 ):
+    """ Обработчик установки нового пароля после отправки письма восстановления - Форма """
     if forget_password_token is not None:
         response: Response = templates.TemplateResponse(request=request, name="change-forget-password.html")
         response.set_cookie(key=FORGET_PASSWORD_TOKEN_NAME, value=forget_password_token)
@@ -251,8 +263,9 @@ async def forget_password_page(
 @router.post("/forget-password", response_class=HTMLResponse, name="change-forget-password")
 async def process_change_forget_password(
         request: Request,
-        result: ChangeForgetPasswordResponse = Depends(change_forget_password_dependency)
+        result: ChangeForgetPasswordResponse = Depends(change_forget_password_dependency),
 ):
+    """ Обработчик установки нового пароля после отправки письма восстановления - Процесс """
     if result.error is None:
         response: Response = templates.TemplateResponse(
             request=request,
@@ -276,37 +289,30 @@ async def process_change_password(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: ChangePasswordResponse = Depends(change_password_dependency)
 ):
+    """ Ручка авторизованного пользователя для смены пароля - Процесс """
     if current_user.user is None:
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
     context = {
         "user": current_user.user,
-        # Активная вкладка:
         "tab": "security",
-        # Основные параметры:
-        "username": current_user.user.display_name,
-        "email": current_user.user.email,
-        "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
-        "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
-        "created_at": DatetimeParser.parse(current_user.user.created_at),
-        "avatar": current_user.user.avatar,
-        # Дополнительные параметры:
-        "email_verified": current_user.user.email_confirmed,
-        "phone_verified": current_user.user.phone_confirmed,
-        "telegram_verified": current_user.user.telegram_confirmed
     }
 
     if result.error is None:
         context["security_message"] = "Вы успешно поменяли пароль"
-
     else:
         context["security_error"] = result.error
 
-    return templates.TemplateResponse(
+    response: Response = templates.TemplateResponse(
         request=request,
         name="profile.html",
         context=context
     )
+
+    for cookie in current_user.cookies:
+        response = set_cookie(response, cookie)
+
+    return response
 
 
 @router.post("/confirm-edit-profile", response_class=HTMLResponse, name="confirm-edit-profile")
@@ -315,31 +321,27 @@ async def confirm_edit_profile(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
 ):
+    """ Ручка авторизованного пользователя для изменения данных о себе: никнейм, телеграм, телефон - Процесс """
     if current_user.user is None:
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
     context = {
         "user": current_user.user,
         "tab": "main",
-        # Основные параметры:
-        "username": current_user.user.display_name,
-        "email": current_user.user.email,
-        "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
-        "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
-        "created_at": DatetimeParser.parse(current_user.user.created_at),
-        "avatar": current_user.user.avatar,
-        # Дополнительные параметры:
-        "email_verified": current_user.user.email_confirmed,
-        "phone_verified": current_user.user.phone_confirmed,
-        "telegram_verified": current_user.user.telegram_confirmed
     }
+
     if result.error is None:
         context["main_message"] = "Вы успешно поменяли данные о профиле"
     else:
         context["main_error"] = result.error
 
-    return templates.TemplateResponse(
+    response: Response = templates.TemplateResponse(
         request=request,
         name="profile.html",
         context=context
     )
+
+    for cookie in current_user.cookies:
+        response = set_cookie(response, cookie)
+
+    return response
