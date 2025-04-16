@@ -135,19 +135,9 @@ async def profile_page(
             request=request,
             name="profile.html",
             context={
-                "tab": "main",  # Активная вкладка
+                "tab": "main",
                 "user": current_user.user,
-                # Основные параметры:
-                "username": current_user.user.display_name,
-                "email": current_user.user.email,
-                "phone": current_user.user.phone if current_user.user.phone is not None else "Отсутствует",
-                "telegram": current_user.user.telegram if current_user.user.telegram is not None else "Отсутствует",
                 "created_at": DatetimeParser.parse(current_user.user.created_at),
-                "avatar": current_user.user.avatar,
-                # Дополнительные параметры:
-                "email_verified": current_user.user.email_confirmed,
-                "phone_verified": current_user.user.phone_confirmed,
-                "telegram_verified": current_user.user.telegram_confirmed
             }
         )
 
@@ -309,7 +299,7 @@ async def process_change_password(
         context=context
     )
 
-    for cookie in current_user.cookies:
+    for cookie in result.cookies:
         response = set_cookie(response, cookie)
 
     return response
@@ -341,7 +331,7 @@ async def confirm_edit_profile(
         context=context
     )
 
-    for cookie in current_user.cookies:
+    for cookie in result.cookies:
         response = set_cookie(response, cookie)
 
     return response

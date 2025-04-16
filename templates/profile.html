@@ -3,7 +3,7 @@
 {% block title %}Профиль{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/styles/profile.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -11,7 +11,8 @@
     <div class="profile-header">
         <!-- Блок с аватаркой -->
         <div class="avatar-section">
-            <img src="{{ user.avatar if user.avatar else '/static/images/default_avatar.png' }}" alt="Аватар" class="profile-avatar">
+            <img src="{{ user.avatar if user.avatar else '/static/images/default_avatar.png' }}" alt="Аватар"
+                 class="profile-avatar">
         </div>
 
         <!-- Форма с вкладками -->
@@ -45,56 +46,62 @@
                                     <div class="static-fields">
                                         <p class="static-field">
                                             <strong>Почта:</strong>
-                                            {% if email and email != "Отсутствует" %}
-                                            <span class="field-value">{{ email }}</span>
-                                            <span class="verification-status {% if email_verified %}verified{% else %}not-verified{% endif %} edit-status">
-                                                {% if email_verified %}Подтвержден{% else %}Не подтвержден{% endif %}
+                                            {% if user.email and user.email != "Отсутствует" %}
+                                            <span class="field-value">{{ user.email }}</span>
+                                            <span class="verification-status {% if user.email_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
+                                                {% if user.email_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
                                             </span>
                                             {% else %}
                                             <span class="field-value">Отсутствует</span>
                                             {% endif %}
                                         </p>
                                         <p class="static-field">
+                                            {% if created_at and created_at != "Отсутствует" %}
                                             <strong>Дата регистрации: </strong>{{ created_at }}
+                                            {% else %}
+                                            <strong>Дата регистрации: </strong>Ошибка загрузки формы
+                                            {% endif %}
                                         </p>
                                     </div>
 
                                     <!-- Редактируемые поля -->
                                     <div class="editable-fields">
                                         <p class="profile-field" data-field="username">
-                                            <strong>Никнейм:</strong> <span class="field-value">{{ username | default("Отсутствует") }}</span>
+                                            <strong>Никнейм:</strong> <span
+                                                class="field-value">{{ user.display_name }}</span>
                                             <span class="edit-field" style="display: none;">
-                                                <input type="text" name="username" placeholder="Введите новый никнейм" value="{{ username }}">
+                                                <input type="text" name="username" placeholder="Введите новый никнейм"
+                                                       value="{{ user.display_name }}">
                                             </span>
                                         </p>
                                         <p class="profile-field" data-field="phone">
                                             <strong>Телефон:</strong>
-                                            {% if phone and phone != "Отсутствует" %}
-                                            <span class="field-value">{{ phone }}</span>
-                                            <span class="verification-status {% if phone_verified %}verified{% else %}not-verified{% endif %} edit-status">
-                                                {% if phone_verified %}Подтвержден{% else %}Не подтвержден{% endif %}
+                                            {% if user.phone and user.phone != "Отсутствует" %}
+                                            <span class="field-value">{{ user.phone }}</span>
+                                            <span class="verification-status {% if user.phone_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
+                                                {% if phone_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
                                             </span>
                                             {% else %}
                                             <span class="field-value">Отсутствует</span>
                                             {% endif %}
                                             <span class="edit-field" style="display: none;">
                                                 <input type="tel" name="phone" placeholder="Введите новый телефон"
-                                                       value="{{ phone if phone and phone != 'Отсутствует' else '' }}">
+                                                       value="{{ user.phone if user.phone and user.phone != 'Отсутствует' else '' }}">
                                             </span>
                                         </p>
                                         <p class="profile-field" data-field="telegram">
                                             <strong>Телеграм:</strong>
-                                            {% if telegram and telegram != "Отсутствует" %}
-                                            <span class="field-value">{{ telegram }}</span>
-                                            <span class="verification-status {% if telegram_verified %}verified{% else %}not-verified{% endif %} edit-status">
-                                                {% if telegram_verified %}Подтвержден{% else %}Не подтвержден{% endif %}
+                                            {% if user.telegram and user.telegram != "Отсутствует" %}
+                                            <span class="field-value">{{ user.telegram }}</span>
+                                            <span class="verification-status {% if telegram_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
+                                                {% if user.telegram_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
                                             </span>
                                             {% else %}
                                             <span class="field-value">Отсутствует</span>
                                             {% endif %}
                                             <span class="edit-field" style="display: none;">
                                                 <input type="text" name="telegram" placeholder="Введите новый телеграм"
-                                                       value="{{ telegram if telegram and telegram != 'Отсутствует' else '' }}">
+                                                       value="{{ user.telegram if user.telegram and user.telegram != 'Отсутствует' else '' }}">
                                             </span>
                                         </p>
                                         <p class="profile-field" data-field="avatar">
@@ -108,9 +115,12 @@
                                         </p>
                                     </div>
                                 </div>
-                                <button id="edit-profile-btn" type="button" class="btn edit-profile-btn">Редактировать профиль</button>
+                                <button id="edit-profile-btn" type="button" class="btn edit-profile-btn">Редактировать
+                                    профиль
+                                </button>
                                 <button id="save-profile-btn" type="submit" class="btn save-profile-btn"
-                                        style="display: none;">Сохранить изменения</button>
+                                        style="display: none;">Сохранить изменения
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -132,7 +142,8 @@
                                     <input type="hidden" name="tab" value="security">
                                     <input type="password" name="old_password" placeholder="Текущий пароль" required>
                                     <input type="password" name="new_password" placeholder="Новый пароль" required>
-                                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить изменения</button>
+                                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить изменения
+                                    </button>
                                 </form>
                             </div>
                         </div>

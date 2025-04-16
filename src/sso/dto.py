@@ -48,3 +48,8 @@ class ChangePasswordResponse(BoolResponse):
 @dataclass
 class ChangeForgetPasswordResponse(BoolResponse):
     pass
+
+
+@dataclass
+class RefreshTokensResponse(BoolResponse):
+    pass

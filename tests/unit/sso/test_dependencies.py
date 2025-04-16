@@ -25,7 +25,8 @@ from src.sso.dto import (
     VerifyEmailResponse,
     ChangeForgetPasswordResponse,
     UpdateUserProfileResponse,
-    ChangePasswordResponse
+    ChangePasswordResponse,
+    RefreshTokensResponse,
 )
 
 
@@ -56,6 +57,24 @@ def mock_failed_login_response() -> Generator[MagicMock, None, None]:
     mock.result = False
 
     yield mock
+
+
+@pytest.fixture(scope="function")
+def mock_refreshed_tokens() -> Generator[MagicMock, None, None]:
+    mock_refresh_tokens: MagicMock = MagicMock(spec=RefreshTokensResponse)
+    mock_refresh_tokens.error = None
+
+    mock_access_cookie = MagicMock()
+    mock_access_cookie.KEY = "accessToken"
+    mock_access_cookie.VALUE = "Egrele'h..."
+
+    mock_refresh_cookie = MagicMock()
+    mock_refresh_cookie.KEY = "refreshToken"
+    mock_refresh_cookie.VALUE = "Egrele'h..."
+
+    mock_refresh_tokens.cookies = [mock_access_cookie, mock_refresh_cookie]
+
+    yield mock_refresh_tokens
 
 
 class TestProcessRegisterDependency:
@@ -221,7 +240,7 @@ class TestGetMeDependency:
 
         result: GetMeResponse = await get_me(mock_request)
 
-        assert result.error == "AccessToken не найден"
+        assert result.error == "Пользователь не найден"
 
     @pytest.mark.asyncio
     async def test_get_me_success(self, mock_gql_client: AsyncMock) -> None:
@@ -370,16 +389,18 @@ class TestChangeForgetPassword:
 
 class TestUpdateUserProfile:
     @pytest.mark.asyncio
-    async def test_update_user_profile_success(self, mock_gql_client: AsyncMock) -> None:
-        mock_request: MagicMock = MagicMock(spec=Request)
-
+    async def test_update_user_profile_success(
+            self,
+            mock_gql_client: AsyncMock,
+            mock_refreshed_tokens: MagicMock
+    ) -> None:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
-        mock_response.headers = {"editProfileStatus": True}
 
+        mock_response.headers = {"editProfileStatus": True}
         mock_gql_client.return_value = mock_response
 
         result: UpdateUserProfileResponse = await update_user_profile(
-            request=mock_request,
+            refreshed_tokens=mock_refreshed_tokens,
             username="Correct_username",
             phone="+79995554433",
             telegram="@HMTMSupport",
@@ -404,15 +425,17 @@ class TestUpdateUserProfile:
         }
 
     @pytest.mark.asyncio
-    async def test_update_user_profile_failure(self, mock_gql_client: AsyncMock) -> None:
-        mock_request: MagicMock = MagicMock(spec=Request)
-
+    async def test_update_user_profile_failure(
+            self,
+            mock_gql_client: AsyncMock,
+            mock_refreshed_tokens: MagicMock
+    ) -> None:
         mock_gql_client.side_effect = Exception(
             {"message": "rpc error: code = FailedPrecondition desc = display name not meet the requirements"}
         )
 
         result: UpdateUserProfileResponse = await update_user_profile(
-            request=mock_request,
+            refreshed_tokens=mock_refreshed_tokens,
             username="Unc",
             phone="+79995554433",
             telegram="@HMTMSupport",
@@ -428,15 +451,14 @@ class TestUpdateUserProfile:
 
 class TestChangePassword:
     @pytest.mark.asyncio
-    async def test_change_password_success(self, mock_gql_client: AsyncMock) -> None:
-        mock_request: MagicMock = MagicMock(spec=Request)
+    async def test_change_password_success(self, mock_gql_client: AsyncMock, mock_refreshed_tokens: MagicMock) -> None:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.headers = {"changePasswordStatus": True}
 
         mock_gql_client.return_value = mock_response
 
         result: ChangePasswordResponse = await change_password(
-            request=mock_request,
+            refreshed_tokens=mock_refreshed_tokens,
             old_password="old_password",
             new_password="new_correct_password",
         )
@@ -457,14 +479,13 @@ class TestChangePassword:
         }
 
     @pytest.mark.asyncio
-    async def test_change_password_failure(self, mock_gql_client: AsyncMock) -> None:
-        mock_request: MagicMock = MagicMock(spec=Request)
+    async def test_change_password_failure(self, mock_gql_client: AsyncMock, mock_refreshed_tokens: MagicMock) -> None:
         mock_gql_client.side_effect = Exception(
             {"message": "rpc error: code = Internal desc = wrong password"}
         )
 
         result: ChangePasswordResponse = await change_password(
-            request=mock_request,
+            refreshed_tokens=mock_refreshed_tokens,
             old_password="old_incorrect_password",
             new_password="new_password",
         )

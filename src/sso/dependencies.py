@@ -1,7 +1,7 @@
 import io
 
 from typing import Annotated, Dict, Optional, BinaryIO
-from fastapi import Form, Request, UploadFile, File
+from fastapi import Form, Request, UploadFile, File, Depends
 
 from graphql_client.dto import GQLResponse
 from src.config import config
@@ -42,7 +42,8 @@ from src.sso.dto import (
     SendForgetPasswordMessageResponse,
     ChangePasswordResponse,
     ChangeForgetPasswordResponse,
-    UpdateUserProfileResponse
+    UpdateUserProfileResponse,
+    RefreshTokensResponse
 )
 from src.sso.models import User
 
@@ -83,7 +84,7 @@ async def process_register(  # type: ignore[return]
 
 async def process_login(  # type: ignore[return]
         email: Annotated[str, Form()],
-        password: Annotated[str, Form()],
+        password: Annotated[str, Form()]
 ) -> LoginResponse:
     result: LoginResponse = LoginResponse()
 
@@ -146,13 +147,49 @@ async def verify_email(  # type: ignore[return]
     return result
 
 
+async def refresh_tokens(
+        request: Request,
+) -> RefreshTokensResponse:
+    result: RefreshTokensResponse = RefreshTokensResponse()
+
+    try:
+        gql_refresh_tokens: GQLResponse = await config.graphql_client.gql_query(
+            query=RefreshTokensMutation.to_gql(),
+            variable_values={},
+            cookies=request.cookies
+        )
+
+        if "errors" in gql_refresh_tokens.result:
+            result.error = gql_refresh_tokens.result["errors"][0]["message"]
+            return result
+
+        result.result = True
+        result.headers = gql_refresh_tokens.headers  # type: ignore[assignment]
+
+        if gql_refresh_tokens.headers is not None:
+            result.cookies = GQLResponseProcessor(gql_response=gql_refresh_tokens).get_cookies()
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка обновления токенов"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.error = error
+
+    return result
+
+
 async def get_me(
         request: Request,
 ) -> GetMeResponse:
     result: GetMeResponse = GetMeResponse()
 
     if len(request.cookies) == 0:
-        result.error = "AccessToken не найден"
+        result.error = "Пользователь не найден"
         return result
 
     try:
@@ -162,7 +199,6 @@ async def get_me(
                 variable_values={},
                 cookies=request.cookies
             )
-
             if "errors" in gql_response.result:
                 raise Exception
 
@@ -182,23 +218,17 @@ async def get_me(
 
     except Exception:
         try:
-            gql_refresh_tokens: GQLResponse = await config.graphql_client.gql_query(
-                query=RefreshTokensMutation.to_gql(),
-                variable_values={},
-                cookies=request.cookies
-            )
+            refreshed_tokens: RefreshTokensResponse = await refresh_tokens(request)
 
-            if "errors" in gql_refresh_tokens.result:
-                result.error = gql_refresh_tokens.result["errors"][0]["message"]
+            if refreshed_tokens.error is not None:
+                result.error = refreshed_tokens.error
                 return result
 
-            result.headers = gql_refresh_tokens.headers  # type: ignore[assignment]
-
-            if gql_refresh_tokens.headers is not None:
-                result.cookies = GQLResponseProcessor(gql_response=gql_refresh_tokens).get_cookies()
+            result.headers = refreshed_tokens.headers
+            result.cookies = refreshed_tokens.cookies
 
             updated_cookies: Dict[str, str] = {}
-            for cookie in result.cookies:
+            for cookie in refreshed_tokens.cookies:
                 updated_cookies[cookie.KEY] = cookie.VALUE
 
             gql_get_me: GQLResponse = await config.graphql_client.gql_query(
@@ -270,7 +300,7 @@ async def send_verify_email_message(
 
 async def send_forget_password_message(
         email: Annotated[str, Form()]
-):
+) -> SendForgetPasswordMessageResponse:
     result: SendForgetPasswordMessageResponse = SendForgetPasswordMessageResponse()
 
     try:
@@ -300,8 +330,8 @@ async def send_forget_password_message(
 
 async def change_forget_password(
         request: Request,
-        new_password: Annotated[str, Form()],
-):
+        new_password: Annotated[str, Form()]
+) -> ChangeForgetPasswordResponse:
     result: ChangeForgetPasswordResponse = ChangeForgetPasswordResponse()
     try:
         forget_password_token: Optional[str] = request.cookies.get(FORGET_PASSWORD_TOKEN_NAME)
@@ -335,11 +365,20 @@ async def change_forget_password(
 
 
 async def change_password(
-        request: Request,
         old_password: Annotated[str, Form()],
-        new_password: Annotated[str, Form()]
-):
+        new_password: Annotated[str, Form()],
+        refreshed_tokens: RefreshTokensResponse = Depends(refresh_tokens),
+) -> ChangePasswordResponse:
     result: ChangePasswordResponse = ChangePasswordResponse()
+    updated_cookies: Dict[str, str] = {}
+
+    if refreshed_tokens.error is None:
+        result.cookies = refreshed_tokens.cookies
+        for cookie in refreshed_tokens.cookies:
+            updated_cookies[cookie.KEY] = cookie.VALUE
+    else:
+        result.error = "Пользователь не найден"
+        return result
 
     try:
         gql_response: GQLResponse = await config.graphql_client.gql_query(
@@ -348,7 +387,7 @@ async def change_password(
                 old_password=old_password,
                 new_password=new_password
             ).to_dict(),
-            cookies=request.cookies
+            cookies=updated_cookies,
         )
 
         result.result = True
@@ -369,14 +408,23 @@ async def change_password(
 
 
 async def update_user_profile(
-        request: Request,
         username: Annotated[str | None, Form()],
         phone: Annotated[str | None, Form()],
         telegram: Annotated[str | None, Form()],
         avatar: Annotated[UploadFile | None, File()],
-):
+        refreshed_tokens: RefreshTokensResponse = Depends(refresh_tokens),
+) -> UpdateUserProfileResponse:
     result: UpdateUserProfileResponse = UpdateUserProfileResponse()
     upload_file: Optional[BinaryIO] = None
+    updated_cookies: Dict[str, str] = {}
+
+    if refreshed_tokens.error is None:
+        result.cookies = refreshed_tokens.cookies
+        for cookie in refreshed_tokens.cookies:
+            updated_cookies[cookie.KEY] = cookie.VALUE
+    else:
+        result.error = "Пользователь не найден"
+        return result
 
     try:
         if avatar and avatar.size is not None and avatar.size > 0:
@@ -392,7 +440,7 @@ async def update_user_profile(
                 avatar=upload_file,
             ).to_dict(),
             upload_files=True,
-            cookies=request.cookies,
+            cookies=updated_cookies,
         )
 
         result.result = True
