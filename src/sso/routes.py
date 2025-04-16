@@ -305,8 +305,8 @@ async def process_change_password(
     return response
 
 
-@router.post("/confirm-edit-profile", response_class=HTMLResponse, name="confirm-edit-profile")
-async def confirm_edit_profile(
+@router.post("/update_user_profile", response_class=HTMLResponse, name="update_user_profile")
+async def process_update_user_profile(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),

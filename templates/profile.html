@@ -37,7 +37,7 @@
                         <p class="error">{{ main_error }}</p>
                         {% endif %}
                         <div class="form-section">
-                            <form id="profile-form" action="{{ url_for('confirm-edit-profile') }}" method="post"
+                            <form id="profile-form" action="{{ url_for('update_user_profile') }}" method="post"
                                   enctype="multipart/form-data">
                                 <input type="hidden" name="tab" value="main">
                                 <!-- Текстовые поля (по умолчанию видимые) -->
@@ -56,7 +56,7 @@
                                             {% endif %}
                                         </p>
                                         <p class="static-field">
-                                            {% if created_at and created_at != "Отсутствует" %}
+                                            {% if created_at %}
                                             <strong>Дата регистрации: </strong>{{ created_at }}
                                             {% else %}
                                             <strong>Дата регистрации: </strong>Ошибка загрузки формы
@@ -79,7 +79,7 @@
                                             {% if user.phone and user.phone != "Отсутствует" %}
                                             <span class="field-value">{{ user.phone }}</span>
                                             <span class="verification-status {% if user.phone_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
-                                                {% if phone_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
+                                                {% if user.phone_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
                                             </span>
                                             {% else %}
                                             <span class="field-value">Отсутствует</span>
@@ -93,7 +93,7 @@
                                             <strong>Телеграм:</strong>
                                             {% if user.telegram and user.telegram != "Отсутствует" %}
                                             <span class="field-value">{{ user.telegram }}</span>
-                                            <span class="verification-status {% if telegram_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
+                                            <span class="verification-status {% if user.telegram_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
                                                 {% if user.telegram_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
                                             </span>
                                             {% else %}

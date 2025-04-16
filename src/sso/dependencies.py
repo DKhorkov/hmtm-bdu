@@ -372,13 +372,13 @@ async def change_password(
     result: ChangePasswordResponse = ChangePasswordResponse()
     updated_cookies: Dict[str, str] = {}
 
-    if refreshed_tokens.error is None:
-        result.cookies = refreshed_tokens.cookies
-        for cookie in refreshed_tokens.cookies:
-            updated_cookies[cookie.KEY] = cookie.VALUE
-    else:
+    if refreshed_tokens.error:
         result.error = "Пользователь не найден"
         return result
+
+    result.cookies = refreshed_tokens.cookies
+    for cookie in refreshed_tokens.cookies:
+        updated_cookies[cookie.KEY] = cookie.VALUE
 
     try:
         gql_response: GQLResponse = await config.graphql_client.gql_query(
@@ -418,13 +418,13 @@ async def update_user_profile(
     upload_file: Optional[BinaryIO] = None
     updated_cookies: Dict[str, str] = {}
 
-    if refreshed_tokens.error is None:
-        result.cookies = refreshed_tokens.cookies
-        for cookie in refreshed_tokens.cookies:
-            updated_cookies[cookie.KEY] = cookie.VALUE
-    else:
+    if refreshed_tokens.error:
         result.error = "Пользователь не найден"
         return result
+
+    result.cookies = refreshed_tokens.cookies
+    for cookie in refreshed_tokens.cookies:
+        updated_cookies[cookie.KEY] = cookie.VALUE
 
     try:
         if avatar and avatar.size is not None and avatar.size > 0:
