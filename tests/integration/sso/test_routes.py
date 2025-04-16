@@ -7,7 +7,7 @@ from src.main import app as fastapi_app
 
 
 @pytest.fixture(scope="function", autouse=True)
-def test_app():
+def test_app() -> TestClient:
     return TestClient(app=fastapi_app)
 
 

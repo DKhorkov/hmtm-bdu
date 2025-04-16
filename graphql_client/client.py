@@ -15,7 +15,8 @@ class GraphQLClient:
             self,
             query: DocumentNode,
             variable_values: Optional[Dict[str, Any]],
-            cookies: Optional[Dict[str, str]] = None
+            cookies: Optional[Dict[str, str]] = None,
+            upload_files: bool = False
     ) -> GQLResponse:
         cookies = cookies if cookies else {}
         transport = AIOHTTPTransport(url=self.__url, cookies=cookies)
@@ -23,7 +24,8 @@ class GraphQLClient:
         async with Client(transport=transport) as client:
             result: Dict[str, Any] | ExecutionResult = await client.execute(
                 document=query,
-                variable_values=variable_values
+                variable_values=variable_values,
+                upload_files=upload_files
             )
 
             assert isinstance(result, dict)

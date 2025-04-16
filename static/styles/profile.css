@@ -1,0 +1,311 @@
+:root {
+    --dark-border-color: #333;
+}
+
+/* Форма ошибок и сообщений */
+.message,
+.error {
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.95em;
+}
+
+.message {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+/* Профиль */
+.profile-container {
+    padding: 140px 20px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.profile-header {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    margin: 30px 0;
+}
+
+.avatar-section {
+    flex: 0 0 200px;
+    text-align: center;
+}
+
+.tab-content {
+    display: none !important;
+    padding-top: 10px;
+}
+
+.tab-content.active {
+    display: block !important;
+    animation: fadeIn 0.3s ease;
+}
+
+.profile-form-section {
+    flex: 1;
+    max-width: 1000px;
+    background: #E3D5C8;
+    border: 2px solid var(--form-border-color);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--form-border-color);
+    margin-bottom: 20px;
+}
+
+.edit-profile-btn,
+.save-profile-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95em;
+    margin-top: 10px;
+}
+
+.profile-layout {
+    display: flex;
+    gap: 30px;
+}
+
+.profile-tabs {
+    flex: 0 0 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-right: 2px solid var(--form-border-color);
+    padding-right: 20px;
+}
+
+.verification-status {
+    font-size: 0.85em;
+    margin-left: 12px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 400;
+}
+
+.verification-status.verified {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+.verification-status.not-verified {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+/* Скрываем статусы в режиме редактирования */
+.edit-mode .edit-status {
+    display: none !important;
+}
+
+@media (max-width: 480px) {
+    .verification-status {
+        display: block;
+        margin-left: 0;
+        margin-top: 4px;
+        width: fit-content;
+    }
+}
+
+.tab-btn {
+    width: 100%;
+    text-align: left;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: none;
+    border: none;
+    font-size: 1em;
+    color: var(--primary-text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: var(--btn-bg-color);
+    color: var(--btn-text-color);
+}
+
+.tabs-content-wrapper {
+    flex: 1;
+}
+
+.form-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: var(--input-bg-color);
+    border-radius: 8px;
+}
+
+.security-form-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: #E3D5C8;
+    border-radius: 8px;
+}
+
+.user-info p {
+    margin: 6px 0;
+    padding: 8px;
+    background: var(--input-bg-color);
+    border-radius: 6px;
+}
+
+.profile-field[data-field="avatar"] {
+    display: none !important;
+}
+
+.profile-field[data-field="avatar"].edit-mode {
+    display: block !important;
+}
+
+.static-field {
+    margin: 6px 0;
+    padding: 8px;
+    background: var(--input-bg-color);
+    border-radius: 6px;
+}
+
+#change-password-btn {
+    width: auto;
+    padding: 12px 25px;
+    margin: 0;
+    display: inline-block;
+    text-align: left;
+}
+
+.password-form {
+    width: 100%;
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--form-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: none;
+    text-align: left;
+    border: 1px solid var(--form-border-color);
+}
+
+.password-form.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.password-form button[type="submit"] {
+    display: inline-block;
+    margin: 20px 0 0 0;
+}
+
+.file-upload {
+    border: 2px dashed var(--dark-border-color);
+    padding: 12px;
+    text-align: center;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.file-upload:hover {
+    border-color: #111;
+}
+
+.file-upload.dragging {
+    border-color: #111;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.file-upload input[type="file"] {
+    display: none;
+}
+
+.file-upload-text {
+    font-size: 0.95em;
+    color: var(--primary-text-color);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-field .edit-field {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.profile-field .edit-field input {
+    width: 100%;
+    padding: 8px;
+    margin: 6px 0;
+    border: 1px solid var(--form-border-color);
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .profile-form-section {
+        padding: 15px;
+    }
+
+    .profile-layout {
+        flex-direction: column;
+    }
+
+    .profile-tabs {
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 2px solid var(--form-border-color);
+        padding-right: 0;
+        padding-bottom: 15px;
+    }
+
+    .tab-btn {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-header {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .avatar-section {
+        width: 100%;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+    }
+
+    .profile-container {
+        padding-top: 100px;
+    }
+}

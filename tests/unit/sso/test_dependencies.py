@@ -1,6 +1,7 @@
 import pytest
 
 from unittest.mock import AsyncMock, patch, MagicMock
+
 from graphql import DocumentNode
 from typing import Generator, Dict
 from multidict import CIMultiDictProxy, CIMultiDict
@@ -12,11 +13,21 @@ from src.sso.dependencies import (
     verify_email,
     get_me,
     change_forget_password,
+    update_user_profile,
+    change_password,
 )
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
-from src.sso.dto import LoginResponse, GetMeResponse, RegisterResponse, VerifyEmailResponse, \
-    ChangeForgetPasswordResponse
+from src.sso.dto import (
+    LoginResponse,
+    GetMeResponse,
+    RegisterResponse,
+    VerifyEmailResponse,
+    ChangeForgetPasswordResponse,
+    UpdateUserProfileResponse,
+    ChangePasswordResponse,
+    RefreshTokensResponse,
+)
 
 
 @pytest.fixture(scope="function")
@@ -46,6 +57,24 @@ def mock_failed_login_response() -> Generator[MagicMock, None, None]:
     mock.result = False
 
     yield mock
+
+
+@pytest.fixture(scope="function")
+def mock_refreshed_tokens() -> Generator[MagicMock, None, None]:
+    mock_refresh_tokens: MagicMock = MagicMock(spec=RefreshTokensResponse)
+    mock_refresh_tokens.error = None
+
+    mock_access_cookie = MagicMock()
+    mock_access_cookie.KEY = "accessToken"
+    mock_access_cookie.VALUE = "Egrele'h..."
+
+    mock_refresh_cookie = MagicMock()
+    mock_refresh_cookie.KEY = "refreshToken"
+    mock_refresh_cookie.VALUE = "Egrele'h..."
+
+    mock_refresh_tokens.cookies = [mock_access_cookie, mock_refresh_cookie]
+
+    yield mock_refresh_tokens
 
 
 class TestProcessRegisterDependency:
@@ -211,7 +240,7 @@ class TestGetMeDependency:
 
         result: GetMeResponse = await get_me(mock_request)
 
-        assert result.error == "AccessToken не найден"
+        assert result.error == "Пользователь не найден"
 
     @pytest.mark.asyncio
     async def test_get_me_success(self, mock_gql_client: AsyncMock) -> None:
@@ -223,8 +252,16 @@ class TestGetMeDependency:
         mock_response.result = {
             "me": {
                 "id": 1,
-                "email": "test@example.com",
                 "displayName": "Test User",
+                "email": "test@example.com",
+                "emailConfirmed": True,
+                "phone": None,
+                "phoneConfirmed": False,
+                "telegram": None,
+                "telegramConfirmed": False,
+                "avatar": None,
+                "createdAt": "2021-09-22T01:00:00",
+                "updatedAt": "2021-09-22T01:00:00",
             }
         }
 
@@ -256,7 +293,15 @@ class TestGetMeDependency:
             "me": {
                 "id": 2,
                 "email": "refresh@example.com",
-                "displayName": "Refreshed User"
+                "displayName": "Refreshed User",
+                "emailConfirmed": True,
+                "phone": None,
+                "phoneConfirmed": False,
+                "telegram": None,
+                "telegramConfirmed": False,
+                "avatar": None,
+                "createdAt": "2021-09-22T01:00:00",
+                "updatedAt": "2021-09-22T01:00:00",
             }
         }
 
@@ -329,7 +374,7 @@ class TestChangeForgetPassword:
         mock_request.cookies = {"forget_password_token": "test_change_pass_token"}
 
         mock_gql_client.side_effect = Exception(
-            {"message" : "rpc error: code = FailedPrecondition desc = New password can not be equal to old password"}
+            {"message": "rpc error: code = FailedPrecondition desc = New password can not be equal to old password"}
         )
 
         result: ChangeForgetPasswordResponse = await change_forget_password(
@@ -340,3 +385,121 @@ class TestChangeForgetPassword:
         mock_gql_client.assert_called_once()
 
         assert result.error == "Новый пароль идентичен старому"
+
+
+class TestUpdateUserProfile:
+    @pytest.mark.asyncio
+    async def test_update_user_profile_success(
+            self,
+            mock_gql_client: AsyncMock,
+            mock_refreshed_tokens: MagicMock
+    ) -> None:
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+
+        mock_response.headers = {"editProfileStatus": True}
+        mock_gql_client.return_value = mock_response
+
+        result: UpdateUserProfileResponse = await update_user_profile(
+            refreshed_tokens=mock_refreshed_tokens,
+            username="Correct_username",
+            phone="+79995554433",
+            telegram="@HMTMSupport",
+            avatar=None,
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.result is True
+        assert result.error is None
+        assert result.headers == mock_response.headers
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
+        assert isinstance(call_kwargs["query"], DocumentNode)
+        assert call_kwargs["variable_values"] == {
+            "input": {
+                "displayName": "Correct_username",
+                "phone": "+79995554433",
+                "telegram": "@HMTMSupport",
+                "avatar": None
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_user_profile_failure(
+            self,
+            mock_gql_client: AsyncMock,
+            mock_refreshed_tokens: MagicMock
+    ) -> None:
+        mock_gql_client.side_effect = Exception(
+            {"message": "rpc error: code = FailedPrecondition desc = display name not meet the requirements"}
+        )
+
+        result: UpdateUserProfileResponse = await update_user_profile(
+            refreshed_tokens=mock_refreshed_tokens,
+            username="Unc",
+            phone="+79995554433",
+            telegram="@HMTMSupport",
+            avatar=None,
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.result is False
+        assert result.headers is None
+        assert result.error == "Имя пользователя не может быть короче 4-х символов"
+
+
+class TestChangePassword:
+    @pytest.mark.asyncio
+    async def test_change_password_success(self, mock_gql_client: AsyncMock, mock_refreshed_tokens: MagicMock) -> None:
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.headers = {"changePasswordStatus": True}
+
+        mock_gql_client.return_value = mock_response
+
+        result: ChangePasswordResponse = await change_password(
+            refreshed_tokens=mock_refreshed_tokens,
+            old_password="old_password",
+            new_password="new_correct_password",
+        )
+
+        mock_gql_client.assert_called_once()
+
+        assert result.result is True
+        assert result.error is None
+        assert result.headers == mock_response.headers
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
+        assert isinstance(call_kwargs["query"], DocumentNode)
+        assert call_kwargs["variable_values"] == {
+            "input": {
+                "newPassword": "new_correct_password",
+                "oldPassword": "old_password",
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test_change_password_failure(self, mock_gql_client: AsyncMock, mock_refreshed_tokens: MagicMock) -> None:
+        mock_gql_client.side_effect = Exception(
+            {"message": "rpc error: code = Internal desc = wrong password"}
+        )
+
+        result: ChangePasswordResponse = await change_password(
+            refreshed_tokens=mock_refreshed_tokens,
+            old_password="old_incorrect_password",
+            new_password="new_password",
+        )
+
+        mock_gql_client.assert_called_once()
+        assert result.result is False
+        assert result.headers is None
+        assert result.error == "Вы ввели неправильный текущий пароль"
+
+        call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
+        assert isinstance(call_kwargs["query"], DocumentNode)
+        assert call_kwargs["variable_values"] == {
+            "input": {
+                "newPassword": "new_password",
+                "oldPassword": "old_incorrect_password",
+            }
+        }

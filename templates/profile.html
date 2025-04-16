@@ -2,14 +2,156 @@
 
 {% block title %}Профиль{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/styles/profile.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <div class="form-box">
-        <h2>Профиль пользователя</h2>
-        {% if user %}
-            <p>Добро пожаловать, {{ user.display_name }}!</p>
-            <!-- Здесь можно добавить дополнительную информацию о профиле -->
-        {% endif %}
+<div class="profile-container">
+    <div class="profile-header">
+        <!-- Блок с аватаркой -->
+        <div class="avatar-section">
+            <img src="{{ user.avatar if user.avatar else '/static/images/default_avatar.png' }}" alt="Аватар"
+                 class="profile-avatar">
+        </div>
+
+        <!-- Форма с вкладками -->
+        <div class="profile-form-section">
+            <div class="profile-layout">
+                <!-- Навбар вкладок в форме профиля -->
+                <nav class="profile-tabs">
+                    <button class="tab-btn {{ 'active' if tab == 'main' else '' }}" data-tab="main">Основное</button>
+                    <button class="tab-btn {{ 'active' if tab == 'security' else '' }}" data-tab="security">
+                        Безопасность
+                    </button>
+                </nav>
+
+                <!-- Контент вкладок -->
+                <div class="tabs-content-wrapper">
+                    <!-- Вкладка "Основное" -->
+                    <div class="tab-content {{ 'active' if tab == 'main' else '' }}" id="main">
+                        {% if main_message %}
+                        <p class="message">{{ main_message }}</p>
+                        {% endif %}
+                        {% if main_error %}
+                        <p class="error">{{ main_error }}</p>
+                        {% endif %}
+                        <div class="form-section">
+                            <form id="profile-form" action="{{ url_for('update_user_profile') }}" method="post"
+                                  enctype="multipart/form-data">
+                                <input type="hidden" name="tab" value="main">
+                                <!-- Текстовые поля (по умолчанию видимые) -->
+                                <div class="user-info">
+                                    <!-- Неизменяемые поля -->
+                                    <div class="static-fields">
+                                        <p class="static-field">
+                                            <strong>Почта:</strong>
+                                            {% if user.email and user.email != "Отсутствует" %}
+                                            <span class="field-value">{{ user.email }}</span>
+                                            <span class="verification-status {% if user.email_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
+                                                {% if user.email_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
+                                            </span>
+                                            {% else %}
+                                            <span class="field-value">Отсутствует</span>
+                                            {% endif %}
+                                        </p>
+                                        <p class="static-field">
+                                            {% if created_at %}
+                                            <strong>Дата регистрации: </strong>{{ created_at }}
+                                            {% else %}
+                                            <strong>Дата регистрации: </strong>Ошибка загрузки формы
+                                            {% endif %}
+                                        </p>
+                                    </div>
+
+                                    <!-- Редактируемые поля -->
+                                    <div class="editable-fields">
+                                        <p class="profile-field" data-field="username">
+                                            <strong>Никнейм:</strong> <span
+                                                class="field-value">{{ user.display_name }}</span>
+                                            <span class="edit-field" style="display: none;">
+                                                <input type="text" name="username" placeholder="Введите новый никнейм"
+                                                       value="{{ user.display_name }}">
+                                            </span>
+                                        </p>
+                                        <p class="profile-field" data-field="phone">
+                                            <strong>Телефон:</strong>
+                                            {% if user.phone and user.phone != "Отсутствует" %}
+                                            <span class="field-value">{{ user.phone }}</span>
+                                            <span class="verification-status {% if user.phone_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
+                                                {% if user.phone_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
+                                            </span>
+                                            {% else %}
+                                            <span class="field-value">Отсутствует</span>
+                                            {% endif %}
+                                            <span class="edit-field" style="display: none;">
+                                                <input type="tel" name="phone" placeholder="Введите новый телефон"
+                                                       value="{{ user.phone if user.phone and user.phone != 'Отсутствует' else '' }}">
+                                            </span>
+                                        </p>
+                                        <p class="profile-field" data-field="telegram">
+                                            <strong>Телеграм:</strong>
+                                            {% if user.telegram and user.telegram != "Отсутствует" %}
+                                            <span class="field-value">{{ user.telegram }}</span>
+                                            <span class="verification-status {% if user.telegram_confirmed %}verified{% else %}not-verified{% endif %} edit-status">
+                                                {% if user.telegram_confirmed %}Подтвержден{% else %}Не подтвержден{% endif %}
+                                            </span>
+                                            {% else %}
+                                            <span class="field-value">Отсутствует</span>
+                                            {% endif %}
+                                            <span class="edit-field" style="display: none;">
+                                                <input type="text" name="telegram" placeholder="Введите новый телеграм"
+                                                       value="{{ user.telegram if user.telegram and user.telegram != 'Отсутствует' else '' }}">
+                                            </span>
+                                        </p>
+                                        <p class="profile-field" data-field="avatar">
+                                            <strong>Аватар:</strong>
+                                            <span class="edit-field">
+                                                <div id="avatar-upload-field" class="file-upload">
+                                                    <span class="file-upload-text">Выберите или перетащите изображение</span>
+                                                    <input type="file" name="avatar" accept="image/*" hidden>
+                                                </div>
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button id="edit-profile-btn" type="button" class="btn edit-profile-btn">Редактировать
+                                    профиль
+                                </button>
+                                <button id="save-profile-btn" type="submit" class="btn save-profile-btn"
+                                        style="display: none;">Сохранить изменения
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Вкладка "Безопасность" -->
+                    <div class="tab-content {{ 'active' if tab == 'security' else '' }}" id="security">
+                        {% if security_message %}
+                        <p class="message">{{ security_message }}</p>
+                        {% endif %}
+                        {% if security_error %}
+                        <p class="error">{{ security_error }}</p>
+                        {% endif %}
+                        <div class="security-form-section">
+                            <button class="btn" id="change-password-btn">Сменить пароль</button>
+                            <div class="password-form" style="display: none;">
+
+                                <!-- Форма для смены пароля -->
+                                <form action="{{ url_for('change-password') }}" method="post">
+                                    <input type="hidden" name="tab" value="security">
+                                    <input type="password" name="old_password" placeholder="Текущий пароль" required>
+                                    <input type="password" name="new_password" placeholder="Новый пароль" required>
+                                    <button type="submit" class="btn" style="margin-top: 15px;">Сохранить изменения
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+<script type="module" src="../scripts/profile.js"></script>
 {% endblock %}

@@ -66,3 +66,13 @@ class ChangeForgetPasswordMutation:
                 mutation ChangeForgetPassword($input: ForgetPasswordInput!) {forgetPassword(input: $input)}
             """
         )
+
+
+class UpdateUserProfileMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                mutation UpdateUserProfile($input: UpdateUserProfileInput!) {updateUserProfile(input: $input)}
+            """
+        )

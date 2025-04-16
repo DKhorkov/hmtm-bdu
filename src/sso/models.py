@@ -1,11 +1,17 @@
 from dataclasses import dataclass
-import datetime
+from typing import Optional
 
 
 @dataclass
 class User:
     id: int
-    email: str
     display_name: str
-    created_at: datetime.datetime = datetime.datetime.now()
-    updated_at: datetime.datetime = datetime.datetime.now()
+    email: str
+    email_confirmed: bool
+    phone: Optional[str]
+    phone_confirmed: bool
+    telegram: Optional[str]
+    telegram_confirmed: bool
+    avatar: Optional[str]
+    created_at: str
+    updated_at: str

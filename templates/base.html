@@ -23,8 +23,8 @@
             <a href="{{ url_for('profile') }}" class="btn">Профиль</a>
             <a href="{{ url_for('logout') }}" class="btn">Выйти</a>
             {% else %}
-            <a href="{{ url_for('register') }}" class="btn">Регистрация</a>
             <a href="{{ url_for('login') }}" class="btn">Вход</a>
+            <a href="{{ url_for('register') }}" class="btn">Регистрация</a>
             {% endif %}
         </div>
     </div>

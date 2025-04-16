@@ -11,6 +11,11 @@ class GetMeResponse(BaseResponse):
 
 
 @dataclass
+class UpdateUserProfileResponse(BoolResponse):
+    pass
+
+
+@dataclass
 class RegisterResponse(BoolResponse):
     pass
 
@@ -42,4 +47,9 @@ class ChangePasswordResponse(BoolResponse):
 
 @dataclass
 class ChangeForgetPasswordResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class RefreshTokensResponse(BoolResponse):
     pass
