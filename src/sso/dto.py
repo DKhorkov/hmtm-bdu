@@ -61,7 +61,7 @@ class GetUserIsMasterResponse(BoolResponse):
 
 
 @dataclass
-class UpdateMasterInfoResponse(BoolResponse):
+class UpdateMasterResponse(BoolResponse):
     pass
 
 

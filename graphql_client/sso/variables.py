@@ -116,7 +116,7 @@ class UpdateUserProfileVariables:
 
 
 @dataclass(frozen=True)
-class UpdateMasterInfoVariables:
+class UpdateMasterVariables:
     id: int
     info: Optional[str]
 

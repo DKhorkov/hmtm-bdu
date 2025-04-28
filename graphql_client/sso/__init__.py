@@ -8,7 +8,7 @@ from .mutations import (
     ChangePasswordMutation,
     ChangeForgetPasswordMutation,
     UpdateUserProfileMutation,
-    UpdateMasterInfoMutation,
+    UpdateMasterMutation,
     RegisterMasterMutation,
 )
 from .variables import (
@@ -20,7 +20,7 @@ from .variables import (
     ChangePasswordVariables,
     ForgetPasswordVariables,
     UpdateUserProfileVariables,
-    UpdateMasterInfoVariables,
+    UpdateMasterVariables,
     RegisterMasterVariables,
 )
 from .queries import GetMeQuery, GetMasterByUserQuery

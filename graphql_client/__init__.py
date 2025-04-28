@@ -28,8 +28,8 @@ from .sso import (
     UpdateUserProfileVariables,
     UpdateUserProfileMutation,
 
-    UpdateMasterInfoVariables,
-    UpdateMasterInfoMutation,
+    UpdateMasterVariables,
+    UpdateMasterMutation,
 
     RegisterMasterVariables,
     RegisterMasterMutation,

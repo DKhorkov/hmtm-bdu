@@ -78,12 +78,12 @@ class UpdateUserProfileMutation:
         )
 
 
-class UpdateMasterInfoMutation:
+class UpdateMasterMutation:
     @staticmethod
     def to_gql() -> DocumentNode:
         return gql(
             """
-                mutation UpdateMasterInfo($input: UpdateMasterInput!) {updateMaster(input: $input)}
+                mutation UpdateMaster($input: UpdateMasterInput!) {updateMaster(input: $input)}
             """
         )
 

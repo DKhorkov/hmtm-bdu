@@ -18,7 +18,7 @@ from graphql_client import (
     ChangePasswordVariables,
     ForgetPasswordVariables,
     UpdateUserProfileVariables,
-    UpdateMasterInfoVariables,
+    UpdateMasterVariables,
     RegisterMasterVariables,
 
     RegisterUserMutation,
@@ -30,7 +30,7 @@ from graphql_client import (
     ChangePasswordMutation,
     ChangeForgetPasswordMutation,
     UpdateUserProfileMutation,
-    UpdateMasterInfoMutation,
+    UpdateMasterMutation,
     RegisterMasterMutation,
 
     GetMeQuery,
@@ -52,7 +52,7 @@ from src.sso.dto import (
     UpdateUserProfileResponse,
     RefreshTokensResponse,
     GetUserIsMasterResponse,
-    UpdateMasterInfoResponse,
+    UpdateMasterResponse,
     RegisterMasterResponse,
 )
 from src.sso.models import Master
@@ -509,13 +509,13 @@ async def master_by_user(
     return result
 
 
-async def update_master_info(
+async def update_master(
         request: Request,
         info: Annotated[str | None, Form()],
         current_user: GetMeResponse = Depends(get_me),
         master_info: GetUserIsMasterResponse = Depends(master_by_user),
-) -> UpdateMasterInfoResponse:
-    result: UpdateMasterInfoResponse = UpdateMasterInfoResponse()
+) -> UpdateMasterResponse:
+    result: UpdateMasterResponse = UpdateMasterResponse()
 
     if current_user.error:
         result.error = "Пользователь не найден"
@@ -533,8 +533,8 @@ async def update_master_info(
             return result
 
         gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=UpdateMasterInfoMutation().to_gql(),
-            variable_values=UpdateMasterInfoVariables(
+            query=UpdateMasterMutation().to_gql(),
+            variable_values=UpdateMasterVariables(
                 id=master_info.master.id,
                 info=info
             ).to_dict(),

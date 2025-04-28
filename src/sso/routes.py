@@ -14,7 +14,7 @@ from src.sso.dependencies import (
     change_password as change_password_dependency,
     update_user_profile as update_user_profile_dependency,
     master_by_user as master_by_user_dependency,
-    update_master_info as update_master_info_dependency,
+    update_master as update_master_info_dependency,
     register_master as register_master_dependency,
 )
 from src.sso.dto import (
@@ -28,7 +28,7 @@ from src.sso.dto import (
     ChangePasswordResponse,
     UpdateUserProfileResponse,
     GetUserIsMasterResponse,
-    UpdateMasterInfoResponse,
+    UpdateMasterResponse,
     RegisterMasterResponse,
 )
 from src.sso.constants import FORGET_PASSWORD_TOKEN_NAME
@@ -183,7 +183,7 @@ async def process_verify_email_letter(
         result: SendVerifyEmailMessageResponse = Depends(send_verify_email_message_dependency)
 ):
     """ Повторная отправка письма подтверждения почты - Процесс """
-    if result.error is None:
+    if result.error is not None:
         return templates.TemplateResponse(
             request=request,
             name="verify-email-letter-form.html",
@@ -261,21 +261,20 @@ async def process_change_forget_password(
         result: ChangeForgetPasswordResponse = Depends(change_forget_password_dependency),
 ):
     """ Обработчик установки нового пароля после отправки письма восстановления - Процесс """
-    if result.error is None:
-        response: Response = templates.TemplateResponse(
+    if result.error is not None:
+        return templates.TemplateResponse(
             request=request,
-            name="login.html",
-            context={"message": "Пароль успешно обновлен"}
+            name="change-forget-password.html",
+            context={"error": result.error}
         )
-        response.delete_cookie(key=FORGET_PASSWORD_TOKEN_NAME)
 
-        return response
-
-    return templates.TemplateResponse(
+    response: Response = templates.TemplateResponse(
         request=request,
-        name="change-forget-password.html",
-        context={"error": result.error}
+        name="login.html",
+        context={"message": "Пароль успешно обновлен"}
     )
+    response.delete_cookie(key=FORGET_PASSWORD_TOKEN_NAME)
+    return response
 
 
 @router.post("/change-password", response_class=HTMLResponse, name="change-password")
@@ -291,8 +290,8 @@ async def process_change_password(
     master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
     context = {
         "user": current_user.user,
+        "master": master.master if master.master else None,
         "tab": "security",
-        "master": master.master if master.master else None
     }
 
     if result.error is None:
@@ -319,15 +318,15 @@ async def process_update_user_profile(
 ):
     """ Ручка авторизованного пользователя для изменения данных о себе: никнейм, телеграм, телефон - Процесс """
     current_user: GetMeResponse = await get_me_dependency(request=request, cookies=result.cookies)
-    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
 
     if current_user.user is None:
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
+    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
     context = {
         "user": current_user.user,
-        "tab": "main",
         "master": master.master if master.master else None,
+        "tab": "main",
     }
 
     if result.error is None:
@@ -351,18 +350,17 @@ async def process_update_user_profile(
 async def process_update_master(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
-        result: UpdateMasterInfoResponse = Depends(update_master_info_dependency),
+        result: UpdateMasterResponse = Depends(update_master_info_dependency),
 ):
     if current_user.user is None:
         return RedirectResponse("/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
+    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
     context = {
         "user": current_user.user,
+        "master": master.master if master.master else None,
         "tab": "master"
     }
-
-    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
-    context["master"] = master.master if master.master else None
 
     if result.error is None:
         context["master_message"] = "Вы успешно поменяли данные о мастере"
@@ -390,17 +388,17 @@ async def register_master(
     if current_user.user is None:
         return RedirectResponse("/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
+    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
     context = {
         "user": current_user.user,
+        "master": master.master if master.master is not None else None,
         "tab": "master"
     }
 
-    if result.error is not None:
-        context["master_error"] = result.error
-    else:
+    if result.error is None:
         context["master_message"] = "Вы успешно отправили заявку на Мастера"
-        master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
-        context["master"] = master.master if master.master is not None else None
+    else:
+        context["master_error"] = result.error
 
     response: Response = templates.TemplateResponse(
         request=request,

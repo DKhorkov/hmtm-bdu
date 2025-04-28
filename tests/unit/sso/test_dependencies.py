@@ -15,7 +15,9 @@ from src.sso.dependencies import (
     change_forget_password,
     update_user_profile,
     change_password,
-    master_by_user, update_master_info, register_master,
+    master_by_user,
+    update_master,
+    register_master,
 )
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
@@ -27,7 +29,9 @@ from src.sso.dto import (
     ChangeForgetPasswordResponse,
     UpdateUserProfileResponse,
     ChangePasswordResponse,
-    GetUserIsMasterResponse, UpdateMasterInfoResponse, RegisterMasterResponse
+    GetUserIsMasterResponse,
+    UpdateMasterResponse,
+    RegisterMasterResponse
 )
 
 
@@ -576,9 +580,9 @@ class TestGetMasterByUser:
         assert result.error == "Пользователь не является мастером"
 
 
-class TestUpdateMasterInfo:
+class TestUpdateMaster:
     @pytest.mark.asyncio
-    async def test_update_master_info_success(self, mock_gql_client: AsyncMock, mock_get_me: MagicMock) -> None:
+    async def test_update_master_success(self, mock_gql_client: AsyncMock, mock_get_me: MagicMock) -> None:
         mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
@@ -594,7 +598,7 @@ class TestUpdateMasterInfo:
 
         mock_gql_client.return_value = mock_response
 
-        result: UpdateMasterInfoResponse = await update_master_info(
+        result: UpdateMasterResponse = await update_master(
             request=mock_request,
             master_info=mock_master_info,
             info=new_master_info,
@@ -604,8 +608,11 @@ class TestUpdateMasterInfo:
         assert result.result is True
 
     @pytest.mark.asyncio
-    async def test_update_master_info_failure_with_no_cookies(self, mock_gql_client: AsyncMock,
-                                                              mock_get_me: MagicMock) -> None:
+    async def test_update_master_failure_with_no_cookies(
+            self,
+            mock_gql_client: AsyncMock,
+            mock_get_me: MagicMock
+    ) -> None:
         mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
@@ -623,7 +630,7 @@ class TestUpdateMasterInfo:
 
         mock_gql_client.return_value = mock_response
 
-        result: UpdateMasterInfoResponse = await update_master_info(
+        result: UpdateMasterResponse = await update_master(
             request=mock_request,
             master_info=mock_master_info,
             info=new_master_info,
@@ -634,8 +641,11 @@ class TestUpdateMasterInfo:
         assert result.error == "Пользователь не найден"
 
     @pytest.mark.asyncio
-    async def test_update_master_info_failure_with_no_master(self, mock_gql_client: AsyncMock,
-                                                             mock_get_me: MagicMock) -> None:
+    async def test_update_master_failure_with_no_master(
+            self,
+            mock_gql_client: AsyncMock,
+            mock_get_me: MagicMock
+    ) -> None:
         mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
@@ -646,7 +656,7 @@ class TestUpdateMasterInfo:
 
         new_master_info = "New_test_master"
 
-        result: UpdateMasterInfoResponse = await update_master_info(
+        result: UpdateMasterResponse = await update_master(
             request=mock_request,
             master_info=mock_master_info,
             info=new_master_info,
@@ -677,8 +687,11 @@ class TestRegisterMaster:
         assert result.error is None
 
     @pytest.mark.asyncio
-    async def test_register_master_failure_with_no_cookies(self, mock_gql_client: AsyncMock,
-                                                           mock_get_me: MagicMock) -> None:
+    async def test_register_master_failure_with_no_cookies(
+            self,
+            mock_gql_client: AsyncMock,
+            mock_get_me: MagicMock
+    ) -> None:
         mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)

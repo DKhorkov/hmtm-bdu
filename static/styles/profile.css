@@ -1,5 +1,7 @@
 :root {
     --dark-border-color: #333;
+    --master-status-bg: #E3D5C8;
+    --user-status-bg: #DBCBB9;
 }
 
 /* Форма ошибок и сообщений */
