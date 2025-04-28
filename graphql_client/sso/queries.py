@@ -22,3 +22,21 @@ class GetMeQuery:
                     }
                 }
             """)
+
+
+class GetMasterByUserQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql("""
+                query {
+                    masterByUser {
+                        id
+                        user {
+                            id
+                        }
+                        info
+                        createdAt
+                        updatedAt
+                    }
+                }
+            """)

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from src.sso.models import User
+from src.sso.models import User, Master
 from src.dto import BaseResponse, BoolResponse
 
 
@@ -52,4 +52,19 @@ class ChangeForgetPasswordResponse(BoolResponse):
 
 @dataclass
 class RefreshTokensResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class GetUserIsMasterResponse(BoolResponse):
+    master: Optional[Master] = None
+
+
+@dataclass
+class UpdateMasterResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class RegisterMasterResponse(BoolResponse):
     pass

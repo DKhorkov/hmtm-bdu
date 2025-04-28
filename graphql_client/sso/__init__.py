@@ -7,7 +7,9 @@ from .mutations import (
     SendForgetPasswordMessageMutation,
     ChangePasswordMutation,
     ChangeForgetPasswordMutation,
-    UpdateUserProfileMutation
+    UpdateUserProfileMutation,
+    UpdateMasterMutation,
+    RegisterMasterMutation,
 )
 from .variables import (
     RegisterUserVariables,
@@ -17,6 +19,8 @@ from .variables import (
     SendForgetPasswordMessageVariables,
     ChangePasswordVariables,
     ForgetPasswordVariables,
-    UpdateUserProfileVariables
+    UpdateUserProfileVariables,
+    UpdateMasterVariables,
+    RegisterMasterVariables,
 )
-from .queries import GetMeQuery
+from .queries import GetMeQuery, GetMasterByUserQuery

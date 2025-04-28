@@ -113,3 +113,29 @@ class UpdateUserProfileVariables:
                 "avatar": self.avatar,
             }
         }
+
+
+@dataclass(frozen=True)
+class UpdateMasterVariables:
+    id: int
+    info: Optional[str]
+
+    def to_dict(self) -> Dict[str, Dict[str, Optional[str]]]:
+        return {
+            "input": {
+                "id": str(self.id),
+                "info": self.info,
+            }
+        }
+
+
+@dataclass(frozen=True)
+class RegisterMasterVariables:
+    info: Optional[str]
+
+    def to_dict(self) -> Dict[str, Dict[str, Optional[str]]]:
+        return {
+            "input": {
+                "info": self.info,
+            }
+        }

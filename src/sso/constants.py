@@ -55,7 +55,10 @@ ERRORS_MAPPING: Dict[str, str] = {
         "Некорректное имя пользователя для telegram",
 
     "rpc error: code = FailedPrecondition desc = phone not meet the requirements":
-        "Некорректный номер телефона"
+        "Некорректный номер телефона",
+
+    "rpc error: code = NotFound desc = master not found":
+        "Пользователь не является мастером"
 }
 
 FORGET_PASSWORD_TOKEN_NAME: str = "forget_password_token"
