@@ -513,7 +513,7 @@ async def update_master(
         request: Request,
         info: Annotated[str | None, Form()],
         current_user: GetMeResponse = Depends(get_me),
-        master_info: GetUserIsMasterResponse = Depends(master_by_user),
+        master: GetUserIsMasterResponse = Depends(master_by_user),
 ) -> UpdateMasterResponse:
     result: UpdateMasterResponse = UpdateMasterResponse()
 
@@ -528,14 +528,14 @@ async def update_master(
             actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
-        if master_info.master is None:
+        if master.master is None:
             result.error = "Не удалось найти мастера"
             return result
 
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=UpdateMasterMutation().to_gql(),
             variable_values=UpdateMasterVariables(
-                id=master_info.master.id,
+                id=master.master.id,
                 info=info
             ).to_dict(),
             cookies=actual_cookies,

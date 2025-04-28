@@ -588,11 +588,11 @@ class TestUpdateMaster:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.result = {"gql_query_status": True}
 
-        mock_master_info: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
-        mock_master_info.master.id = 1
-        mock_master_info.master.info = "Test_master"
-        mock_master_info.master.created_at = "27.04.2025"
-        mock_master_info.master.updated_at = "27.04.2025"
+        mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
+        mock_master.master.id = 1
+        mock_master.master.info = "Test_master"
+        mock_master.master.created_at = "27.04.2025"
+        mock_master.master.updated_at = "27.04.2025"
 
         new_master_info = "New_test_master"
 
@@ -600,7 +600,7 @@ class TestUpdateMaster:
 
         result: UpdateMasterResponse = await update_master(
             request=mock_request,
-            master_info=mock_master_info,
+            master=mock_master,
             info=new_master_info,
             current_user=mock_get_me
         )
@@ -618,11 +618,11 @@ class TestUpdateMaster:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.result = {"gql_query_status": True}
 
-        mock_master_info: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
-        mock_master_info.master.id = 1
-        mock_master_info.master.info = "Test_master"
-        mock_master_info.master.created_at = "27.04.2025"
-        mock_master_info.master.updated_at = "27.04.2025"
+        mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
+        mock_master.master.id = 1
+        mock_master.master.info = "Test_master"
+        mock_master.master.created_at = "27.04.2025"
+        mock_master.master.updated_at = "27.04.2025"
 
         new_master_info = "New_test_master"
 
@@ -632,7 +632,7 @@ class TestUpdateMaster:
 
         result: UpdateMasterResponse = await update_master(
             request=mock_request,
-            master_info=mock_master_info,
+            master=mock_master,
             info=new_master_info,
             current_user=mock_get_me
         )
@@ -651,14 +651,14 @@ class TestUpdateMaster:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.result = {"gql_query_status": True}
 
-        mock_master_info: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
-        mock_master_info.master = None
+        mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
+        mock_master.master = None
 
         new_master_info = "New_test_master"
 
         result: UpdateMasterResponse = await update_master(
             request=mock_request,
-            master_info=mock_master_info,
+            master=mock_master,
             info=new_master_info,
             current_user=mock_get_me
         )
