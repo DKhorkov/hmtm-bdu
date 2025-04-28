@@ -15,22 +15,6 @@ tasks:
       - task: docker_build_prod
       - task: docker_run_prod
 
-  local:
-    desc: "Run application dependencies for local launch."
-    cmds:
-      - task: create_logs_folder
-      - task: prepare_env_file_local
-      - task: docker_build_local
-      - task: docker_run_local
-
-  create_postgres_folders:
-    desc: "Create postgres folders for other tasks purposes."
-    internal: true
-    dir: ../
-    cmds:
-      - mkdir -p postgres_data
-      - mkdir -p postgres_backups
-
   create_logs_folder:
     desc: "Create logs folder for docker volume purposes."
     internal: true
@@ -43,46 +27,25 @@ tasks:
     internal: true
     dir: ../
     cmds:
-      - cp .env.example .env
-      - cp .env build/package/prod/.env
-
-  prepare_env_file_local:
-    desc: "Prepare .env file for local launch."
-    internal: true
-    dir: ../
-    cmds:
-      - cp .env.local .env
-      - cp .env build/package/local/.env
+      - cp .env.prod ./deploy/prod/.env
 
   docker_build_prod:
     desc: "Build docker container for production."
     aliases:
       - build_prod
-    cmd: sudo docker compose -f ../build/package/prod/docker-compose.yml build
+    cmd: sudo docker compose -f ../deploy/prod/docker-compose.yml build
 
   docker_run_prod:
     desc: "Launch docker container for production."
     aliases:
       - run_prod
-    cmd: sudo docker compose -f ../build/package/prod/docker-compose.yml up
-
-  docker_build_local:
-    desc: "Build docker container for local launch."
-    aliases:
-      - build_local
-    cmd: sudo docker compose -f ../build/package/local/docker-compose.yml build
-
-  docker_run_local:
-    desc: "Launch docker container for local launch."
-    aliases:
-      - run_local
-    cmd: sudo docker compose -f ../build/package/local/docker-compose.yml up
+    cmd: sudo docker compose -f ../deploy/prod/docker-compose.yml up
 
   docker_stop:
     desc: "Stop all docker containers."
     aliases:
       - stop
-    cmd: sudo docker stop $(sudo docker ps -a -q)
+    cmd: sudo docker stop hmtm_bdu
 
   docker_clean:
     desc: "Clean docker containers, images and volumes."
@@ -96,157 +59,8 @@ tasks:
     cmds:
       - sudo rm -rf logs/
       - sudo rm -rf coverage/
-      - sudo rm -rf build/package/prod/.env
-      - sudo rm -rf build/package/local/.env
-      - sudo rm -rf postgres_data/
-      - sudo rm -rf postgres_backups/
+      - sudo rm -rf deploy/prod/.env
       - task: docker_clean
-
-  setup_proto:
-    desc: "Install all go-proto requirements."
-    aliases:
-      - setup
-    cmds:
-      - sudo snap install protobuf --classic
-      - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-      - export PATH="$PATH:$(go env GOPATH)/bin"
-      - task: create_protobuf_folders
-
-  create_protobuf_folders:
-    desc: "Create folders structure for protobuf usage."
-    internal: true
-    dir: ../
-    cmds:
-      - mkdir -p api/protobuf/protofiles
-      - mkdir -p api/protobuf/generated/go
-
-  grpc_generate:
-    desc: "Generate code from .proto files."
-    aliases:
-      - gen
-      - generate
-      - grpc
-    dir: ../
-    cmds:
-      - protoc --proto_path=api/protobuf/protofiles ./api/protobuf/protofiles/notifications/emails.proto --go_out=./api/protobuf/generated/go --go_opt=paths=source_relative --go-grpc_out=./api/protobuf/generated/go --go-grpc_opt=paths=source_relative --experimental_allow_proto3_optional
-
-  tests:
-    desc: "Run tests and save coverage to ./tests/coverage folder."
-    aliases:
-      - test
-    dir: ../
-    cmds:
-      - task: create_postgres_folders
-      - sudo chmod -R 777 postgres_data
-      - sudo chmod -R 777 postgres_backups
-      - mkdir -p ./coverage
-      - go test -v -shuffle=on -coverprofile ./coverage/coverage.out -coverpkg=./... ./... -tags=integration
-      - go tool cover -html ./coverage/coverage.out -o ./coverage/coverage.html
-
-  benchmarks:
-    desc: "Run benchmarks."
-    aliases:
-      - bench
-    dir: ../
-    cmd: go test -v ./... -bench=. -run=xxx -benchmem >> bench.txt
-
-  linters:
-    desc: "Run linters."
-    aliases:
-      - lint
-    dir: ../
-    cmds:
-      - task: create_postgres_folders
-      - sudo chmod -R 777 postgres_data
-      - sudo chmod -R 777 postgres_backups
-      - golangci-lint run -v --fix
-
-  makemigrations:
-    desc: "Create migration file with provided name."
-    requires: # Make sure these variables are set before running
-      vars: [ NAME ]
-    vars:
-      DIR: ./migrations
-    dir: ../
-    cmds:
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-      - goose -dir {{.DIR}} create {{.NAME}} sql
-
-  migrate:
-    desc: "Apply all available migrations."
-    aliases:
-      - create_database
-    dotenv:
-      - .env
-    vars:
-      DIR: ./migrations
-      DRIVER: $POSTGRES_DRIVER
-      DATABASE_URL: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$HMTM_NOTIFICATIONS_DB_OUTER_HOST:$HMTM_NOTIFICATIONS_DB_OUTER_PORT/$POSTGRES_DB"
-    dir: ../
-    cmds:
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-      - goose -dir {{.DIR}} {{.DRIVER}} {{.DATABASE_URL}} up
-
-  migrate_to:
-    desc: "Migrate up to a specific version."
-    requires:
-      vars: [ VERSION ]
-    dotenv:
-      - .env
-    vars:
-      DIR: ./migrations
-      DRIVER: $POSTGRES_DRIVER
-      DATABASE_URL: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$HMTM_NOTIFICATIONS_DB_OUTER_HOST:$HMTM_NOTIFICATIONS_DB_OUTER_PORT/$POSTGRES_DB"
-    dir: ../
-    cmds:
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-      - goose -dir {{.DIR}} {{.DRIVER}} {{.DATABASE_URL}} up-to {{.VERSION}}
-
-  downgrade_to:
-    desc: "Rollback migrations to a specific version."
-    requires:
-      vars: [ VERSION ]
-    dotenv:
-      - .env
-    vars:
-      DIR: ./migrations
-      DRIVER: $POSTGRES_DRIVER
-      DATABASE_URL: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$HMTM_NOTIFICATIONS_DB_OUTER_HOST:$HMTM_NOTIFICATIONS_DB_OUTER_PORT/$POSTGRES_DB"
-    dir: ../
-    cmds:
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-      - goose -dir {{.DIR}} {{.DRIVER}} {{.DATABASE_URL}} down-to {{.VERSION}}
-
-  downgrade_to_base:
-    desc: "Rollback all migrations (careful!)."
-    aliases:
-      - drop_tables
-    dotenv:
-      - .env
-    vars:
-      DIR: ./migrations
-      DRIVER: $POSTGRES_DRIVER
-      DATABASE_URL: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$HMTM_NOTIFICATIONS_DB_OUTER_HOST:$HMTM_NOTIFICATIONS_DB_OUTER_PORT/$POSTGRES_DB"
-    dir: ../
-    cmds:
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-      - goose -dir {{.DIR}} {{.DRIVER}} {{.DATABASE_URL}} down-to 0
-
-  migrations_status:
-    desc: "Print status of all migrations."
-    aliases:
-      - status
-    dotenv:
-      - .env
-    vars:
-      DIR: ./migrations
-      DRIVER: $POSTGRES_DRIVER
-      DATABASE_URL: "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$HMTM_NOTIFICATIONS_DB_OUTER_HOST:$HMTM_NOTIFICATIONS_DB_OUTER_PORT/$POSTGRES_DB"
-    dir: ../
-    cmds:
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-      - goose -dir {{.DIR}} {{.DRIVER}} {{.DATABASE_URL}} status
 
   upload_docker_image:
     desc: "Uploads docker image to dockerhub."
@@ -256,5 +70,5 @@ tasks:
     cmds:
       - task: prepare_env_file_prod
       - task: docker_build_prod
-      - sudo docker tag hmtm_notifications d3m0s/hmtm_notifications
-      - sudo docker push d3m0s/hmtm_notifications
+      - sudo docker tag hmtm_bdu d3m0s/hmtm_bdu
+      - sudo docker push d3m0s/hmtm_bdu

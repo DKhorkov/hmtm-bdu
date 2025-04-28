@@ -6,7 +6,7 @@ from graphql_client.client import GraphQLClient
 from graphql_client.interface import GraphQLInterface
 from src.enums import Environments
 
-load_dotenv(find_dotenv('.env.bdu'))
+load_dotenv(find_dotenv('.env'))
 
 
 @dataclass(frozen=True)
@@ -14,7 +14,11 @@ class Config:
     graphql_client: GraphQLInterface
 
 
-config: Config
+config: Config = Config(
+    graphql_client=GraphQLClient(
+        url=getenv("GRAPHQL_URL", default="http://localhost:8080/query"),
+    )
+)
 
 ENVIRONMENT = getenv("ENVIRONMENT")
 if ENVIRONMENT == Environments.TEST:
@@ -25,10 +29,3 @@ elif ENVIRONMENT == Environments.PRODUCTION:
 
 elif ENVIRONMENT == Environments.DEVELOPMENT:
     pass
-
-else:
-    config = Config(
-        graphql_client=GraphQLClient(
-            url=getenv("GRAPHQL_URL", default="http://localhost:8080/query"),
-        )
-    )
