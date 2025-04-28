@@ -13,6 +13,10 @@
         <div class="avatar-section">
             <img src="{{ user.avatar if user.avatar else '/static/images/default_avatar.png' }}" alt="Аватар"
                  class="profile-avatar">
+            <!-- Добавленный статус -->
+            <div class="user-status {% if master is not none %}master{% else %}user{% endif %}">
+                {% if master is not none %}Мастер{% else %}Пользователь{% endif %}
+            </div>
         </div>
 
         <!-- Форма с вкладками -->
@@ -23,6 +27,9 @@
                     <button class="tab-btn {{ 'active' if tab == 'main' else '' }}" data-tab="main">Основное</button>
                     <button class="tab-btn {{ 'active' if tab == 'security' else '' }}" data-tab="security">
                         Безопасность
+                    </button>
+                    <button class="tab-btn {{ 'active' if tab == 'master' else '' }}" data-tab="master">
+                        {% if master is none %}Стать мастером{% else %}Я мастер{% endif %}
                     </button>
                 </nav>
 
@@ -56,8 +63,8 @@
                                             {% endif %}
                                         </p>
                                         <p class="static-field">
-                                            {% if created_at %}
-                                            <strong>Дата регистрации: </strong>{{ created_at }}
+                                            {% if user.created_at %}
+                                            <strong>Дата регистрации: </strong>{{ user.created_at }}
                                             {% else %}
                                             <strong>Дата регистрации: </strong>Ошибка загрузки формы
                                             {% endif %}
@@ -136,7 +143,6 @@
                         <div class="security-form-section">
                             <button class="btn" id="change-password-btn">Сменить пароль</button>
                             <div class="password-form" style="display: none;">
-
                                 <!-- Форма для смены пароля -->
                                 <form action="{{ url_for('change-password') }}" method="post">
                                     <input type="hidden" name="tab" value="security">
@@ -148,6 +154,58 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Вкладка "Стать мастером / Я мастер" -->
+                    <div class="tab-content {{ 'active' if tab == 'master' else '' }}" id="master">
+                        <div class="form-section">
+                            {% if master_message %}
+                            <p class="message">{{ master_message }}</p>
+                            {% endif %}
+                            {% if master_error %}
+                            <p class="error">{{ master_error }}</p>
+                            {% endif %}
+
+                            {% if not master %}
+                            <form action="{{ url_for('register-master') }}" method="post">
+                                <input type="hidden" name="tab" value="master">
+                                <div class="user-info">
+                                    <p class="profile-field" data-field="master-info">
+                                        <strong class="field-label">О мастере:</strong>
+                                        <span class="edit-field master-info-field">
+                                            <textarea name="info" placeholder="Расскажите о себе"
+                                                      maxlength="1000"></textarea>
+                                        </span>
+                                    </p>
+                                </div>
+                                <button type="submit" class="btn">Отправить заявку</button>
+                            </form>
+                            {% else %}
+                            <form id="master-form" action="{{ url_for('update-master') }}" method="post">
+                                <input type="hidden" name="tab" value="master">
+                                <div class="user-info">
+                                    <p class="static-field">
+                                        <strong>Мастер с:</strong>
+                                        <span class="field-value">{{ master.created_at if master.created_at else 'Ошибка загрузки формы' }}</span>
+                                    </p>
+                                    <p class="profile-field" data-field="master-info">
+                                        <strong class="field-label">О мастере:</strong>
+                                        <span class="field-value">{{ master.info if master.info else 'Информации еще нет, рекомендуется добавить' }}</span>
+                                        <span class="edit-field master-info-field" style="display: none;">
+                                            <textarea name="info" placeholder="Расскажите о себе" maxlength="1000">{{ master.info if master.info else '' }}</textarea>
+                                        </span>
+                                    </p>
+                                </div>
+                                <button id="edit-master-btn" type="button" class="btn edit-profile-btn">Редактировать
+                                    мастера
+                                </button>
+                                <button id="save-master-btn" type="submit" class="btn save-profile-btn"
+                                        style="display: none;">Сохранить изменения
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

@@ -1,22 +1,38 @@
 from .sso import (
     RegisterUserVariables,
-    LoginUserVariables,
-    VerifyUserEmailVariables,
     RegisterUserMutation,
+
+    LoginUserVariables,
     LoginUserMutation,
+
+    VerifyUserEmailVariables,
     VerifyUserEmailMutation,
+
     GetMeQuery,
+    GetMasterByUserQuery,
+
     RefreshTokensMutation,
+
     SendVerifyEmailMessageVariables,
     SendVerifyEmailMessageMutation,
+
     SendForgetPasswordMessageVariables,
     SendForgetPasswordMessageMutation,
+
     ChangePasswordVariables,
     ChangePasswordMutation,
-    ChangeForgetPasswordMutation,
+
     ForgetPasswordVariables,
+    ChangeForgetPasswordMutation,
+
+    UpdateUserProfileVariables,
     UpdateUserProfileMutation,
-    UpdateUserProfileVariables
+
+    UpdateMasterInfoVariables,
+    UpdateMasterInfoMutation,
+
+    RegisterMasterVariables,
+    RegisterMasterMutation,
 )
 
 from .client import GraphQLClient

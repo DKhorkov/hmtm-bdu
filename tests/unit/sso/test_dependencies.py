@@ -15,6 +15,7 @@ from src.sso.dependencies import (
     change_forget_password,
     update_user_profile,
     change_password,
+    master_by_user, update_master_info, register_master,
 )
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
@@ -26,7 +27,7 @@ from src.sso.dto import (
     ChangeForgetPasswordResponse,
     UpdateUserProfileResponse,
     ChangePasswordResponse,
-    RefreshTokensResponse,
+    GetUserIsMasterResponse, UpdateMasterInfoResponse, RegisterMasterResponse
 )
 
 
@@ -60,8 +61,8 @@ def mock_failed_login_response() -> Generator[MagicMock, None, None]:
 
 
 @pytest.fixture(scope="function")
-def mock_refreshed_tokens() -> Generator[MagicMock, None, None]:
-    mock_refresh_tokens: MagicMock = MagicMock(spec=RefreshTokensResponse)
+def mock_get_me() -> Generator[MagicMock, None, None]:
+    mock_refresh_tokens: MagicMock = MagicMock(spec=GetMeResponse)
     mock_refresh_tokens.error = None
 
     mock_access_cookie = MagicMock()
@@ -392,19 +393,21 @@ class TestUpdateUserProfile:
     async def test_update_user_profile_success(
             self,
             mock_gql_client: AsyncMock,
-            mock_refreshed_tokens: MagicMock
+            mock_get_me: MagicMock
     ) -> None:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
-
         mock_response.headers = {"editProfileStatus": True}
+
         mock_gql_client.return_value = mock_response
+        mock_request: MagicMock = MagicMock(spec=Request)
 
         result: UpdateUserProfileResponse = await update_user_profile(
-            refreshed_tokens=mock_refreshed_tokens,
             username="Correct_username",
             phone="+79995554433",
             telegram="@HMTMSupport",
             avatar=None,
+            request=mock_request,
+            current_user=mock_get_me,
         )
 
         mock_gql_client.assert_called_once()
@@ -428,18 +431,20 @@ class TestUpdateUserProfile:
     async def test_update_user_profile_failure(
             self,
             mock_gql_client: AsyncMock,
-            mock_refreshed_tokens: MagicMock
+            mock_get_me: MagicMock
     ) -> None:
         mock_gql_client.side_effect = Exception(
             {"message": "rpc error: code = FailedPrecondition desc = display name not meet the requirements"}
         )
+        mock_request: MagicMock = MagicMock(spec=Request)
 
         result: UpdateUserProfileResponse = await update_user_profile(
-            refreshed_tokens=mock_refreshed_tokens,
+            current_user=mock_get_me,
             username="Unc",
             phone="+79995554433",
             telegram="@HMTMSupport",
             avatar=None,
+            request=mock_request
         )
 
         mock_gql_client.assert_called_once()
@@ -451,16 +456,18 @@ class TestUpdateUserProfile:
 
 class TestChangePassword:
     @pytest.mark.asyncio
-    async def test_change_password_success(self, mock_gql_client: AsyncMock, mock_refreshed_tokens: MagicMock) -> None:
+    async def test_change_password_success(self, mock_gql_client: AsyncMock, mock_get_me: MagicMock) -> None:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.headers = {"changePasswordStatus": True}
+        mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_gql_client.return_value = mock_response
 
         result: ChangePasswordResponse = await change_password(
-            refreshed_tokens=mock_refreshed_tokens,
+            request=mock_request,
             old_password="old_password",
             new_password="new_correct_password",
+            current_user=mock_get_me
         )
 
         mock_gql_client.assert_called_once()
@@ -479,15 +486,17 @@ class TestChangePassword:
         }
 
     @pytest.mark.asyncio
-    async def test_change_password_failure(self, mock_gql_client: AsyncMock, mock_refreshed_tokens: MagicMock) -> None:
+    async def test_change_password_failure(self, mock_gql_client: AsyncMock, mock_get_me: MagicMock) -> None:
         mock_gql_client.side_effect = Exception(
             {"message": "rpc error: code = Internal desc = wrong password"}
         )
+        mock_request: MagicMock = MagicMock(spec=Request)
 
         result: ChangePasswordResponse = await change_password(
-            refreshed_tokens=mock_refreshed_tokens,
+            request=mock_request,
             old_password="old_incorrect_password",
             new_password="new_password",
+            current_user=mock_get_me
         )
 
         mock_gql_client.assert_called_once()
@@ -503,3 +512,187 @@ class TestChangePassword:
                 "oldPassword": "old_incorrect_password",
             }
         }
+
+
+class TestGetMasterByUser:
+    @pytest.mark.asyncio
+    async def test_get_master_by_user_success(self, mock_gql_client: AsyncMock) -> None:
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {
+            "masterByUser": {
+                "id": 1,
+                "info": "Test_master",
+                "createdAt": "2025-04-27T08:10:35.388787Z",
+                "updatedAt": "2025-04-27T08:10:35.388787Z",
+            }
+        }
+
+        mock_request = MagicMock(spec=Request)
+        mock_request.cookies = {"accessToken": "...", "refreshToken": "..."}
+
+        mock_gql_client.return_value = mock_response
+
+        result: GetUserIsMasterResponse = await master_by_user(
+            request=mock_request,
+        )
+
+        assert result.master.id == 1  # type: ignore[union-attr]
+        assert result.master.info == "Test_master"  # type: ignore[union-attr]
+        assert result.master.created_at == "27.04.2025"  # type: ignore[union-attr]
+        assert result.master.updated_at == "27.04.2025"  # type: ignore[union-attr]
+
+    @pytest.mark.asyncio
+    async def test_get_master_by_user_failure_with_no_cookies(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {}
+
+        result: GetUserIsMasterResponse = await master_by_user(request=mock_request)
+
+        assert result.result is False
+        assert result.error == "Пользователь не найден"
+
+    @pytest.mark.asyncio
+    async def test_get_master_by_user_failure_with_no_master(self, mock_gql_client: AsyncMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {"accessToken": "...", "refreshToken": "..."}
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {
+            "errors": [
+                {
+                    "message": "rpc error: code = NotFound desc = master not found",
+                    "path": [
+                        "masterByUser"
+                    ]
+                }
+            ],
+            "data": None
+        }
+        mock_gql_client.return_value = mock_response
+
+        result: GetUserIsMasterResponse = await master_by_user(request=mock_request)
+
+        assert result.result is False
+        assert result.error == "Пользователь не является мастером"
+
+
+class TestUpdateMasterInfo:
+    @pytest.mark.asyncio
+    async def test_update_master_info_success(self, mock_gql_client: AsyncMock, mock_get_me: MagicMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {"gql_query_status": True}
+
+        mock_master_info: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
+        mock_master_info.master.id = 1
+        mock_master_info.master.info = "Test_master"
+        mock_master_info.master.created_at = "27.04.2025"
+        mock_master_info.master.updated_at = "27.04.2025"
+
+        new_master_info = "New_test_master"
+
+        mock_gql_client.return_value = mock_response
+
+        result: UpdateMasterInfoResponse = await update_master_info(
+            request=mock_request,
+            master_info=mock_master_info,
+            info=new_master_info,
+            current_user=mock_get_me
+        )
+
+        assert result.result is True
+
+    @pytest.mark.asyncio
+    async def test_update_master_info_failure_with_no_cookies(self, mock_gql_client: AsyncMock,
+                                                              mock_get_me: MagicMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {"gql_query_status": True}
+
+        mock_master_info: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
+        mock_master_info.master.id = 1
+        mock_master_info.master.info = "Test_master"
+        mock_master_info.master.created_at = "27.04.2025"
+        mock_master_info.master.updated_at = "27.04.2025"
+
+        new_master_info = "New_test_master"
+
+        mock_get_me.error = "accessToken not found"
+
+        mock_gql_client.return_value = mock_response
+
+        result: UpdateMasterInfoResponse = await update_master_info(
+            request=mock_request,
+            master_info=mock_master_info,
+            info=new_master_info,
+            current_user=mock_get_me
+        )
+
+        assert result.result is False
+        assert result.error == "Пользователь не найден"
+
+    @pytest.mark.asyncio
+    async def test_update_master_info_failure_with_no_master(self, mock_gql_client: AsyncMock,
+                                                             mock_get_me: MagicMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {"gql_query_status": True}
+
+        mock_master_info: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
+        mock_master_info.master = None
+
+        new_master_info = "New_test_master"
+
+        result: UpdateMasterInfoResponse = await update_master_info(
+            request=mock_request,
+            master_info=mock_master_info,
+            info=new_master_info,
+            current_user=mock_get_me
+        )
+
+        assert result.result is False
+        assert result.error == "Не удалось найти мастера"
+
+
+class TestRegisterMaster:
+    @pytest.mark.asyncio
+    async def test_register_master_success(self, mock_gql_client: AsyncMock, mock_get_me: MagicMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {"gql_query_status": True}
+
+        master_info = "New_master"
+
+        result: RegisterMasterResponse = await register_master(
+            request=mock_request,
+            info=master_info,
+            current_user=mock_get_me
+        )
+
+        assert result.result is True
+        assert result.error is None
+
+    @pytest.mark.asyncio
+    async def test_register_master_failure_with_no_cookies(self, mock_gql_client: AsyncMock,
+                                                           mock_get_me: MagicMock) -> None:
+        mock_request: MagicMock = MagicMock(spec=Request)
+
+        mock_response: MagicMock = MagicMock(spec=GQLResponse)
+        mock_response.result = {"gql_query_status": True}
+
+        mock_get_me.error = "accessToken not found"
+
+        master_info = "New_master"
+
+        result: RegisterMasterResponse = await register_master(
+            request=mock_request,
+            info=master_info,
+            current_user=mock_get_me
+        )
+
+        assert result.result is False
+        assert result.error == "Пользователь не найден"

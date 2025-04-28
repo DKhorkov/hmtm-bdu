@@ -15,3 +15,11 @@ class User:
     avatar: Optional[str]
     created_at: str
     updated_at: str
+
+
+@dataclass
+class Master:
+    id: int
+    info: Optional[str]
+    created_at: str
+    updated_at: str

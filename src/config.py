@@ -6,7 +6,7 @@ from graphql_client.client import GraphQLClient
 from graphql_client.interface import GraphQLInterface
 from src.enums import Environments
 
-load_dotenv(find_dotenv())
+load_dotenv(find_dotenv('.env.bdu'))
 
 
 @dataclass(frozen=True)

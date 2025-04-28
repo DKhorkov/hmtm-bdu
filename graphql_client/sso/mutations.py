@@ -76,3 +76,23 @@ class UpdateUserProfileMutation:
                 mutation UpdateUserProfile($input: UpdateUserProfileInput!) {updateUserProfile(input: $input)}
             """
         )
+
+
+class UpdateMasterInfoMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                mutation UpdateMasterInfo($input: UpdateMasterInput!) {updateMaster(input: $input)}
+            """
+        )
+
+
+class RegisterMasterMutation:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                mutation RegisterMaster($input: RegisterMasterInput!) {registerMaster(input: $input)}
+            """
+        )

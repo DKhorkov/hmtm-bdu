@@ -13,6 +13,9 @@ from src.sso.dependencies import (
     change_forget_password as change_forget_password_dependency,
     change_password as change_password_dependency,
     update_user_profile as update_user_profile_dependency,
+    master_by_user as master_by_user_dependency,
+    update_master_info as update_master_info_dependency,
+    register_master as register_master_dependency,
 )
 from src.sso.dto import (
     LoginResponse,
@@ -24,9 +27,11 @@ from src.sso.dto import (
     ChangeForgetPasswordResponse,
     ChangePasswordResponse,
     UpdateUserProfileResponse,
+    GetUserIsMasterResponse,
+    UpdateMasterInfoResponse,
+    RegisterMasterResponse,
 )
 from src.sso.constants import FORGET_PASSWORD_TOKEN_NAME
-from src.sso.datetime_parser import DatetimeParser
 
 router = APIRouter(prefix="/sso", tags=["SSO"])
 templates = Jinja2Templates(directory="templates")
@@ -128,8 +133,8 @@ async def verify_email(
 async def profile_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
+        master: GetUserIsMasterResponse = Depends(master_by_user_dependency),
 ):
-    """ Отрисовка профиля пользователя """
     if current_user.user is not None:
         response: Response = templates.TemplateResponse(
             request=request,
@@ -137,7 +142,7 @@ async def profile_page(
             context={
                 "tab": "main",
                 "user": current_user.user,
-                "created_at": DatetimeParser.parse(current_user.user.created_at),
+                "master": master.master if master.master else None,
             }
         )
 
@@ -283,9 +288,11 @@ async def process_change_password(
     if current_user.user is None:
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
+    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
     context = {
         "user": current_user.user,
         "tab": "security",
+        "master": master.master if master.master else None
     }
 
     if result.error is None:
@@ -308,22 +315,92 @@ async def process_change_password(
 @router.post("/update_user_profile", response_class=HTMLResponse, name="update_user_profile")
 async def process_update_user_profile(
         request: Request,
-        current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
 ):
     """ Ручка авторизованного пользователя для изменения данных о себе: никнейм, телеграм, телефон - Процесс """
+    current_user: GetMeResponse = await get_me_dependency(request=request, cookies=result.cookies)
+    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
+
     if current_user.user is None:
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
     context = {
         "user": current_user.user,
         "tab": "main",
+        "master": master.master if master.master else None,
     }
 
     if result.error is None:
         context["main_message"] = "Вы успешно поменяли данные о профиле"
     else:
         context["main_error"] = result.error
+
+    response: Response = templates.TemplateResponse(
+        request=request,
+        name="profile.html",
+        context=context
+    )
+
+    for cookie in result.cookies:
+        response = set_cookie(response, cookie)
+
+    return response
+
+
+@router.post("/update-master", response_class=HTMLResponse, name="update-master")
+async def process_update_master(
+        request: Request,
+        current_user: GetMeResponse = Depends(get_me_dependency),
+        result: UpdateMasterInfoResponse = Depends(update_master_info_dependency),
+):
+    if current_user.user is None:
+        return RedirectResponse("/sso/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    context = {
+        "user": current_user.user,
+        "tab": "master"
+    }
+
+    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
+    context["master"] = master.master if master.master else None
+
+    if result.error is None:
+        context["master_message"] = "Вы успешно поменяли данные о мастере"
+    else:
+        context["master_error"] = result.error
+
+    response: Response = templates.TemplateResponse(
+        request=request,
+        name="profile.html",
+        context=context
+    )
+
+    for cookie in result.cookies:
+        response = set_cookie(response, cookie)
+
+    return response
+
+
+@router.post("/register-master", response_class=HTMLResponse, name="register-master")
+async def register_master(
+        request: Request,
+        current_user: GetMeResponse = Depends(get_me_dependency),
+        result: RegisterMasterResponse = Depends(register_master_dependency),
+):
+    if current_user.user is None:
+        return RedirectResponse("/sso/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    context = {
+        "user": current_user.user,
+        "tab": "master"
+    }
+
+    if result.error is not None:
+        context["master_error"] = result.error
+    else:
+        context["master_message"] = "Вы успешно отправили заявку на Мастера"
+        master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
+        context["master"] = master.master if master.master is not None else None
 
     response: Response = templates.TemplateResponse(
         request=request,

@@ -27,10 +27,7 @@ go.work
 go.work.sum
 
 # env file
-.env
-.env.local
-.env.example
-.env.test
+.env*
 
 # Local files^
 *.log

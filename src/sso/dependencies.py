@@ -1,8 +1,10 @@
 import io
 
-from typing import Annotated, Dict, Optional, BinaryIO
+from typing import Annotated, Dict, Optional, BinaryIO, List
 from fastapi import Form, Request, UploadFile, File, Depends
 
+from src.cookies import CookiesConfig
+from src.sso.datetime_parser import DatetimeParser
 from graphql_client.dto import GQLResponse
 from src.config import config
 from src.sso.constants import ERRORS_MAPPING, FORGET_PASSWORD_TOKEN_NAME
@@ -16,6 +18,8 @@ from graphql_client import (
     ChangePasswordVariables,
     ForgetPasswordVariables,
     UpdateUserProfileVariables,
+    UpdateMasterInfoVariables,
+    RegisterMasterVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -26,12 +30,15 @@ from graphql_client import (
     ChangePasswordMutation,
     ChangeForgetPasswordMutation,
     UpdateUserProfileMutation,
+    UpdateMasterInfoMutation,
+    RegisterMasterMutation,
 
     GetMeQuery,
+    GetMasterByUserQuery,
 
     extract_error_message,
 
-    ResponseProcessor as GQLResponseProcessor
+    ResponseProcessor as GQLResponseProcessor,
 )
 from src.sso.dto import (
     LoginResponse,
@@ -43,9 +50,13 @@ from src.sso.dto import (
     ChangePasswordResponse,
     ChangeForgetPasswordResponse,
     UpdateUserProfileResponse,
-    RefreshTokensResponse
+    RefreshTokensResponse,
+    GetUserIsMasterResponse,
+    UpdateMasterInfoResponse,
+    RegisterMasterResponse,
 )
-from src.sso.models import User
+from src.sso.models import Master
+from src.sso.utils import user_from_dict
 
 
 async def process_register(  # type: ignore[return]
@@ -149,14 +160,20 @@ async def verify_email(  # type: ignore[return]
 
 async def refresh_tokens(
         request: Request,
+        cookies: Optional[List[CookiesConfig]] = None
 ) -> RefreshTokensResponse:
     result: RefreshTokensResponse = RefreshTokensResponse()
+
+    actual_cookies: Dict[str, str] = request.cookies
+    if cookies:
+        for cookie in cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
         gql_refresh_tokens: GQLResponse = await config.graphql_client.gql_query(
             query=RefreshTokensMutation.to_gql(),
             variable_values={},
-            cookies=request.cookies
+            cookies=actual_cookies
         )
 
         if "errors" in gql_refresh_tokens.result:
@@ -185,40 +202,34 @@ async def refresh_tokens(
 
 async def get_me(
         request: Request,
+        cookies: Optional[List[CookiesConfig]] = None
 ) -> GetMeResponse:
     result: GetMeResponse = GetMeResponse()
 
-    if len(request.cookies) == 0:
+    if not cookies and len(request.cookies) == 0:
         result.error = "Пользователь не найден"
         return result
+
+    actual_cookies: Dict[str, str] = request.cookies
+    if cookies:
+        for cookie in cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
         if request.cookies:
             gql_response: GQLResponse = await config.graphql_client.gql_query(
                 query=GetMeQuery.to_gql(),
                 variable_values={},
-                cookies=request.cookies
+                cookies=actual_cookies
             )
             if "errors" in gql_response.result:
                 raise Exception
 
-            result.user = User(
-                id=gql_response.result["me"]["id"],
-                display_name=gql_response.result["me"]["displayName"],
-                email=gql_response.result["me"]["email"],
-                email_confirmed=gql_response.result["me"]["emailConfirmed"],
-                phone=gql_response.result["me"]["phone"],
-                phone_confirmed=gql_response.result["me"]["phoneConfirmed"],
-                telegram=gql_response.result["me"]["telegram"],
-                telegram_confirmed=gql_response.result["me"]["telegramConfirmed"],
-                avatar=gql_response.result["me"]["avatar"],
-                created_at=gql_response.result["me"]["createdAt"],
-                updated_at=gql_response.result["me"]["updatedAt"],
-            )
+            result.user = user_from_dict(gql_response.result["me"])
 
     except Exception:
         try:
-            refreshed_tokens: RefreshTokensResponse = await refresh_tokens(request)
+            refreshed_tokens: RefreshTokensResponse = await refresh_tokens(request=request, cookies=cookies)
 
             if refreshed_tokens.error is not None:
                 result.error = refreshed_tokens.error
@@ -227,33 +238,21 @@ async def get_me(
             result.headers = refreshed_tokens.headers
             result.cookies = refreshed_tokens.cookies
 
-            updated_cookies: Dict[str, str] = {}
+            actual_cookies = {}
             for cookie in refreshed_tokens.cookies:
-                updated_cookies[cookie.KEY] = cookie.VALUE
+                actual_cookies[cookie.KEY] = cookie.VALUE
 
             gql_get_me: GQLResponse = await config.graphql_client.gql_query(
                 query=GetMeQuery.to_gql(),
                 variable_values={},
-                cookies=updated_cookies
+                cookies=actual_cookies
             )
 
             if "errors" in gql_get_me.result:
                 result.error = gql_get_me.result["errors"][0]["message"]
                 return result
 
-            result.user = User(
-                id=gql_get_me.result["me"]["id"],
-                display_name=gql_get_me.result["me"]["displayName"],
-                email=gql_get_me.result["me"]["email"],
-                email_confirmed=gql_get_me.result["me"]["emailConfirmed"],
-                phone=gql_get_me.result["me"]["phone"],
-                phone_confirmed=gql_get_me.result["me"]["phoneConfirmed"],
-                telegram=gql_get_me.result["me"]["telegram"],
-                telegram_confirmed=gql_get_me.result["me"]["telegramConfirmed"],
-                avatar=gql_get_me.result["me"]["avatar"],
-                created_at=gql_get_me.result["me"]["createdAt"],
-                updated_at=gql_get_me.result["me"]["updatedAt"],
-            )
+            result.user = user_from_dict(gql_get_me.result["me"])
 
         except Exception as err:
             error = ERRORS_MAPPING.get(
@@ -365,20 +364,22 @@ async def change_forget_password(
 
 
 async def change_password(
+        request: Request,
         old_password: Annotated[str, Form()],
         new_password: Annotated[str, Form()],
-        refreshed_tokens: RefreshTokensResponse = Depends(refresh_tokens),
+        current_user: GetMeResponse = Depends(get_me)
 ) -> ChangePasswordResponse:
     result: ChangePasswordResponse = ChangePasswordResponse()
-    updated_cookies: Dict[str, str] = {}
 
-    if refreshed_tokens.error:
+    if current_user.error:
         result.error = "Пользователь не найден"
         return result
 
-    result.cookies = refreshed_tokens.cookies
-    for cookie in refreshed_tokens.cookies:
-        updated_cookies[cookie.KEY] = cookie.VALUE
+    actual_cookies: Dict[str, str] = request.cookies
+    if current_user.cookies:
+        result.cookies = current_user.cookies
+        for cookie in current_user.cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
         gql_response: GQLResponse = await config.graphql_client.gql_query(
@@ -387,7 +388,7 @@ async def change_password(
                 old_password=old_password,
                 new_password=new_password
             ).to_dict(),
-            cookies=updated_cookies,
+            cookies=actual_cookies,
         )
 
         result.result = True
@@ -408,23 +409,25 @@ async def change_password(
 
 
 async def update_user_profile(
+        request: Request,
         username: Annotated[str | None, Form()],
         phone: Annotated[str | None, Form()],
         telegram: Annotated[str | None, Form()],
         avatar: Annotated[UploadFile | None, File()],
-        refreshed_tokens: RefreshTokensResponse = Depends(refresh_tokens),
+        current_user: GetMeResponse = Depends(get_me),
 ) -> UpdateUserProfileResponse:
     result: UpdateUserProfileResponse = UpdateUserProfileResponse()
     upload_file: Optional[BinaryIO] = None
-    updated_cookies: Dict[str, str] = {}
 
-    if refreshed_tokens.error:
+    if current_user.error:
         result.error = "Пользователь не найден"
         return result
 
-    result.cookies = refreshed_tokens.cookies
-    for cookie in refreshed_tokens.cookies:
-        updated_cookies[cookie.KEY] = cookie.VALUE
+    actual_cookies: Dict[str, str] = request.cookies
+    if current_user.cookies:
+        result.cookies = current_user.cookies
+        for cookie in current_user.cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
         if avatar and avatar.size is not None and avatar.size > 0:
@@ -440,8 +443,153 @@ async def update_user_profile(
                 avatar=upload_file,
             ).to_dict(),
             upload_files=True,
-            cookies=updated_cookies,
+            cookies=actual_cookies,
         )
+
+        result.result = True
+        result.headers = gql_response.headers  # type: ignore[assignment]
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка изменения профиля"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.error = error
+
+    return result
+
+
+async def master_by_user(
+        request: Request,
+        cookies: Optional[List[CookiesConfig]] = None
+) -> GetUserIsMasterResponse:
+    result: GetUserIsMasterResponse = GetUserIsMasterResponse()
+
+    if not cookies and len(request.cookies) == 0:
+        result.error = "Пользователь не найден"
+        return result
+
+    actual_cookies: Dict[str, str] = request.cookies
+    if cookies:
+        for cookie in cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
+
+    try:
+        gql_response: GQLResponse = await config.graphql_client.gql_query(
+            query=GetMasterByUserQuery().to_gql(),
+            variable_values={},
+            cookies=actual_cookies,
+        )
+
+        if "errors" in gql_response.result:
+            raise Exception(gql_response.result["errors"][0])
+
+        result.master = Master(
+            id=gql_response.result["masterByUser"]["id"],
+            info=gql_response.result["masterByUser"]["info"],
+            created_at=DatetimeParser.parse(gql_response.result["masterByUser"]["createdAt"]),
+            updated_at=DatetimeParser.parse(gql_response.result["masterByUser"]["updatedAt"]),
+        )
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка изменения профиля"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.error = error
+
+    return result
+
+
+async def update_master_info(
+        request: Request,
+        info: Annotated[str | None, Form()],
+        current_user: GetMeResponse = Depends(get_me),
+        master_info: GetUserIsMasterResponse = Depends(master_by_user),
+) -> UpdateMasterInfoResponse:
+    result: UpdateMasterInfoResponse = UpdateMasterInfoResponse()
+
+    if current_user.error:
+        result.error = "Пользователь не найден"
+        return result
+
+    actual_cookies: Dict[str, str] = request.cookies
+    if current_user.cookies:
+        result.cookies = current_user.cookies
+        for cookie in current_user.cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
+
+    try:
+        if master_info.master is None:
+            result.error = "Не удалось найти мастера"
+            return result
+
+        gql_response: GQLResponse = await config.graphql_client.gql_query(
+            query=UpdateMasterInfoMutation().to_gql(),
+            variable_values=UpdateMasterInfoVariables(
+                id=master_info.master.id,
+                info=info
+            ).to_dict(),
+            cookies=actual_cookies,
+        )
+
+        if "errors" in gql_response.result:
+            result.error = gql_response.result["errors"][0]["message"]
+            return result
+
+        result.result = True
+        result.headers = gql_response.headers  # type: ignore[assignment]
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка изменения профиля"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.error = error
+
+    return result
+
+
+async def register_master(
+        request: Request,
+        info: Annotated[str | None, Form()],
+        current_user: GetMeResponse = Depends(get_me),
+) -> RegisterMasterResponse:
+    result: RegisterMasterResponse = RegisterMasterResponse()
+
+    if current_user.error:
+        result.error = "Пользователь не найден"
+        return result
+
+    actual_cookies: Dict[str, str] = request.cookies
+    if current_user.cookies:
+        result.cookies = current_user.cookies
+        for cookie in current_user.cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
+
+    try:
+        gql_response: GQLResponse = await config.graphql_client.gql_query(
+            query=RegisterMasterMutation().to_gql(),
+            variable_values=RegisterMasterVariables(
+                info=info,
+            ).to_dict(),
+            cookies=actual_cookies,
+        )
+
+        if "errors" in gql_response.result:
+            raise Exception(gql_response.result["errors"][0])
 
         result.result = True
         result.headers = gql_response.headers  # type: ignore[assignment]

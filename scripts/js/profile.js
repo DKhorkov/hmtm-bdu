@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileUploadArea = document.querySelector('.file-upload');
     const fileUploadText = document.querySelector('.file-upload-text');
     const avatarInput = document.querySelector('input[name="avatar"]');
+    const masterForm = document.getElementById('master-form');
+    const editMasterBtn = document.getElementById('edit-master-btn');
+    const saveMasterBtn = document.getElementById('save-master-btn');
+    const masterField = document.querySelector('.profile-field[data-field="master-info"]');
 
     // Начальное состояние: скрываем поле "Аватар" при загрузке страницы + поле для загрузки файла
     if (avatarUploadField) {
@@ -22,7 +26,8 @@ document.addEventListener('DOMContentLoaded', function () {
         avatarField.style.display = 'none';
     }
 
-    let isEditing = false;
+    let isEditingProfile = false;
+    let isEditingMaster = false;
 
     const resetPasswordForm = () => {
         passwordForm.style.display = 'none';
@@ -30,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
         passwordForm.querySelector('form').reset();
     };
 
-    const resetEditForm = () => {
-        if (isEditing) {
+    const resetProfileForm = () => {
+        if (isEditingProfile) {
             profileFields.forEach(field => {
                 const fieldValue = field.querySelector('.field-value');
                 const editField = field.querySelector('.edit-field');
@@ -55,17 +60,35 @@ document.addEventListener('DOMContentLoaded', function () {
             // Возвращаем порядок полей
             staticFields.style.order = '0';
             editableFields.style.order = '1';
-            isEditing = false;
+            isEditingProfile = false;
 
-            avatarUploadField.style.display = 'none'
+            avatarUploadField.style.display = 'none';
+        }
+    };
+
+    const resetMasterForm = () => {
+        if (isEditingMaster) {
+            const fieldValue = masterField.querySelector('.field-value');
+            const editField = masterField.querySelector('.edit-field');
+
+            if (fieldValue) fieldValue.style.display = 'inline';
+            editField.style.display = 'none';
+
+            editMasterBtn.textContent = 'Редактировать мастера';
+            saveMasterBtn.style.display = 'none';
+            editMasterBtn.style.display = 'block';
+            isEditingMaster = false;
         }
     };
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             resetPasswordForm();
-            if (btn.dataset.tab !== 'main' && isEditing) {
-                resetEditForm();
+            if (btn.dataset.tab !== 'main' && isEditingProfile) {
+                resetProfileForm();
+            }
+            if (btn.dataset.tab !== 'master' && isEditingMaster) {
+                resetMasterForm();
             }
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -81,8 +104,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     editProfileBtn.addEventListener('click', function () {
-        if (!isEditing) {
-            // Включаем режим редактирования
+        if (!isEditingProfile) {
+            // Включаем режим редактирования профиля
             profileFields.forEach(field => {
                 const fieldValue = field.querySelector('.field-value');
                 const editField = field.querySelector('.edit-field');
@@ -103,18 +126,45 @@ document.addEventListener('DOMContentLoaded', function () {
             // Перемещаем неизменяемые поля наверх
             staticFields.style.order = '-1';
             editableFields.style.order = '0';
-            isEditing = true;
+            isEditingProfile = true;
 
-            avatarUploadField.style.display = 'inline-block'
+            avatarUploadField.style.display = 'inline-block';
         } else {
-            // Отменяем редактирование
-            resetEditForm();
+            // Отменяем редактирование профиля
+            resetProfileForm();
         }
     });
 
+    if (editMasterBtn) {
+        editMasterBtn.addEventListener('click', function () {
+            if (!isEditingMaster) {
+                // Включаем режим редактирования мастера
+                const fieldValue = masterField.querySelector('.field-value');
+                const editField = masterField.querySelector('.edit-field');
+
+                if (fieldValue) fieldValue.style.display = 'none';
+                editField.style.display = 'inline-block';
+
+                this.textContent = 'Отменить редактирование';
+                saveMasterBtn.style.display = 'block';
+                this.style.display = 'block';
+                isEditingMaster = true;
+            } else {
+                // Отменяем редактирование мастера
+                resetMasterForm();
+            }
+        });
+    }
+
+    if (saveMasterBtn) {
+        saveMasterBtn.addEventListener('click', function () {
+            masterForm.submit();
+        });
+    }
+
     // Открытие файлового менеджера при клике на область загрузки
     fileUploadArea?.addEventListener('click', () => {
-        if (isEditing) {
+        if (isEditingProfile) {
             avatarInput.click();
         }
     });
@@ -122,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Обработка событий drag-and-drop
     fileUploadArea?.addEventListener('dragover', (e) => {
         e.preventDefault();
-        if (isEditing) {
+        if (isEditingProfile) {
             fileUploadArea.classList.add('dragging');
         }
     });
@@ -135,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fileUploadArea?.addEventListener('drop', (e) => {
         e.preventDefault();
         fileUploadArea.classList.remove('dragging');
-        if (isEditing) {
+        if (isEditingProfile) {
             const files = e.dataTransfer.files;
             if (files.length > 0 && files[0].type.startsWith('image/')) {
                 avatarInput.files = files;
@@ -157,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
         profileForm.submit();
     });
 
-    // Применяем начальное состояние формы
-    resetEditForm();
+    // Применяем начальное состояние форм
+    resetProfileForm();
+    resetMasterForm();
 });

@@ -161,7 +161,6 @@
 .security-form-section {
     margin: 20px 0;
     padding: 15px;
-    background: #E3D5C8;
     border-radius: 8px;
 }
 
@@ -255,17 +254,63 @@
     }
 }
 
+/* Общие стили для полей ввода */
+.profile-field {
+    width: 100%; /* Ensure the parent container stretches fully */
+}
+
 .profile-field .edit-field {
     display: inline-block;
     margin-left: 5px;
 }
 
-.profile-field .edit-field input {
+.profile-field .edit-field input,
+.profile-field .edit-field textarea {
     width: 100%;
     padding: 8px;
     margin: 6px 0;
     border: 1px solid var(--form-border-color);
     border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+    background: var(--input-bg-color);
+}
+
+/* Специфичные стили для textarea мастера */
+.profile-field .edit-field.master-info-field {
+    display: block;
+    margin-left: 0;
+    width: 100%; /* Ensure the edit-field spans the full width */
+}
+
+.profile-field .edit-field.master-info-field textarea {
+    height: 200px;
+    resize: none;
+    width: 100%; /* Reinforce full width */
+}
+
+.profile-field .edit-field.master-info-field textarea::placeholder {
+    font-size: 1em;
+}
+
+.profile-field .field-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 1em;
+}
+
+/* Specific styles for the master info field */
+.profile-field:has(.master-info-field) {
+    padding: 8px;
+    background: var(--input-bg-color);
+    border-radius: 6px;
+    width: 100%; /* Ensure the parent container stretches fully */
+}
+
+/* Ensure the field-value doesn't constrain the width */
+.profile-field .field-value {
+    display: inline-block;
+    word-break: break-word;
 }
 
 @media (max-width: 768px) {
@@ -288,6 +333,11 @@
     .tab-btn {
         text-align: center;
     }
+
+    .profile-field .edit-field.master-info-field textarea {
+        padding: 8px;
+        margin: 6px 0;
+    }
 }
 
 @media (max-width: 480px) {
@@ -307,5 +357,36 @@
 
     .profile-container {
         padding-top: 100px;
+    }
+}
+
+.user-status {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: 500;
+    margin-top: 10px;
+    border: 2px solid transparent;
+}
+
+.user-status.user {
+    background: #DBCBB9;
+    color: #5D4C3A;
+    border-color: #C9B09E;
+}
+
+.user-status.master {
+    background: #E3D5C8;
+    color: #4A4035;
+    border-color: #5D4C3A;
+    box-shadow: 0 2px 4px rgba(93, 76, 58, 0.1);
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .user-status {
+        font-size: 0.8em;
+        padding: 4px 8px;
     }
 }

@@ -2,7 +2,6 @@ import pytest
 
 from fastapi.testclient import TestClient
 from httpx import Response as httpx_Response
-
 from src.main import app as fastapi_app
 
 
