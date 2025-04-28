@@ -45,7 +45,7 @@ tasks:
     desc: "Stop all docker containers."
     aliases:
       - stop
-    cmd: sudo docker stop $(sudo docker ps -a -q)
+    cmd: sudo docker stop hmtm_bdu
 
   docker_clean:
     desc: "Clean docker containers, images and volumes."
