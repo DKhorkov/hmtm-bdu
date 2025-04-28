@@ -1,0 +1,20 @@
+services:
+  hmtm_bdu:
+    container_name: hmtm_bdu
+    image: hmtm_bdu
+    env_file:
+      - .env
+    build:
+      context: ../..  # Путь до корня проекта (Т.к deploy/local) - (../..)
+      dockerfile: deploy/prod/Dockerfile  # Путь к Dockerfile относительно корня проекта
+    ports:
+      - "${HMTM_BDU_OUTER_PORT}:${HMTM_BDU_INNER_PORT}"  # Берем переменные из env-file
+    volumes: # Синхронизируем и записываем файлы(в данном случае - логи) на хосте и контейнере
+      - ../../logs/hmtm_bdu:/app/logs
+    networks:
+      - hmtm_network  # Подключение сети для "общения" с другими сервисами в той же сети по имени сервиса
+
+networks:
+  hmtm_network:
+    name: hmtm_network
+    external: true

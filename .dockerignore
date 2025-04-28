@@ -1,0 +1,17 @@
+# General
+.venv
+__pycache__
+*.pyc
+
+# Tests
+tests/
+
+# Others
+.flake8
+.gitignore
+LICENSE
+pyproject.toml
+README.md
+
+# env
+.env*
