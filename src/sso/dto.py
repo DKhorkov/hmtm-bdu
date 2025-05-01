@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 
-from src.sso.models import User, Master
+from src.sso.models import User, Master, UserInfoByID
 from src.dto import BaseResponse, BoolResponse
 
 
@@ -68,3 +68,10 @@ class UpdateMasterResponse(BoolResponse):
 @dataclass
 class RegisterMasterResponse(BoolResponse):
     pass
+
+
+@dataclass
+class GetAllUserInfoByIDResponse:
+    user: Optional[UserInfoByID] = None
+    master: Optional[Master] = None
+    errors: Optional[List[str]] = None

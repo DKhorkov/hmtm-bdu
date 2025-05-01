@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request, Depends, status, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -16,6 +18,7 @@ from src.sso.dependencies import (
     master_by_user as master_by_user_dependency,
     update_master as update_master_info_dependency,
     register_master as register_master_dependency,
+    user_info_by_id as user_info_by_id_dependency,
 )
 from src.sso.dto import (
     LoginResponse,
@@ -30,8 +33,14 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
+    GetAllUserInfoByIDResponse,
 )
 from src.sso.constants import FORGET_PASSWORD_TOKEN_NAME
+from src.request_utils import (
+    FernetEnvironmentsKey,
+    extract_request_error_message,
+    extract_request_message
+)
 
 router = APIRouter(prefix="/sso", tags=["SSO"])
 templates = Jinja2Templates(directory="templates")
@@ -44,7 +53,10 @@ async def register_page(
 ):
     """ Регистрация пользователя - Форма """
     if current_user.user is not None:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+        encrypted_error = FernetEnvironmentsKey()
+        encrypted_error_key = encrypted_error.encrypt("Вы уже зарегистрированы!")
+
+        return RedirectResponse(url=f"/?error={encrypted_error_key}", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(request=request, name="register.html")
 
@@ -84,9 +96,22 @@ async def login_page(
 ):
     """ Аутентификация пользователя - Форма """
     if current_user.user is not None:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+        encrypted_error = FernetEnvironmentsKey()
+        encrypted_error_key = encrypted_error.encrypt("У вас активная сессия!")
 
-    return templates.TemplateResponse(request=request, name="login.html")
+        return RedirectResponse(url=f"/?error={encrypted_error_key}", status_code=status.HTTP_303_SEE_OTHER)
+
+    error_message: Optional[str] = extract_request_error_message(request=request)
+    success_message: Optional[str] = extract_request_message(request=request)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={
+            "success_message": success_message,
+            "error_message": error_message,
+        }
+    )
 
 
 @router.post("/login", response_class=HTMLResponse, name="login")
@@ -132,17 +157,28 @@ async def verify_email(
 @router.get("/profile", response_class=HTMLResponse, name="profile")
 async def profile_page(
         request: Request,
-        current_user: GetMeResponse = Depends(get_me_dependency),
-        master: GetUserIsMasterResponse = Depends(master_by_user_dependency),
+        current_user: GetMeResponse = Depends(get_me_dependency)
 ):
     if current_user.user is not None:
+        master: GetUserIsMasterResponse = await master_by_user_dependency(
+            user_id=current_user.user.id,
+            request=request,
+            cookies=current_user.cookies,
+        )
+
+        error_message: Optional[str] = extract_request_error_message(request=request)
+        success_message: Optional[str] = extract_request_message(request=request)
+        active_tab: Optional[str] = request.query_params.get("tab")
+
         response: Response = templates.TemplateResponse(
             request=request,
             name="profile.html",
             context={
-                "tab": "main",
+                "tab": active_tab if active_tab else "main",
                 "user": current_user.user,
                 "master": master.master if master.master else None,
+                "error_message": error_message,
+                "success_message": success_message
             }
         )
 
@@ -171,7 +207,10 @@ async def verify_email_letter_page(
 ):
     """ Повторная отправка письма подтверждения почты - Форма """
     if current_user.user is not None:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+        encrypted_error = FernetEnvironmentsKey()
+        encrypted_error_key = encrypted_error.encrypt("Ваша почта уже подтверждена!")
+
+        return RedirectResponse(url=f"/?error={encrypted_error_key}", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(request=request, name="verify-email-letter-form.html")
 
@@ -207,33 +246,71 @@ async def forget_password_form_page(
 ):
     """ Восстановление пароля для не аутентифицированного пользователя - Форма """
     if current_user.user is not None:
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+        encrypted_error = FernetEnvironmentsKey()
+        encrypted_error_key = encrypted_error.encrypt("Для смены забытого пароля вам необходима форма в профиле")
 
-    return templates.TemplateResponse(request=request, name="forget-password-form.html")
+        return RedirectResponse(
+            url=f"/sso/profile/?error={encrypted_error_key}&tab=security",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    error_message: Optional[str] = extract_request_error_message(request=request)
+    return templates.TemplateResponse(
+        request=request,
+        name="forget-password-form.html",
+        context={
+            "error_message": error_message
+        }
+    )
 
 
 @router.post("/forget-password-form", response_class=HTMLResponse, name="forget-password-form")
 async def process_send_forget_password_message(
-        request: Request,
-        email: str = Form(...),
+        current_user: GetMeResponse = Depends(get_me_dependency),
         result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency)
 ):
-    """ Восстановление пароля для не аутентифицированного пользователя - Процесс """
-    if result.error is not None:
-        return templates.TemplateResponse(
-            request=request,
-            name="forget-password-form.html",
-            context={
-                "error": result.error,
-                "email": email,
-            }
-        )
+    """ Восстановление пароля в профиле через форму - Процесс"""
+    if current_user.user is not None:
+        if result.error is not None:
+            error_encryptor = FernetEnvironmentsKey()
+            encrypted_error_key = error_encryptor.encrypt(str(result.error))
 
-    return templates.TemplateResponse(
-        request=request,
-        name="login.html",
-        context={"message": "Письмо для смены пароля отправлено на электронную почту"}
-    )
+            response = RedirectResponse(
+                url=f"/sso/profile/?error={encrypted_error_key}&tab=security",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+        else:
+            message_encryptor = FernetEnvironmentsKey()
+            encrypted_message_key = message_encryptor.encrypt(
+                "Письмо о смене пароля отправлено на почту, указанную при регистрации!"
+            )
+
+            response = RedirectResponse(
+                url=f"/sso/profile/?message={encrypted_message_key}&tab=security",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+
+    else:
+        if result.error is not None:
+            error_encryptor = FernetEnvironmentsKey()
+            encrypted_error_key = error_encryptor.encrypt(str(result.error))
+
+            response = RedirectResponse(
+                url=f"/sso/forget-password-form/?error={encrypted_error_key}",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+        else:
+            message_encryptor = FernetEnvironmentsKey()
+            encrypted_message_key = message_encryptor.encrypt(
+                "Письмо о смене пароля отправлено на почту, указанную при регистрации!"
+            )
+
+            response = RedirectResponse(
+                url=f"/sso/login/?message={encrypted_message_key}",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+
+    return response
 
 
 @router.get("/forget-password/{forget_password_token}", response_class=HTMLResponse, name="change-forget-password")
@@ -274,12 +351,14 @@ async def process_change_forget_password(
         context={"message": "Пароль успешно обновлен"}
     )
     response.delete_cookie(key=FORGET_PASSWORD_TOKEN_NAME)
+    response.delete_cookie(key="accessToken")
+    response.delete_cookie(key="refreshToken")
+
     return response
 
 
 @router.post("/change-password", response_class=HTMLResponse, name="change-password")
 async def process_change_password(
-        request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: ChangePasswordResponse = Depends(change_password_dependency)
 ):
@@ -287,23 +366,26 @@ async def process_change_password(
     if current_user.user is None:
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
-    context = {
-        "user": current_user.user,
-        "master": master.master if master.master else None,
-        "tab": "security",
-    }
+    response: Response
+    if result.error is not None:
+        encrypted_error: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
-    if result.error is None:
-        context["security_message"] = "Вы успешно поменяли пароль"
+        failed_request: Response = RedirectResponse(
+            url=f"/sso/profile/?error={encrypted_error_key}&tab=security",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = failed_request
+
     else:
-        context["security_error"] = result.error
+        encrypted_message: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_message_key: str = encrypted_message.encrypt("Вы успешно поменяли пароль!")
 
-    response: Response = templates.TemplateResponse(
-        request=request,
-        name="profile.html",
-        context=context
-    )
+        success_request: Response = RedirectResponse(
+            url=f"/sso/profile/?message={encrypted_message_key}&tab=security",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = success_request
 
     for cookie in result.cookies:
         response = set_cookie(response, cookie)
@@ -322,23 +404,25 @@ async def process_update_user_profile(
     if current_user.user is None:
         return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
-    context = {
-        "user": current_user.user,
-        "master": master.master if master.master else None,
-        "tab": "main",
-    }
+    response: Response
+    if result.error is not None:
+        encrypted_error: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
-    if result.error is None:
-        context["main_message"] = "Вы успешно поменяли данные о профиле"
+        failed_request: Response = RedirectResponse(
+            url=f"/sso/profile/?error={encrypted_error_key}&tab=main",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = failed_request
     else:
-        context["main_error"] = result.error
+        encrypted_message: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_message_key: str = encrypted_message.encrypt("Вы успешно поменяли данные о себе")
 
-    response: Response = templates.TemplateResponse(
-        request=request,
-        name="profile.html",
-        context=context
-    )
+        success_request: Response = RedirectResponse(
+            url=f"/sso/profile/?message={encrypted_message_key}&tab=main",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = success_request
 
     for cookie in result.cookies:
         response = set_cookie(response, cookie)
@@ -348,30 +432,32 @@ async def process_update_user_profile(
 
 @router.post("/update-master", response_class=HTMLResponse, name="update-master")
 async def process_update_master(
-        request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateMasterResponse = Depends(update_master_info_dependency),
 ):
     if current_user.user is None:
         return RedirectResponse("/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
-    context = {
-        "user": current_user.user,
-        "master": master.master if master.master else None,
-        "tab": "master"
-    }
+    response: Response
+    if result.error is not None:
+        encrypted_error: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
-    if result.error is None:
-        context["master_message"] = "Вы успешно поменяли данные о мастере"
+        failed_request: Response = RedirectResponse(
+            url=f"/sso/profile/?error={encrypted_error_key}&tab=master",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = failed_request
+
     else:
-        context["master_error"] = result.error
+        encrypted_message: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_message_key: str = encrypted_message.encrypt("Вы успешно поменяли данные о мастере")
 
-    response: Response = templates.TemplateResponse(
-        request=request,
-        name="profile.html",
-        context=context
-    )
+        success_request: Response = RedirectResponse(
+            url=f"/sso/profile/?message={encrypted_message_key}&tab=master",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = success_request
 
     for cookie in result.cookies:
         response = set_cookie(response, cookie)
@@ -381,32 +467,56 @@ async def process_update_master(
 
 @router.post("/register-master", response_class=HTMLResponse, name="register-master")
 async def register_master(
-        request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: RegisterMasterResponse = Depends(register_master_dependency),
 ):
     if current_user.user is None:
         return RedirectResponse("/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    master: GetUserIsMasterResponse = await master_by_user_dependency(cookies=result.cookies, request=request)
-    context = {
-        "user": current_user.user,
-        "master": master.master if master.master is not None else None,
-        "tab": "master"
-    }
+    response: Response
+    if result.error is not None:
+        encrypted_error: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
-    if result.error is None:
-        context["master_message"] = "Вы успешно отправили заявку на Мастера"
+        failed_request: Response = RedirectResponse(
+            url=f"/sso/profile/?error={encrypted_error_key}&tab=master",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = failed_request
+
     else:
-        context["master_error"] = result.error
+        encrypted_message: FernetEnvironmentsKey = FernetEnvironmentsKey()
+        encrypted_message_key: str = encrypted_message.encrypt("Вы успешно стали мастером!")
 
-    response: Response = templates.TemplateResponse(
-        request=request,
-        name="profile.html",
-        context=context
-    )
+        success_request: Response = RedirectResponse(
+            url=f"/sso/profile/?message={encrypted_message_key}&tab=master",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        response = success_request
 
     for cookie in result.cookies:
         response = set_cookie(response, cookie)
 
     return response
+
+
+@router.get("/users/{user_id}", response_class=HTMLResponse, name="user_info_by_id")
+async def find_user_info_by_id(
+        request: Request,
+        result: GetAllUserInfoByIDResponse = Depends(user_info_by_id_dependency)
+):
+    if result.user is None:
+        encrypted_error = FernetEnvironmentsKey()
+        encrypted_error_key = encrypted_error.encrypt("user_not_found")
+
+        return RedirectResponse(
+            url=f"/sso/profile/?error={encrypted_error_key}&tab=find_user",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    context = {
+        "user": result.user if result.user else None,
+        "master": result.master if result.master else None,
+    }
+
+    return templates.TemplateResponse(request=request, name="user-info.html", context=context)

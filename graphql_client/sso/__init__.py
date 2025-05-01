@@ -22,5 +22,11 @@ from .variables import (
     UpdateUserProfileVariables,
     UpdateMasterVariables,
     RegisterMasterVariables,
+    GetMasterByUserVariables,
+    GetUserByIDVariables
 )
-from .queries import GetMeQuery, GetMasterByUserQuery
+from .queries import (
+    GetMeQuery,
+    GetMasterByUserQuery,
+    GetUserByIDQuery
+)

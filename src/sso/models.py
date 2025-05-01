@@ -23,3 +23,13 @@ class Master:
     info: Optional[str]
     created_at: str
     updated_at: str
+
+
+@dataclass
+class UserInfoByID:
+    display_name: str
+    email: str
+    phone: Optional[str]
+    telegram: Optional[str]
+    avatar: Optional[str]
+    created_at: str

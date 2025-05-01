@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль пользователя{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/styles/profile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/styles/user-info.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <!-- Блок с аватаркой -->
+        <div class="avatar-section">
+            <img src="{{ user.avatar if user.avatar else '/static/images/default_avatar.png' }}"
+                 alt="Аватар"
+                 class="profile-avatar">
+            <!-- Статус -->
+            <div class="user-status {% if master %}master{% else %}user{% endif %}">
+                {% if master %}Мастер{% else %}Пользователь{% endif %}
+            </div>
+        </div>
+
+        <!-- Основная информация -->
+        <div class="profile-form-section">
+            <div class="profile-layout">
+                <!-- Вкладки -->
+                <nav class="profile-tabs">
+                    <button class="tab-btn active" data-tab="main">Основное</button>
+                    {% if master %}
+                    <button class="tab-btn" data-tab="master">Мастер</button>
+                    {% endif %}
+                </nav>
+
+                <!-- Контент вкладок -->
+                <div class="tabs-content-wrapper">
+                    <!-- Основная информация -->
+                    <div class="tab-content active" id="main">
+                        <div class="form-section">
+                            <div class="user-info">
+                                <div class="static-fields">
+                                    <!-- Почта -->
+                                    <p class="static-field">
+                                        <strong>Почта:</strong>
+                                        <span class="field-value">
+                                            {{ user.email if user.email else "Отсутствует" }}
+                                        </span>
+                                    </p>
+
+                                    <!-- Дата регистрации -->
+                                    <p class="static-field">
+                                        <strong>Дата регистрации:</strong>
+                                        <span class="field-value">{{ user.created_at }}</span>
+                                    </p>
+
+                                    <!-- Никнейм -->
+                                    <p class="static-field">
+                                        <strong>Никнейм:</strong>
+                                        <span class="field-value">{{ user.display_name }}</span>
+                                    </p>
+
+                                    <!-- Телефон -->
+                                    <p class="static-field">
+                                        <strong>Телефон:</strong>
+                                        <span class="field-value">
+                                            {{ user.phone if user.phone else "Отсутствует" }}
+                                        </span>
+                                    </p>
+
+                                    <!-- Телеграм -->
+                                    <p class="static-field">
+                                        <strong>Телеграм:</strong>
+                                        <span class="field-value">
+                                            {{ user.telegram if user.telegram else "Отсутствует" }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Вкладка мастера -->
+                    {% if master %}
+                    <div class="tab-content" id="master">
+                        <div class="form-section">
+                            <div class="user-info">
+                                <p class="static-field">
+                                    <strong>Мастер с:</strong>
+                                    <span class="field-value">{{ master.created_at }}</span>
+                                </p>
+                                <p class="static-field">
+                                    <strong>Информация:</strong>
+                                    <span class="field-value">{{ master.info if master.info else 'Нет описания' }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/scripts/user-info.js"></script>
+{% endblock %}

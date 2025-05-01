@@ -20,6 +20,8 @@ from graphql_client import (
     UpdateUserProfileVariables,
     UpdateMasterVariables,
     RegisterMasterVariables,
+    GetMasterByUserVariables,
+    GetUserByIDVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -32,6 +34,7 @@ from graphql_client import (
     UpdateUserProfileMutation,
     UpdateMasterMutation,
     RegisterMasterMutation,
+    GetUserByIDQuery,
 
     GetMeQuery,
     GetMasterByUserQuery,
@@ -54,8 +57,9 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
+    GetAllUserInfoByIDResponse,
 )
-from src.sso.models import Master
+from src.sso.models import Master, UserInfoByID
 from src.sso.utils import user_from_dict
 
 
@@ -464,8 +468,9 @@ async def update_user_profile(
 
 
 async def master_by_user(
+        user_id: int,
         request: Request,
-        cookies: Optional[List[CookiesConfig]] = None
+        cookies: Optional[List[CookiesConfig]] = None,
 ) -> GetUserIsMasterResponse:
     result: GetUserIsMasterResponse = GetUserIsMasterResponse()
 
@@ -481,7 +486,9 @@ async def master_by_user(
     try:
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=GetMasterByUserQuery().to_gql(),
-            variable_values={},
+            variable_values=GetMasterByUserVariables(
+                id=user_id,
+            ).to_dict(),
             cookies=actual_cookies,
         )
 
@@ -513,7 +520,6 @@ async def update_master(
         request: Request,
         info: Annotated[str | None, Form()],
         current_user: GetMeResponse = Depends(get_me),
-        master: GetUserIsMasterResponse = Depends(master_by_user),
 ) -> UpdateMasterResponse:
     result: UpdateMasterResponse = UpdateMasterResponse()
 
@@ -528,6 +534,12 @@ async def update_master(
             actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
+        master: GetUserIsMasterResponse = await master_by_user(
+            user_id=current_user.user.id,  # type: ignore[union-attr]
+            request=request,
+            cookies=current_user.cookies,
+        )
+
         if master.master is None:
             result.error = "Не удалось найти мастера"
             return result
@@ -604,5 +616,61 @@ async def register_master(
         )
 
         result.error = error
+
+    return result
+
+
+async def user_info_by_id(
+        user_id: int,
+) -> GetAllUserInfoByIDResponse:
+    result: GetAllUserInfoByIDResponse = GetAllUserInfoByIDResponse(errors=[])
+
+    try:
+        user: GQLResponse = await config.graphql_client.gql_query(
+            query=GetUserByIDQuery().to_gql(),
+            variable_values=GetUserByIDVariables(
+                id=user_id,
+            ).to_dict(),
+        )
+
+        if "errors" in user.result:
+            raise Exception(user.result["errors"][0])
+
+        result.user = UserInfoByID(
+            display_name=user.result["user"]["displayName"],
+            email=user.result["user"]["email"],
+            phone=user.result["user"]["phone"],
+            telegram=user.result["user"]["telegram"],
+            avatar=user.result["user"]["avatar"],
+            created_at=DatetimeParser.parse(user.result["user"]["createdAt"]),
+        )
+
+        master: GQLResponse = await config.graphql_client.gql_query(
+            query=GetMasterByUserQuery().to_gql(),
+            variable_values=GetMasterByUserVariables(
+                id=user_id,
+            ).to_dict(),
+        )
+
+        if "errors" not in master.result:
+            result.master = Master(
+                id=master.result["masterByUser"]["id"],
+                info=master.result["masterByUser"]["info"],
+                created_at=DatetimeParser.parse(master.result["masterByUser"]["createdAt"]),
+                updated_at=DatetimeParser.parse(master.result["masterByUser"]["updatedAt"]),
+            )
+        else:
+            result.errors.append(master.result["errors"][0]["message"])  # type: ignore[union-attr]
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка изменения профиля"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.errors.append(error)  # type: ignore[union-attr]
 
     return result

@@ -8,6 +8,27 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+<!-- Всплывающее окно с ошибкой  -->
+{% if error_message %}
+<div class="error-popup">
+    <div>
+        <p style="margin: 0">{{ error_message | safe }}</p>
+    </div>
+    <button class="close-btn">×</button>
+</div>
+{% endif %}
+
+<!-- Всплывающее окно с успешным статусом -->
+{% if success_message %}
+<div class="message-popup">
+    <div>
+        <p style="margin: 0">{{ success_message | safe }}</p>
+    </div>
+    <button class="close-btn">×</button>
+</div>
+{% endif %}
+
 <nav class="top-nav">
     <div class="top-nav-container">
         <div class="nav-left">
@@ -30,7 +51,9 @@
     </div>
 </nav>
 <div class="content">
-    {% block content %}{% endblock %}
+    {% block content %}
+    {% endblock %}
+    <script src="/scripts/global.js"></script>
 </div>
 </body>
 </html>
