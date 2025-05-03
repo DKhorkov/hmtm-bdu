@@ -55,3 +55,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 });
+
+// Burger-Menu
+const burger = document.querySelector('.burger');
+const sidebar = document.querySelector('.sidebar-menu');
+const overlay = document.querySelector('.overlay');
+
+// Открытие/закрытие меню через бургер
+burger.addEventListener('click', () => {
+  burger.classList.toggle('active');
+  sidebar.classList.toggle('active');
+  overlay.classList.toggle('active');
+});
+
+// Закрытие через клик на оверлей
+overlay.addEventListener('click', () => {
+  burger.classList.remove('active');
+  sidebar.classList.remove('active');
+  overlay.classList.remove('active');
+});
+
+// Закрытие меню при клике на иконку мишки
+document.querySelector('.nav-icon').addEventListener('click', (e) => {
+  if (sidebar.classList.contains('active')) {
+    e.preventDefault();
+    burger.classList.remove('active');
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+});

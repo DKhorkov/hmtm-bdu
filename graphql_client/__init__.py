@@ -16,6 +16,9 @@ from .sso import (
     GetUserByIDQuery,
     GetUserByIDVariables,
 
+    GetUserByEmailQuery,
+    GetUserByEmailVariables,
+
     RefreshTokensMutation,
 
     SendVerifyEmailMessageVariables,

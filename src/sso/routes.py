@@ -18,7 +18,7 @@ from src.sso.dependencies import (
     master_by_user as master_by_user_dependency,
     update_master as update_master_info_dependency,
     register_master as register_master_dependency,
-    user_info_by_id as user_info_by_id_dependency,
+    get_user_info as get_user_info_dependency,
 )
 from src.sso.dto import (
     LoginResponse,
@@ -33,7 +33,7 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
-    GetAllUserInfoByIDResponse,
+    GetAllUserInfoResponse,
 )
 from src.sso.constants import FORGET_PASSWORD_TOKEN_NAME
 from src.request_utils import (
@@ -250,7 +250,7 @@ async def forget_password_form_page(
         encrypted_error_key = encrypted_error.encrypt("Для смены забытого пароля вам необходима форма в профиле")
 
         return RedirectResponse(
-            url=f"/sso/profile/?error={encrypted_error_key}&tab=security",
+            url=f"/sso/profile?error={encrypted_error_key}&tab=security",
             status_code=status.HTTP_303_SEE_OTHER
         )
 
@@ -276,7 +276,7 @@ async def process_send_forget_password_message(
             encrypted_error_key = error_encryptor.encrypt(str(result.error))
 
             response = RedirectResponse(
-                url=f"/sso/profile/?error={encrypted_error_key}&tab=security",
+                url=f"/sso/profile?error={encrypted_error_key}&tab=security",
                 status_code=status.HTTP_303_SEE_OTHER
             )
         else:
@@ -286,7 +286,7 @@ async def process_send_forget_password_message(
             )
 
             response = RedirectResponse(
-                url=f"/sso/profile/?message={encrypted_message_key}&tab=security",
+                url=f"/sso/profile?message={encrypted_message_key}&tab=security",
                 status_code=status.HTTP_303_SEE_OTHER
             )
 
@@ -296,7 +296,7 @@ async def process_send_forget_password_message(
             encrypted_error_key = error_encryptor.encrypt(str(result.error))
 
             response = RedirectResponse(
-                url=f"/sso/forget-password-form/?error={encrypted_error_key}",
+                url=f"/sso/forget-password-form?error={encrypted_error_key}",
                 status_code=status.HTTP_303_SEE_OTHER
             )
         else:
@@ -306,7 +306,7 @@ async def process_send_forget_password_message(
             )
 
             response = RedirectResponse(
-                url=f"/sso/login/?message={encrypted_message_key}",
+                url=f"/sso/login?message={encrypted_message_key}",
                 status_code=status.HTTP_303_SEE_OTHER
             )
 
@@ -372,7 +372,7 @@ async def process_change_password(
         encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
         failed_request: Response = RedirectResponse(
-            url=f"/sso/profile/?error={encrypted_error_key}&tab=security",
+            url=f"/sso/profile?error={encrypted_error_key}&tab=security",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = failed_request
@@ -382,7 +382,7 @@ async def process_change_password(
         encrypted_message_key: str = encrypted_message.encrypt("Вы успешно поменяли пароль!")
 
         success_request: Response = RedirectResponse(
-            url=f"/sso/profile/?message={encrypted_message_key}&tab=security",
+            url=f"/sso/profile?message={encrypted_message_key}&tab=security",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = success_request
@@ -410,7 +410,7 @@ async def process_update_user_profile(
         encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
         failed_request: Response = RedirectResponse(
-            url=f"/sso/profile/?error={encrypted_error_key}&tab=main",
+            url=f"/sso/profile?error={encrypted_error_key}&tab=main",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = failed_request
@@ -419,7 +419,7 @@ async def process_update_user_profile(
         encrypted_message_key: str = encrypted_message.encrypt("Вы успешно поменяли данные о себе")
 
         success_request: Response = RedirectResponse(
-            url=f"/sso/profile/?message={encrypted_message_key}&tab=main",
+            url=f"/sso/profile?message={encrypted_message_key}&tab=main",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = success_request
@@ -444,7 +444,7 @@ async def process_update_master(
         encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
         failed_request: Response = RedirectResponse(
-            url=f"/sso/profile/?error={encrypted_error_key}&tab=master",
+            url=f"/sso/profile?error={encrypted_error_key}&tab=master",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = failed_request
@@ -454,7 +454,7 @@ async def process_update_master(
         encrypted_message_key: str = encrypted_message.encrypt("Вы успешно поменяли данные о мастере")
 
         success_request: Response = RedirectResponse(
-            url=f"/sso/profile/?message={encrypted_message_key}&tab=master",
+            url=f"/sso/profile?message={encrypted_message_key}&tab=master",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = success_request
@@ -479,7 +479,7 @@ async def register_master(
         encrypted_error_key: str = encrypted_error.encrypt(str(result.error))
 
         failed_request: Response = RedirectResponse(
-            url=f"/sso/profile/?error={encrypted_error_key}&tab=master",
+            url=f"/sso/profile?error={encrypted_error_key}&tab=master",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = failed_request
@@ -489,7 +489,7 @@ async def register_master(
         encrypted_message_key: str = encrypted_message.encrypt("Вы успешно стали мастером!")
 
         success_request: Response = RedirectResponse(
-            url=f"/sso/profile/?message={encrypted_message_key}&tab=master",
+            url=f"/sso/profile?message={encrypted_message_key}&tab=master",
             status_code=status.HTTP_303_SEE_OTHER
         )
         response = success_request
@@ -500,17 +500,33 @@ async def register_master(
     return response
 
 
-@router.get("/users/{user_id}", response_class=HTMLResponse, name="user_info_by_id")
-async def find_user_info_by_id(
+@router.get("/find-users", response_class=HTMLResponse, name="find_users")
+async def find_users_page(
         request: Request,
-        result: GetAllUserInfoByIDResponse = Depends(user_info_by_id_dependency)
+        current_user: GetMeResponse = Depends(get_me_dependency),
+):
+    error_message: Optional[str] = extract_request_error_message(request=request)
+    return templates.TemplateResponse(
+        request=request,
+        name="find-users-form.html",
+        context={
+            "user": current_user.user if current_user.user else None,
+            "error_message": error_message
+        }
+    )
+
+
+@router.post("/users/{query_params}", response_class=HTMLResponse, name="get_user_info")
+async def find_get_user_info(
+        request: Request,
+        result: GetAllUserInfoResponse = Depends(get_user_info_dependency)
 ):
     if result.user is None:
         encrypted_error = FernetEnvironmentsKey()
         encrypted_error_key = encrypted_error.encrypt("user_not_found")
 
         return RedirectResponse(
-            url=f"/sso/profile/?error={encrypted_error_key}&tab=find_user",
+            url=f"/sso/find-users?error={encrypted_error_key}",
             status_code=status.HTTP_303_SEE_OTHER
         )
 

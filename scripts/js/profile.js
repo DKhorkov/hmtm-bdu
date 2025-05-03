@@ -193,11 +193,3 @@ document.addEventListener('DOMContentLoaded', function () {
     resetProfileForm();
     resetMasterForm();
 });
-
-document.getElementById('find-user-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const user_id = this.querySelector('input[name="user_id"]').value.trim();
-    if (!user_id) return;
-
-    window.location.href = `/sso/users/${encodeURIComponent(user_id)}`;
-});

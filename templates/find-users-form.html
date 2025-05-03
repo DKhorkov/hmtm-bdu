@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-box">
+        <h2>Найти пользователя</h2>
+        <form id="searchForm" method="post">
+            <input type="text" id="queryInput" name="query" placeholder="Введите ID или Email" required>
+            <div class="form-actions" style="display: flex; gap: 10px; justify-content: center">
+                <button type="submit" class="btn">Искать</button>
+                <a href="{{ url_for('home_page') }}" style="gap: 10px" class="btn">На главную</a>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="/scripts/find-users-form.js"></script>
+{% endblock %}

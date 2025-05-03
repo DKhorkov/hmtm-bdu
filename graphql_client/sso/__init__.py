@@ -23,10 +23,12 @@ from .variables import (
     UpdateMasterVariables,
     RegisterMasterVariables,
     GetMasterByUserVariables,
-    GetUserByIDVariables
+    GetUserByIDVariables,
+    GetUserByEmailVariables,
 )
 from .queries import (
     GetMeQuery,
     GetMasterByUserQuery,
-    GetUserByIDQuery
+    GetUserByIDQuery,
+    GetUserByEmailQuery
 )

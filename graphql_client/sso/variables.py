@@ -143,7 +143,7 @@ class RegisterMasterVariables:
 
 @dataclass(frozen=True)
 class GetMasterByUserVariables:
-    id: int
+    id: str
 
     def to_dict(self) -> Dict[str, str]:
         return {
@@ -158,4 +158,14 @@ class GetUserByIDVariables:
     def to_dict(self) -> Dict[str, str]:
         return {
             "id": str(self.id)
+        }
+
+
+@dataclass(frozen=True)
+class GetUserByEmailVariables:
+    email: str
+
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            "email": self.email
         }

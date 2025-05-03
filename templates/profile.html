@@ -31,9 +31,6 @@
                     <button class="tab-btn {{ 'active' if tab == 'master' else '' }}" data-tab="master">
                         {% if master is none %}Стать мастером{% else %}Я мастер{% endif %}
                     </button>
-                    <button class="tab-btn {{ 'active' if tab == 'find_user' else '' }}" data-tab="find_user">Найти
-                        пользователя
-                    </button>
                 </nav>
 
                 <!-- Контент вкладок -->
@@ -48,6 +45,13 @@
                                 <div class="user-info">
                                     <!-- Неизменяемые поля -->
                                     <div class="static-fields">
+                                        <p class="static-field">
+                                            {% if user.id %}
+                                            <strong>ID: </strong>{{ user.id }}
+                                            {% else %}
+                                            <strong>ID: </strong>Ошибка загрузки формы
+                                            {% endif %}
+                                        </p>
                                         <p class="static-field">
                                             <strong>Почта:</strong>
                                             {% if user.email and user.email != "Отсутствует" %}
@@ -207,22 +211,6 @@
                                 </button>
                             </form>
                             {% endif %}
-                        </div>
-                    </div>
-                    <!-- Вкладка "Найти пользователя" -->
-                    <div class="tab-content {{ 'active' if tab == 'find_user' else '' }}" id="find_user">
-                        <div class="security-form-section">
-                            <div class="security-actions-block">
-                                <hr class="divider-line">
-                                <div class="find-user-form">
-                                    <form id="find-user-form">
-                                        <input type="text" name="user_id" placeholder="Введите ID пользователя"
-                                               required>
-                                        <button type="submit" class="btn">Найти</button>
-                                    </form>
-                                </div>
-                                <hr class="divider-line">
-                            </div>
                         </div>
                     </div>
 

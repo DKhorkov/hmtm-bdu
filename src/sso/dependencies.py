@@ -22,6 +22,7 @@ from graphql_client import (
     RegisterMasterVariables,
     GetMasterByUserVariables,
     GetUserByIDVariables,
+    GetUserByEmailVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -35,6 +36,7 @@ from graphql_client import (
     UpdateMasterMutation,
     RegisterMasterMutation,
     GetUserByIDQuery,
+    GetUserByEmailQuery,
 
     GetMeQuery,
     GetMasterByUserQuery,
@@ -57,9 +59,9 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
-    GetAllUserInfoByIDResponse,
+    GetAllUserInfoResponse,
 )
-from src.sso.models import Master, UserInfoByID
+from src.sso.models import Master, UserInfo
 from src.sso.utils import user_from_dict
 
 
@@ -468,7 +470,7 @@ async def update_user_profile(
 
 
 async def master_by_user(
-        user_id: int,
+        user_id: str,
         request: Request,
         cookies: Optional[List[CookiesConfig]] = None,
 ) -> GetUserIsMasterResponse:
@@ -620,35 +622,62 @@ async def register_master(
     return result
 
 
-async def user_info_by_id(
-        user_id: int,
-) -> GetAllUserInfoByIDResponse:
-    result: GetAllUserInfoByIDResponse = GetAllUserInfoByIDResponse(errors=[])
+async def get_user_info(
+        query_params: str,
+) -> GetAllUserInfoResponse:
+    result: GetAllUserInfoResponse = GetAllUserInfoResponse(errors=[])
 
     try:
-        user: GQLResponse = await config.graphql_client.gql_query(
-            query=GetUserByIDQuery().to_gql(),
-            variable_values=GetUserByIDVariables(
-                id=user_id,
-            ).to_dict(),
-        )
+        user_info: Dict[str, Dict[str, str]]
+        query_key: str
+        if query_params.isdigit():
+            user_by_id: GQLResponse = await config.graphql_client.gql_query(
+                query=GetUserByIDQuery().to_gql(),
+                variable_values=GetUserByIDVariables(
+                    id=int(query_params),
+                ).to_dict(),
+            )
 
-        if "errors" in user.result:
-            raise Exception(user.result["errors"][0])
+            if "errors" in user_by_id.result:
+                raise Exception(user_by_id.result["errors"][0])
 
-        result.user = UserInfoByID(
-            display_name=user.result["user"]["displayName"],
-            email=user.result["user"]["email"],
-            phone=user.result["user"]["phone"],
-            telegram=user.result["user"]["telegram"],
-            avatar=user.result["user"]["avatar"],
-            created_at=DatetimeParser.parse(user.result["user"]["createdAt"]),
+            user_data_by_id: Dict[str, Dict[str, str]] = user_by_id.result
+            key: str = "user"
+
+            query_key = key
+            user_info = user_data_by_id
+
+        else:
+            user_by_email: GQLResponse = await config.graphql_client.gql_query(
+                query=GetUserByEmailQuery().to_gql(),
+                variable_values=GetUserByEmailVariables(
+                    email=query_params,
+                ).to_dict(),
+            )
+
+            if "errors" in user_by_email.result:
+                raise Exception(user_by_email.result["errors"][0])
+
+            user_data_by_email: Dict[str, Dict[str, str]] = user_by_email.result
+            key: str = "userByEmail"  # type: ignore[no-redef]
+
+            query_key = key
+            user_info = user_data_by_email
+
+        result.user = UserInfo(
+            id=user_info[query_key]["id"],
+            display_name=user_info[query_key]["displayName"],
+            email=user_info[query_key]["email"],
+            phone=user_info[query_key]["phone"],
+            telegram=user_info[query_key]["telegram"],
+            avatar=user_info[query_key]["avatar"],
+            created_at=DatetimeParser.parse(user_info[query_key]["createdAt"]),
         )
 
         master: GQLResponse = await config.graphql_client.gql_query(
             query=GetMasterByUserQuery().to_gql(),
             variable_values=GetMasterByUserVariables(
-                id=user_id,
+                id=result.user.id,
             ).to_dict(),
         )
 
