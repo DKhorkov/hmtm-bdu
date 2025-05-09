@@ -59,7 +59,7 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
-    GetAllUserInfoResponse,
+    GetFullUserInfoResponse,
 )
 from src.sso.models import Master, UserInfo
 from src.sso.utils import user_from_dict
@@ -624,45 +624,40 @@ async def register_master(
 
 async def get_user_info(
         query_params: str,
-) -> GetAllUserInfoResponse:
-    result: GetAllUserInfoResponse = GetAllUserInfoResponse(errors=[])
+) -> GetFullUserInfoResponse:
+    result: GetFullUserInfoResponse = GetFullUserInfoResponse(errors=[])
+
+    user_info: Dict[str, Dict[str, str]]
+    query_key: str
 
     try:
-        user_info: Dict[str, Dict[str, str]]
-        query_key: str
         if query_params.isdigit():
-            user_by_id: GQLResponse = await config.graphql_client.gql_query(
+            user_response: GQLResponse = await config.graphql_client.gql_query(
                 query=GetUserByIDQuery().to_gql(),
                 variable_values=GetUserByIDVariables(
                     id=int(query_params),
                 ).to_dict(),
             )
 
-            if "errors" in user_by_id.result:
-                raise Exception(user_by_id.result["errors"][0])
+            if "errors" in user_response.result:
+                raise Exception(user_response.result["errors"][0])
 
-            user_data_by_id: Dict[str, Dict[str, str]] = user_by_id.result
-            key: str = "user"
-
-            query_key = key
-            user_info = user_data_by_id
+            query_key = "user"
 
         else:
-            user_by_email: GQLResponse = await config.graphql_client.gql_query(
+            user_response: GQLResponse = await config.graphql_client.gql_query(  # type: ignore[no-redef]
                 query=GetUserByEmailQuery().to_gql(),
                 variable_values=GetUserByEmailVariables(
                     email=query_params,
                 ).to_dict(),
             )
 
-            if "errors" in user_by_email.result:
-                raise Exception(user_by_email.result["errors"][0])
+            if "errors" in user_response.result:
+                raise Exception(user_response.result["errors"][0])
 
-            user_data_by_email: Dict[str, Dict[str, str]] = user_by_email.result
-            key: str = "userByEmail"  # type: ignore[no-redef]
+            query_key = "userByEmail"
 
-            query_key = key
-            user_info = user_data_by_email
+        user_info: Dict[str, Dict[str, str]] = user_response.result  # type: ignore[no-redef]
 
         result.user = UserInfo(
             id=user_info[query_key]["id"],

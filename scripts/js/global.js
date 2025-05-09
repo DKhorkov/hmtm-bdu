@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const errorPopup = document.querySelector('.error-popup');
     const closeBtn = document.querySelector('.close-btn');
+    const ERROR_POPUP_TIMEOUT= 5000;
+    const FADE_EFFECT_TIMEOUT = 50;
 
     const fadeOut = (element) => {
         element.style.opacity = 1;
@@ -11,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(fadeEffect);
                 element.remove();
             }
-        }, 50);
+        }, FADE_EFFECT_TIMEOUT);
     };
 
     if (closeBtn) {
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (errorPopup) {
         setTimeout(() => {
             fadeOut(errorPopup);
-        }, 5000);
+        }, ERROR_POPUP_TIMEOUT);
     }
 });
 

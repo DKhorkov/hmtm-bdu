@@ -33,7 +33,7 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
-    GetAllUserInfoResponse
+    GetFullUserInfoResponse
 )
 
 
@@ -729,7 +729,7 @@ class TestGetUserInfo:
             "message": "rpc error: code = NotFound desc = user not found"
         })
 
-        result: GetAllUserInfoResponse = await get_user_info("999")
+        result: GetFullUserInfoResponse = await get_user_info("999")
 
         assert result.user is None
         assert result.master is None
@@ -758,7 +758,7 @@ class TestGetUserInfo:
         mock_gql_client.side_effect = [user_response, master_response]
 
         with patch('src.sso.dependencies.DatetimeParser.parse', return_value="01.01.2023"):
-            result: GetAllUserInfoResponse = await get_user_info("1")
+            result: GetFullUserInfoResponse = await get_user_info("1")
 
         assert result.user is not None
         assert result.user.id == "1"
@@ -797,7 +797,7 @@ class TestGetUserInfo:
                 'src.sso.dependencies.DatetimeParser.parse',
                 side_effect=["01.02.2023", "01.02.2023", "02.02.2023"]
         ):
-            result: GetAllUserInfoResponse = await get_user_info("2")
+            result: GetFullUserInfoResponse = await get_user_info("2")
 
         assert result.user is not None
         assert result.user.email == "master@example.com"
@@ -827,7 +827,7 @@ class TestGetUserInfo:
         mock_gql_client.side_effect = [user_response, master_response]
 
         with patch('src.sso.dependencies.DatetimeParser.parse', return_value="01.03.2023"):
-            result: GetAllUserInfoResponse = await get_user_info("email@example.com")
+            result: GetFullUserInfoResponse = await get_user_info("email@example.com")
 
         assert result.user is not None
         assert result.user.email == "email@example.com"
@@ -866,7 +866,7 @@ class TestGetUserInfo:
                 'src.sso.dependencies.DatetimeParser.parse',
                 side_effect=["01.04.2023", "01.04.2023", "05.04.2023"]
         ):
-            result: GetAllUserInfoResponse = await get_user_info("full@example.com")
+            result: GetFullUserInfoResponse = await get_user_info("full@example.com")
 
         assert result.user is not None
         assert result.user.telegram == "@full"

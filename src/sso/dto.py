@@ -71,7 +71,7 @@ class RegisterMasterResponse(BoolResponse):
 
 
 @dataclass
-class GetAllUserInfoResponse:
+class GetFullUserInfoResponse:
     user: Optional[UserInfo] = None
     master: Optional[Master] = None
     errors: Optional[List[str]] = None

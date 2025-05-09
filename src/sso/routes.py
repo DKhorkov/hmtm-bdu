@@ -33,7 +33,7 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
-    GetAllUserInfoResponse,
+    GetFullUserInfoResponse,
 )
 from src.sso.constants import FORGET_PASSWORD_TOKEN_NAME
 from src.request_utils import (
@@ -270,47 +270,37 @@ async def process_send_forget_password_message(
         result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency)
 ):
     """ Восстановление пароля в профиле через форму - Процесс"""
+    encryptor: FernetEnvironmentsKey = FernetEnvironmentsKey()
     if current_user.user is not None:
         if result.error is not None:
-            error_encryptor = FernetEnvironmentsKey()
-            encrypted_error_key = error_encryptor.encrypt(str(result.error))
-
-            response = RedirectResponse(
+            encrypted_error_key = encryptor.encrypt("Необходима почта, указанная при регистрации")
+            return RedirectResponse(
                 url=f"/sso/profile?error={encrypted_error_key}&tab=security",
                 status_code=status.HTTP_303_SEE_OTHER
             )
-        else:
-            message_encryptor = FernetEnvironmentsKey()
-            encrypted_message_key = message_encryptor.encrypt(
-                "Письмо о смене пароля отправлено на почту, указанную при регистрации!"
-            )
 
-            response = RedirectResponse(
-                url=f"/sso/profile?message={encrypted_message_key}&tab=security",
-                status_code=status.HTTP_303_SEE_OTHER
-            )
+        encrypted_message_key = encryptor.encrypt(
+            "Письмо о смене пароля отправлено на почту, указанную при регистрации!"
+        )
+        return RedirectResponse(
+            url=f"/sso/profile?message={encrypted_message_key}&tab=security",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
-    else:
-        if result.error is not None:
-            error_encryptor = FernetEnvironmentsKey()
-            encrypted_error_key = error_encryptor.encrypt(str(result.error))
+    if result.error is not None:
+        encrypted_error_key = encryptor.encrypt(str(result.error))
+        return RedirectResponse(
+            url=f"/sso/forget-password-form?error={encrypted_error_key}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
-            response = RedirectResponse(
-                url=f"/sso/forget-password-form?error={encrypted_error_key}",
-                status_code=status.HTTP_303_SEE_OTHER
-            )
-        else:
-            message_encryptor = FernetEnvironmentsKey()
-            encrypted_message_key = message_encryptor.encrypt(
-                "Письмо о смене пароля отправлено на почту, указанную при регистрации!"
-            )
-
-            response = RedirectResponse(
-                url=f"/sso/login?message={encrypted_message_key}",
-                status_code=status.HTTP_303_SEE_OTHER
-            )
-
-    return response
+    encrypted_message_key = encryptor.encrypt(
+        "Письмо о смене пароля отправлено на почту, указанную при регистрации!"
+    )
+    return RedirectResponse(
+        url=f"/sso/login?message={encrypted_message_key}",
+        status_code=status.HTTP_303_SEE_OTHER
+    )
 
 
 @router.get("/forget-password/{forget_password_token}", response_class=HTMLResponse, name="change-forget-password")
@@ -519,7 +509,7 @@ async def find_users_page(
 @router.post("/users/{query_params}", response_class=HTMLResponse, name="get_user_info")
 async def find_get_user_info(
         request: Request,
-        result: GetAllUserInfoResponse = Depends(get_user_info_dependency)
+        result: GetFullUserInfoResponse = Depends(get_user_info_dependency)
 ):
     if result.user is None:
         encrypted_error = FernetEnvironmentsKey()

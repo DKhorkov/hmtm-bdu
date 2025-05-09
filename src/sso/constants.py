@@ -61,7 +61,8 @@ ERRORS_MAPPING: Dict[str, str] = {
         "Пользователь не является мастером",
 
     'rpc error: code = AlreadyExists desc = master already exists':
-        "Мастер уже зарегестрирован"
+        "Мастер уже зарегестрирован",
+
 }
 
 REQUEST_ENVIRONMENTS_MAPPING: Dict[str, str] = {
@@ -108,6 +109,9 @@ REQUEST_ENVIRONMENTS_MAPPING: Dict[str, str] = {
 
     "Пользователь не найден":
         "Пользователь не найден",
+
+    'Необходима почта, указанная при регистрации':
+        'Необходима почта, указанная при регистрации'
 }
 
 FORGET_PASSWORD_TOKEN_NAME: str = "forget_password_token"
