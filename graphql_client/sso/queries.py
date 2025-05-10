@@ -82,3 +82,26 @@ class GetUserByEmailQuery:
                 }
             """
         )
+
+
+class ToysCatalogQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query GetToysCatalog($input: ToysInput!) {
+                    toys(input: $input) {
+                        id
+                        master {id user {id avatar} info}
+                        category {name}
+                        name
+                        description
+                        price
+                        quantity
+                        createdAt
+                        tags{name}
+                        attachments{toyId link createdAt}
+                    }
+                }
+            """
+        )

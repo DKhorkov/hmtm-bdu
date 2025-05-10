@@ -180,8 +180,7 @@
                                     <p class="profile-field" data-field="master-info">
                                         <strong class="field-label">О мастере:</strong>
                                         <span class="edit-field master-info-field">
-                                            <textarea name="info" placeholder="Расскажите о себе"
-                                                      maxlength="1000"></textarea>
+                                            <textarea name="info" placeholder="Расскажите о себе" maxlength="1000"></textarea>
                                         </span>
                                     </p>
                                 </div>
@@ -191,6 +190,10 @@
                             <form id="master-form" action="{{ url_for('update-master') }}" method="post">
                                 <input type="hidden" name="tab" value="master">
                                 <div class="user-info">
+                                    <p class="static-field">
+                                        <strong>ID:</strong>
+                                        <span class="field-value">{{ master.id if master.id else 'Ошибка загрузки формы' }}</span>
+                                    </p>
                                     <p class="static-field">
                                         <strong>Мастер с:</strong>
                                         <span class="field-value">{{ master.created_at if master.created_at else 'Ошибка загрузки формы' }}</span>

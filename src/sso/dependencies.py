@@ -63,6 +63,11 @@ from src.sso.dto import (
 )
 from src.sso.models import Master, UserInfo
 from src.sso.utils import user_from_dict
+from src.request_utils import FernetEnvironmentsKey
+
+
+async def encryptor() -> FernetEnvironmentsKey:
+    return FernetEnvironmentsKey()
 
 
 async def process_register(  # type: ignore[return]

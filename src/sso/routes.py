@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from src.cookies import set_cookie
 from src.sso.dependencies import (
+    encryptor as encryptor_dependency,
     process_register as process_register_dependency,
     process_login as process_login_dependency,
     verify_email as verify_email_dependency,
@@ -340,10 +341,10 @@ async def process_change_forget_password(
 @router.post("/change-password", response_class=HTMLResponse, name="change-password")
 async def process_change_password(
         current_user: GetMeResponse = Depends(get_me_dependency),
-        result: ChangePasswordResponse = Depends(change_password_dependency)
+        result: ChangePasswordResponse = Depends(change_password_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     """ Ручка авторизованного пользователя для смены пароля - Процесс """
-    encryptor: FernetEnvironmentsKey = FernetEnvironmentsKey()
     if current_user.user is None:
         encrypted_error: str = encryptor.encrypt(str(current_user.error))
         return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
@@ -372,11 +373,11 @@ async def process_change_password(
 async def process_update_user_profile(
         request: Request,
         result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
+    encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     """ Ручка авторизованного пользователя для изменения данных о себе: никнейм, телеграм, телефон - Процесс """
     current_user: GetMeResponse = await get_me_dependency(request=request, cookies=result.cookies)
 
-    encryptor: FernetEnvironmentsKey = FernetEnvironmentsKey()
     if current_user.user is None:
         encrypted_error: str = encryptor.encrypt(str(current_user.error))
         return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
@@ -405,8 +406,8 @@ async def process_update_user_profile(
 async def process_update_master(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateMasterResponse = Depends(update_master_info_dependency),
+    encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
-    encryptor: FernetEnvironmentsKey = FernetEnvironmentsKey()
     if current_user.user is None:
         encrypted_error: str = encryptor.encrypt(str(current_user.error))
         return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
@@ -435,8 +436,8 @@ async def process_update_master(
 async def register_master(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: RegisterMasterResponse = Depends(register_master_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
-    encryptor: FernetEnvironmentsKey = FernetEnvironmentsKey()
     if current_user.user is None:
         encrypted_error: str = encryptor.encrypt(str(current_user.error))
         return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
@@ -499,3 +500,11 @@ async def find_get_user_info(
     }
 
     return templates.TemplateResponse(request=request, name="user-info.html", context=context)
+
+
+########################################################################################################################
+from fastapi.responses import JSONResponse
+@router.get(path="/toys", response_class=JSONResponse, name="toys")
+async def toys_catalog(
+):
+    pass
