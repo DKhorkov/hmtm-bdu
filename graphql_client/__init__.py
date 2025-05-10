@@ -9,7 +9,15 @@ from .sso import (
     VerifyUserEmailMutation,
 
     GetMeQuery,
+
     GetMasterByUserQuery,
+    GetMasterByUserVariables,
+
+    GetUserByIDQuery,
+    GetUserByIDVariables,
+
+    GetUserByEmailQuery,
+    GetUserByEmailVariables,
 
     RefreshTokensMutation,
 

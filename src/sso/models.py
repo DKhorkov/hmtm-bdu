@@ -4,7 +4,7 @@ from typing import Optional
 
 @dataclass
 class User:
-    id: int
+    id: str
     display_name: str
     email: str
     email_confirmed: bool
@@ -23,3 +23,14 @@ class Master:
     info: Optional[str]
     created_at: str
     updated_at: str
+
+
+@dataclass
+class UserInfo:
+    id: str
+    display_name: str
+    email: str
+    phone: Optional[str]
+    telegram: Optional[str]
+    avatar: Optional[str]
+    created_at: str

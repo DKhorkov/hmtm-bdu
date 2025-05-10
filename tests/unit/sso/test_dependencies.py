@@ -18,6 +18,7 @@ from src.sso.dependencies import (
     master_by_user,
     update_master,
     register_master,
+    get_user_info,
 )
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
@@ -31,7 +32,8 @@ from src.sso.dto import (
     ChangePasswordResponse,
     GetUserIsMasterResponse,
     UpdateMasterResponse,
-    RegisterMasterResponse
+    RegisterMasterResponse,
+    GetFullUserInfoResponse
 )
 
 
@@ -524,7 +526,7 @@ class TestGetMasterByUser:
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.result = {
             "masterByUser": {
-                "id": 1,
+                "id": "1",
                 "info": "Test_master",
                 "createdAt": "2025-04-27T08:10:35.388787Z",
                 "updatedAt": "2025-04-27T08:10:35.388787Z",
@@ -537,10 +539,11 @@ class TestGetMasterByUser:
         mock_gql_client.return_value = mock_response
 
         result: GetUserIsMasterResponse = await master_by_user(
+            user_id=mock_response.result["masterByUser"]["id"],
             request=mock_request,
         )
 
-        assert result.master.id == 1  # type: ignore[union-attr]
+        assert result.master.id == "1"  # type: ignore[union-attr]
         assert result.master.info == "Test_master"  # type: ignore[union-attr]
         assert result.master.created_at == "27.04.2025"  # type: ignore[union-attr]
         assert result.master.updated_at == "27.04.2025"  # type: ignore[union-attr]
@@ -550,7 +553,10 @@ class TestGetMasterByUser:
         mock_request: MagicMock = MagicMock(spec=Request)
         mock_request.cookies = {}
 
-        result: GetUserIsMasterResponse = await master_by_user(request=mock_request)
+        result: GetUserIsMasterResponse = await master_by_user(
+            user_id="1",
+            request=mock_request
+        )
 
         assert result.result is False
         assert result.error == "Пользователь не найден"
@@ -574,7 +580,10 @@ class TestGetMasterByUser:
         }
         mock_gql_client.return_value = mock_response
 
-        result: GetUserIsMasterResponse = await master_by_user(request=mock_request)
+        result: GetUserIsMasterResponse = await master_by_user(
+            user_id="1",
+            request=mock_request
+        )
 
         assert result.result is False
         assert result.error == "Пользователь не является мастером"
@@ -584,28 +593,30 @@ class TestUpdateMaster:
     @pytest.mark.asyncio
     async def test_update_master_success(self, mock_gql_client: AsyncMock, mock_get_me: MagicMock) -> None:
         mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {}
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.result = {"gql_query_status": True}
+        mock_response.headers = {}
 
         mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
+        mock_master.master = MagicMock()
         mock_master.master.id = 1
         mock_master.master.info = "Test_master"
         mock_master.master.created_at = "27.04.2025"
         mock_master.master.updated_at = "27.04.2025"
 
-        new_master_info = "New_test_master"
+        with patch('src.sso.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
+            new_master_info = "New_test_master"
+            mock_gql_client.return_value = mock_response
 
-        mock_gql_client.return_value = mock_response
+            result: UpdateMasterResponse = await update_master(
+                request=mock_request,
+                info=new_master_info,
+                current_user=mock_get_me
+            )
 
-        result: UpdateMasterResponse = await update_master(
-            request=mock_request,
-            master=mock_master,
-            info=new_master_info,
-            current_user=mock_get_me
-        )
-
-        assert result.result is True
+            assert result.result is True
 
     @pytest.mark.asyncio
     async def test_update_master_failure_with_no_cookies(
@@ -632,7 +643,6 @@ class TestUpdateMaster:
 
         result: UpdateMasterResponse = await update_master(
             request=mock_request,
-            master=mock_master,
             info=new_master_info,
             current_user=mock_get_me
         )
@@ -647,6 +657,7 @@ class TestUpdateMaster:
             mock_get_me: MagicMock
     ) -> None:
         mock_request: MagicMock = MagicMock(spec=Request)
+        mock_request.cookies = {}  # Добавляем cookies
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
         mock_response.result = {"gql_query_status": True}
@@ -654,17 +665,17 @@ class TestUpdateMaster:
         mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
         mock_master.master = None
 
-        new_master_info = "New_test_master"
+        with patch('src.sso.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
+            new_master_info = "New_test_master"
 
-        result: UpdateMasterResponse = await update_master(
-            request=mock_request,
-            master=mock_master,
-            info=new_master_info,
-            current_user=mock_get_me
-        )
+            result: UpdateMasterResponse = await update_master(
+                request=mock_request,
+                info=new_master_info,
+                current_user=mock_get_me
+            )
 
-        assert result.result is False
-        assert result.error == "Не удалось найти мастера"
+            assert result.result is False
+            assert result.error == "Не удалось найти мастера"
 
 
 class TestRegisterMaster:
@@ -709,3 +720,157 @@ class TestRegisterMaster:
 
         assert result.result is False
         assert result.error == "Пользователь не найден"
+
+
+class TestGetUserInfo:
+    @pytest.mark.asyncio
+    async def test_user_not_found(self, mock_gql_client: AsyncMock) -> None:
+        mock_gql_client.side_effect = Exception({
+            "message": "rpc error: code = NotFound desc = user not found"
+        })
+
+        result: GetFullUserInfoResponse = await get_user_info("999")
+
+        assert result.user is None
+        assert result.master is None
+        assert "Пользователь не найден" in result.errors  # type: ignore[operator]
+
+    @pytest.mark.asyncio
+    async def test_user_info_without_master_by_id(self, mock_gql_client: AsyncMock) -> None:
+        user_response = MagicMock(spec=GQLResponse)
+        user_response.result = {
+            "user": {
+                "id": "1",
+                "displayName": "Test User",
+                "email": "test@example.com",
+                "phone": "+79995554433",
+                "telegram": "@test",
+                "avatar": "avatar.jpg",
+                "createdAt": "2023-01-01T00:00:00Z"
+            }
+        }
+
+        master_response = MagicMock(spec=GQLResponse)
+        master_response.result = {
+            "errors": [{"message": "master not found"}]
+        }
+
+        mock_gql_client.side_effect = [user_response, master_response]
+
+        with patch('src.sso.dependencies.DatetimeParser.parse', return_value="01.01.2023"):
+            result: GetFullUserInfoResponse = await get_user_info("1")
+
+        assert result.user is not None
+        assert result.user.id == "1"
+        assert result.user.display_name == "Test User"
+        assert result.master is None
+        assert "master not found" in result.errors  # type: ignore[operator]
+
+    @pytest.mark.asyncio
+    async def test_user_and_master_info_by_id(self, mock_gql_client: AsyncMock) -> None:
+        user_response = MagicMock(spec=GQLResponse)
+        user_response.result = {
+            "user": {
+                "id": "2",
+                "displayName": "Master User",
+                "email": "master@example.com",
+                "phone": "+79995550000",
+                "telegram": "@master",
+                "avatar": None,
+                "createdAt": "2023-02-01T00:00:00Z"
+            }
+        }
+
+        master_response = MagicMock(spec=GQLResponse)
+        master_response.result = {
+            "masterByUser": {
+                "id": "10",
+                "info": "Профессиональный сантехник",
+                "createdAt": "2023-02-01T00:00:00Z",
+                "updatedAt": "2023-02-02T00:00:00Z"
+            }
+        }
+
+        mock_gql_client.side_effect = [user_response, master_response]
+
+        with patch(
+                'src.sso.dependencies.DatetimeParser.parse',
+                side_effect=["01.02.2023", "01.02.2023", "02.02.2023"]
+        ):
+            result: GetFullUserInfoResponse = await get_user_info("2")
+
+        assert result.user is not None
+        assert result.user.email == "master@example.com"
+        assert result.master is not None
+        assert result.master.info == "Профессиональный сантехник"
+        assert result.master.updated_at == "02.02.2023"
+        assert not result.errors
+
+    @pytest.mark.asyncio
+    async def test_user_info_without_master_by_email(self, mock_gql_client: AsyncMock) -> None:
+        user_response = MagicMock(spec=GQLResponse)
+        user_response.result = {
+            "userByEmail": {
+                "id": "3",
+                "displayName": "Email User",
+                "email": "email@example.com",
+                "phone": None,
+                "telegram": None,
+                "avatar": "url.jpg",
+                "createdAt": "2023-03-01T00:00:00Z"
+            }
+        }
+
+        master_response = MagicMock(spec=GQLResponse)
+        master_response.result = {"errors": [{"message": "No master data"}]}
+
+        mock_gql_client.side_effect = [user_response, master_response]
+
+        with patch('src.sso.dependencies.DatetimeParser.parse', return_value="01.03.2023"):
+            result: GetFullUserInfoResponse = await get_user_info("email@example.com")
+
+        assert result.user is not None
+        assert result.user.email == "email@example.com"
+        assert result.user.phone is None
+        assert result.master is None
+        assert "No master data" in result.errors  # type: ignore[operator]
+
+    @pytest.mark.asyncio
+    async def test_user_and_master_info_by_email(self, mock_gql_client: AsyncMock) -> None:
+        user_response = MagicMock(spec=GQLResponse)
+        user_response.result = {
+            "userByEmail": {
+                "id": "4",
+                "displayName": "Full User",
+                "email": "full@example.com",
+                "phone": "+79999999999",
+                "telegram": "@full",
+                "avatar": "full.jpg",
+                "createdAt": "2023-04-01T00:00:00Z"
+            }
+        }
+
+        master_response = MagicMock(spec=GQLResponse)
+        master_response.result = {
+            "masterByUser": {
+                "id": "20",
+                "info": "IT специалист",
+                "createdAt": "2023-04-01T00:00:00Z",
+                "updatedAt": "2023-04-05T00:00:00Z"
+            }
+        }
+
+        mock_gql_client.side_effect = [user_response, master_response]
+
+        with patch(
+                'src.sso.dependencies.DatetimeParser.parse',
+                side_effect=["01.04.2023", "01.04.2023", "05.04.2023"]
+        ):
+            result: GetFullUserInfoResponse = await get_user_info("full@example.com")
+
+        assert result.user is not None
+        assert result.user.telegram == "@full"
+        assert result.master is not None
+        assert result.master.info == "IT специалист"
+        assert result.master.updated_at == "05.04.2023"
+        assert not result.errors

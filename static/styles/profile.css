@@ -392,3 +392,111 @@
         padding: 4px 8px;
     }
 }
+
+/* Блок безопасности */
+.security-actions-block {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.divider-line {
+    border: 0;
+    height: 1px;
+    background: var(--form-border-color);
+    margin: 10px 0;
+}
+
+.forgot-password-form {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--form-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--form-border-color);
+}
+
+.password-form.active,
+.forgot-password-form.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Заголовок раздела пароля */
+.password-header {
+    font-size: 1em; /* Уменьшен размер */
+    font-weight: 500; /* Сделать полужирным, но не слишком */
+    color: #6B5C4B; /* Более светлый оттенок */
+    text-align: left; /* Выравнивание по левому краю */
+    margin: -17px 0; /* Уменьшенные отступы */
+    padding: 0 8px; /* Боковые отступы */
+    letter-spacing: normal; /* Убрать увеличенный интервал */
+    text-transform: none; /* Убрать верхний регистр */
+    position: relative;
+    top: 2px;
+}
+
+/* Контейнер для кнопок */
+.password-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: -10px 0;
+}
+
+.password-buttons .btn {
+    flex: 0 1 auto;
+    min-width: 180px;
+    text-align: center;
+    padding: 12px 25px;
+    margin: 0;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+    .password-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .password-buttons .btn {
+        width: 100%;
+        max-width: none;
+    }
+}
+
+/* Стили для формы поиска пользователя */
+.find-user-form {
+    width: 100%;
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--form-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--form-border-color);
+}
+
+.find-user-form input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid var(--dark-border-color);
+    border-radius: 6px;
+    font-size: 1em;
+    background: var(--input-bg-color);
+}
+
+.find-user-form button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .find-user-form {
+        padding: 15px;
+    }
+}

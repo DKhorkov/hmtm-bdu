@@ -139,3 +139,33 @@ class RegisterMasterVariables:
                 "info": self.info,
             }
         }
+
+
+@dataclass(frozen=True)
+class GetMasterByUserVariables:
+    id: str
+
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            "userId": str(self.id)
+        }
+
+
+@dataclass(frozen=True)
+class GetUserByIDVariables:
+    id: int
+
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            "id": str(self.id)
+        }
+
+
+@dataclass(frozen=True)
+class GetUserByEmailVariables:
+    email: str
+
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            "email": self.email
+        }

@@ -4,13 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
+    <!-- Стили-->
     <link rel="stylesheet" href="{{ url_for('static', path='/styles/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles/burger-menu.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+<!-- Всплывающее окно с ошибкой  -->
+{% if error_message %}
+<div class="error-popup">
+    <div>
+        <p style="margin: 0">{{ error_message | safe }}</p>
+    </div>
+    <button class="close-btn">×</button>
+</div>
+{% endif %}
+
+<!-- Всплывающее окно с успешным статусом -->
+{% if success_message %}
+<div class="message-popup">
+    <div>
+        <p style="margin: 0">{{ success_message | safe }}</p>
+    </div>
+    <button class="close-btn">×</button>
+</div>
+{% endif %}
+
 <nav class="top-nav">
     <div class="top-nav-container">
         <div class="nav-left">
+
+            <!-- Burger-Menu -->
+            <div class="burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <!-- Боковое всплывающее меню -->
+            <div class="sidebar-menu">
+                <div class="menu-content">
+                    <form method="get" action="{{ url_for('find_users') }}">
+                        <button class="menu-btn">Найти пользователя</button>
+                    </form>
+                </div>
+            </div>
+            <div class="overlay"></div>
+
+            <!-- Иконка и надпись HMTM -->
             <a href="{{ url_for('home_page') }}" class="nav-icon">
                 <img src="{{ url_for('static', path='/images/teddy_bear.png') }}" alt="Teddy Bear Icon">
             </a>
@@ -18,6 +60,13 @@
                 <span class="nav-title">Handmade Toys Marketplace</span>
             </a>
         </div>
+
+        <!-- Кнопка "Игрушки" -->
+        <div class="nav-buttons">
+            <a href="{{ url_for('profile') }}" class="btn">Игрушки</a>
+        </div>
+
+        <!-- Основные кнопки -->
         <div class="nav-buttons">
             {% if user %}
             <a href="{{ url_for('profile') }}" class="btn">Профиль</a>
@@ -27,10 +76,13 @@
             <a href="{{ url_for('register') }}" class="btn">Регистрация</a>
             {% endif %}
         </div>
+
     </div>
 </nav>
 <div class="content">
-    {% block content %}{% endblock %}
+    {% block content %}
+    {% endblock %}
+    <script src="/scripts/global.js"></script>
 </div>
 </body>
 </html>

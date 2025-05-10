@@ -37,12 +37,6 @@
                 <div class="tabs-content-wrapper">
                     <!-- Вкладка "Основное" -->
                     <div class="tab-content {{ 'active' if tab == 'main' else '' }}" id="main">
-                        {% if main_message %}
-                        <p class="message">{{ main_message }}</p>
-                        {% endif %}
-                        {% if main_error %}
-                        <p class="error">{{ main_error }}</p>
-                        {% endif %}
                         <div class="form-section">
                             <form id="profile-form" action="{{ url_for('update_user_profile') }}" method="post"
                                   enctype="multipart/form-data">
@@ -51,6 +45,13 @@
                                 <div class="user-info">
                                     <!-- Неизменяемые поля -->
                                     <div class="static-fields">
+                                        <p class="static-field">
+                                            {% if user.id %}
+                                            <strong>ID: </strong>{{ user.id }}
+                                            {% else %}
+                                            <strong>ID: </strong>Ошибка загрузки формы
+                                            {% endif %}
+                                        </p>
                                         <p class="static-field">
                                             <strong>Почта:</strong>
                                             {% if user.email and user.email != "Отсутствует" %}
@@ -134,21 +135,35 @@
 
                     <!-- Вкладка "Безопасность" -->
                     <div class="tab-content {{ 'active' if tab == 'security' else '' }}" id="security">
-                        {% if security_message %}
-                        <p class="message">{{ security_message }}</p>
-                        {% endif %}
-                        {% if security_error %}
-                        <p class="error">{{ security_error }}</p>
-                        {% endif %}
                         <div class="security-form-section">
-                            <button class="btn" id="change-password-btn">Сменить пароль</button>
-                            <div class="password-form" style="display: none;">
-                                <!-- Форма для смены пароля -->
+                            <!-- Блок с кнопками безопасности -->
+                            <div class="security-actions-block">
+                                <div class="password-header">Пароль</div>
+                                <hr class="divider-line">
+                                <div class="password-buttons">
+                                    <button class="btn" id="change-password-btn">Сменить пароль</button>
+                                    <button class="btn" id="forgot-password-btn">Забыли пароль</button>
+                                </div>
+                                <hr class="divider-line">
+                            </div>
+
+                            <!-- Форма смены пароля -->
+                            <div class="password-form">
                                 <form action="{{ url_for('change-password') }}" method="post">
                                     <input type="hidden" name="tab" value="security">
                                     <input type="password" name="old_password" placeholder="Текущий пароль" required>
                                     <input type="password" name="new_password" placeholder="Новый пароль" required>
                                     <button type="submit" class="btn" style="margin-top: 15px;">Сохранить изменения
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Форма восстановления пароля -->
+                            <div class="forgot-password-form">
+                                <form action="{{ url_for('forget-password-form') }}" method="post">
+                                    <input type="hidden" name="tab" value="security">
+                                    <input type="email" name="email" placeholder="Введите ваш email" required>
+                                    <button type="submit" class="btn" style="margin-top: 15px;">Отправить ссылку
                                     </button>
                                 </form>
                             </div>
@@ -158,13 +173,6 @@
                     <!-- Вкладка "Стать мастером / Я мастер" -->
                     <div class="tab-content {{ 'active' if tab == 'master' else '' }}" id="master">
                         <div class="form-section">
-                            {% if master_message %}
-                            <p class="message">{{ master_message }}</p>
-                            {% endif %}
-                            {% if master_error %}
-                            <p class="error">{{ master_error }}</p>
-                            {% endif %}
-
                             {% if not master %}
                             <form action="{{ url_for('register-master') }}" method="post">
                                 <input type="hidden" name="tab" value="master">
@@ -172,8 +180,7 @@
                                     <p class="profile-field" data-field="master-info">
                                         <strong class="field-label">О мастере:</strong>
                                         <span class="edit-field master-info-field">
-                                            <textarea name="info" placeholder="Расскажите о себе"
-                                                      maxlength="1000"></textarea>
+                                            <textarea name="info" placeholder="Расскажите о себе" maxlength="1000"></textarea>
                                         </span>
                                     </p>
                                 </div>
@@ -183,6 +190,10 @@
                             <form id="master-form" action="{{ url_for('update-master') }}" method="post">
                                 <input type="hidden" name="tab" value="master">
                                 <div class="user-info">
+                                    <p class="static-field">
+                                        <strong>ID:</strong>
+                                        <span class="field-value">{{ master.id if master.id else 'Ошибка загрузки формы' }}</span>
+                                    </p>
                                     <p class="static-field">
                                         <strong>Мастер с:</strong>
                                         <span class="field-value">{{ master.created_at if master.created_at else 'Ошибка загрузки формы' }}</span>
@@ -211,5 +222,5 @@
         </div>
     </div>
 </div>
-<script type="module" src="../scripts/profile.js"></script>
+<script src="/scripts/profile.js"></script>
 {% endblock %}

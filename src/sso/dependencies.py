@@ -20,6 +20,9 @@ from graphql_client import (
     UpdateUserProfileVariables,
     UpdateMasterVariables,
     RegisterMasterVariables,
+    GetMasterByUserVariables,
+    GetUserByIDVariables,
+    GetUserByEmailVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -32,6 +35,8 @@ from graphql_client import (
     UpdateUserProfileMutation,
     UpdateMasterMutation,
     RegisterMasterMutation,
+    GetUserByIDQuery,
+    GetUserByEmailQuery,
 
     GetMeQuery,
     GetMasterByUserQuery,
@@ -54,9 +59,15 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
+    GetFullUserInfoResponse,
 )
-from src.sso.models import Master
+from src.sso.models import Master, UserInfo
 from src.sso.utils import user_from_dict
+from src.request_utils import FernetEnvironmentsKey
+
+
+async def encryptor() -> FernetEnvironmentsKey:
+    return FernetEnvironmentsKey()
 
 
 async def process_register(  # type: ignore[return]
@@ -464,8 +475,9 @@ async def update_user_profile(
 
 
 async def master_by_user(
+        user_id: str,
         request: Request,
-        cookies: Optional[List[CookiesConfig]] = None
+        cookies: Optional[List[CookiesConfig]] = None,
 ) -> GetUserIsMasterResponse:
     result: GetUserIsMasterResponse = GetUserIsMasterResponse()
 
@@ -481,7 +493,9 @@ async def master_by_user(
     try:
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=GetMasterByUserQuery().to_gql(),
-            variable_values={},
+            variable_values=GetMasterByUserVariables(
+                id=user_id,
+            ).to_dict(),
             cookies=actual_cookies,
         )
 
@@ -513,7 +527,6 @@ async def update_master(
         request: Request,
         info: Annotated[str | None, Form()],
         current_user: GetMeResponse = Depends(get_me),
-        master: GetUserIsMasterResponse = Depends(master_by_user),
 ) -> UpdateMasterResponse:
     result: UpdateMasterResponse = UpdateMasterResponse()
 
@@ -528,6 +541,12 @@ async def update_master(
             actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
+        master: GetUserIsMasterResponse = await master_by_user(
+            user_id=current_user.user.id,  # type: ignore[union-attr]
+            request=request,
+            cookies=current_user.cookies,
+        )
+
         if master.master is None:
             result.error = "Не удалось найти мастера"
             return result
@@ -604,5 +623,83 @@ async def register_master(
         )
 
         result.error = error
+
+    return result
+
+
+async def get_user_info(
+        query_params: str,
+) -> GetFullUserInfoResponse:
+    result: GetFullUserInfoResponse = GetFullUserInfoResponse(errors=[])
+
+    user_info: Dict[str, Dict[str, str]]
+    query_key: str
+
+    try:
+        if query_params.isdigit():
+            user_response: GQLResponse = await config.graphql_client.gql_query(
+                query=GetUserByIDQuery().to_gql(),
+                variable_values=GetUserByIDVariables(
+                    id=int(query_params),
+                ).to_dict(),
+            )
+
+            if "errors" in user_response.result:
+                raise Exception(user_response.result["errors"][0])
+
+            query_key = "user"
+
+        else:
+            user_response: GQLResponse = await config.graphql_client.gql_query(  # type: ignore[no-redef]
+                query=GetUserByEmailQuery().to_gql(),
+                variable_values=GetUserByEmailVariables(
+                    email=query_params,
+                ).to_dict(),
+            )
+
+            if "errors" in user_response.result:
+                raise Exception(user_response.result["errors"][0])
+
+            query_key = "userByEmail"
+
+        user_info: Dict[str, Dict[str, str]] = user_response.result  # type: ignore[no-redef]
+
+        result.user = UserInfo(
+            id=user_info[query_key]["id"],
+            display_name=user_info[query_key]["displayName"],
+            email=user_info[query_key]["email"],
+            phone=user_info[query_key]["phone"],
+            telegram=user_info[query_key]["telegram"],
+            avatar=user_info[query_key]["avatar"],
+            created_at=DatetimeParser.parse(user_info[query_key]["createdAt"]),
+        )
+
+        master: GQLResponse = await config.graphql_client.gql_query(
+            query=GetMasterByUserQuery().to_gql(),
+            variable_values=GetMasterByUserVariables(
+                id=result.user.id,
+            ).to_dict(),
+        )
+
+        if "errors" not in master.result:
+            result.master = Master(
+                id=master.result["masterByUser"]["id"],
+                info=master.result["masterByUser"]["info"],
+                created_at=DatetimeParser.parse(master.result["masterByUser"]["createdAt"]),
+                updated_at=DatetimeParser.parse(master.result["masterByUser"]["updatedAt"]),
+            )
+        else:
+            result.errors.append(master.result["errors"][0]["message"])  # type: ignore[union-attr]
+
+    except Exception as err:
+        error: str = ERRORS_MAPPING.get(
+            extract_error_message(
+                error=str(err),
+                default_message="Ошибка изменения профиля"
+            ),
+            DEFAULT_ERROR_MESSAGE
+        )
+
+        result.errors.append(error)  # type: ignore[union-attr]
 
     return result

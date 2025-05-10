@@ -27,9 +27,10 @@ class GetMeQuery:
 class GetMasterByUserQuery:
     @staticmethod
     def to_gql() -> DocumentNode:
-        return gql("""
-                query {
-                    masterByUser {
+        return gql(
+            """
+                query MasterByUser($userId: ID!) {
+                    masterByUser(userId: $userId) {
                         id
                         user {
                             id
@@ -37,6 +38,47 @@ class GetMasterByUserQuery:
                         info
                         createdAt
                         updatedAt
+                        }
+                }
+            """
+        )
+
+
+class GetUserByIDQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query GetUserByID($id: ID!) {
+                    user(id: $id) {
+                        id
+                        displayName
+                        email
+                        phone
+                        telegram
+                        avatar
+                        createdAt
                     }
                 }
-            """)
+            """
+        )
+
+
+class GetUserByEmailQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query GetUserByEmail($email: String!) {
+                    userByEmail(email: $email) {
+                        id
+                        displayName
+                        email
+                        phone
+                        telegram
+                        avatar
+                        createdAt
+                    }
+                }
+            """
+        )

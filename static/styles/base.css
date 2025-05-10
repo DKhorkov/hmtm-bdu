@@ -167,6 +167,7 @@ input:focus {
 }
 
 .top-nav {
+    height: 73px;
     position: fixed;
     top: 0;
     left: 0;
@@ -191,6 +192,7 @@ input:focus {
 .nav-left {
     display: flex;
     align-items: center;
+    gap: 20px;
 }
 
 .nav-buttons {
@@ -199,6 +201,9 @@ input:focus {
 }
 
 .nav-icon {
+    margin-left: 30px;
+    position: relative;
+    z-index: 1000;
     width: 40px;
     height: 40px;
     transition: transform 0.3s ease, filter 0.3s ease;
@@ -219,7 +224,7 @@ input:focus {
 
 .nav-title-link {
     display: inline-block;
-    margin-left: 15px;
+    margin-left: 0;
     transition: transform 0.3s ease;
     text-decoration: none;
 }
@@ -306,4 +311,167 @@ input:focus {
     .nav-title-link {
         margin-left: 8px;
     }
+}
+
+.error-popup {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    border-radius: 8px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease-out;
+    max-width: 350px;
+    width: 90%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.error-popup div {
+    flex: 1; /* Растягиваем div на всю доступную ширину */
+    padding-right: 15px;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: center;
+}
+
+.error-popup div p {
+    margin: 0; /* Убираем лишние отступы */
+    text-align: center; /* Дополнительно центрируем текст внутри <p> */
+}
+
+.error-popup::before {
+    content: "⚠";
+    margin-right: 6px;
+    font-size: 1.2em;
+    color: #c62828;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .error-popup::before {
+        font-size: 1em;
+        margin-right: 4px;
+    }
+}
+
+.close-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: inherit;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .error-popup {
+        top: 80px;
+        width: 90%;
+        padding: 12px 20px;
+        max-width: 350px;
+    }
+
+    .error-popup div {
+        padding-right: 10px;
+    }
+}
+
+@keyframes slideIn {
+    from { transform: translate(-50%, -100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.message-popup {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 20px;
+    background: #acfac1;
+    color: green;
+    border: 1px solid green;
+    border-radius: 8px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease-out;
+    max-width: 350px;
+    width: 90%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.message-popup div {
+    flex: 1; /* Растягиваем div на всю доступную ширину */
+    padding-right: 15px;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: center;
+}
+
+.message-popup div p {
+    margin: 0; /* Убираем лишние отступы */
+    text-align: center; /* Дополнительно центрируем текст внутри <p> */
+}
+
+.message-popup::before {
+    content: "🎉";
+    margin-right: 6px;
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .message-popup::before {
+        font-size: 1em;
+        margin-right: 4px;
+    }
+}
+
+.close-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: inherit;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .message-popup {
+        top: 80px;
+        width: 90%;
+        padding: 12px 20px;
+        max-width: 350px;
+    }
+
+    .message-popup div {
+        padding-right: 10px;
+    }
+}
+
+@keyframes slideIn {
+    from { transform: translate(-50%, -100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.content {
+  margin-top: 73px; /* Высота навбара */
+  position: relative;
+  z-index: 1; /* Контент под меню */
 }
