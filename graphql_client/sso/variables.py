@@ -169,19 +169,3 @@ class GetUserByEmailVariables:
         return {
             "email": self.email
         }
-
-
-@dataclass(frozen=True)
-class GetToysCatalogVariables:
-    limit: int
-    offset: int
-
-    def to_dict(self) -> Dict[str, Dict[str, Dict[str, int]]]:
-        return {
-            "input": {
-                "pagination": {
-                    "limit": self.limit,
-                    "offset": self.offset,
-                }
-            }
-        }
