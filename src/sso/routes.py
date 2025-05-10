@@ -412,7 +412,7 @@ async def process_update_master(
         return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
 
     if result.error is not None:
-        encrypted_error: str = encryptor.encrypt(str(result.error))
+        encrypted_error: str = encryptor.encrypt(str(result.error))  # type: ignore[no-redef]
 
         return RedirectResponse(
             url=f"/sso/profile?error={encrypted_error}&tab=master",
@@ -442,7 +442,7 @@ async def register_master(
         return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
 
     if result.error is not None:
-        encrypted_error: str = encryptor.encrypt(str(result.error))
+        encrypted_error: str = encryptor.encrypt(str(result.error))  # type: ignore[no-redef]
 
         return RedirectResponse(
             url=f"/sso/profile?error={encrypted_error}&tab=master",
