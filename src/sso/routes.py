@@ -373,7 +373,7 @@ async def process_change_password(
 async def process_update_user_profile(
         request: Request,
         result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
-    encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     """ Ручка авторизованного пользователя для изменения данных о себе: никнейм, телеграм, телефон - Процесс """
     current_user: GetMeResponse = await get_me_dependency(request=request, cookies=result.cookies)
@@ -406,7 +406,7 @@ async def process_update_user_profile(
 async def process_update_master(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateMasterResponse = Depends(update_master_info_dependency),
-    encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     if current_user.user is None:
         encrypted_error: str = encryptor.encrypt(str(current_user.error))
@@ -500,11 +500,3 @@ async def find_get_user_info(
     }
 
     return templates.TemplateResponse(request=request, name="user-info.html", context=context)
-
-
-########################################################################################################################
-from fastapi.responses import JSONResponse
-@router.get(path="/toys", response_class=JSONResponse, name="toys")
-async def toys_catalog(
-):
-    pass
