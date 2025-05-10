@@ -8,7 +8,7 @@ from src.constants import DEFAULT_ERROR_MESSAGE
 from src.sso.constants import REQUEST_ENVIRONMENTS_MAPPING
 
 
-def extract_request_error_message(request: Request) -> Optional[str]:
+def extract_url_error_message(request: Request) -> Optional[str]:
     error_code: Optional[str] = request.query_params.get("error")
     if error_code:
         encrypted_error: FernetEnvironmentsKey = FernetEnvironmentsKey()
@@ -19,7 +19,7 @@ def extract_request_error_message(request: Request) -> Optional[str]:
     return None
 
 
-def extract_request_message(request: Request) -> Optional[str]:
+def extract_url_success_status_message(request: Request) -> Optional[str]:
     status_message: Optional[str] = request.query_params.get("message")
     if status_message:
         encrypted_status: FernetEnvironmentsKey = FernetEnvironmentsKey()
