@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Dict
 
-from src.sso.models import User, Master, UserInfo
+from src.sso.models import User, Master, UserInfo, Toy, ToysFilters
 from src.dto import BaseResponse, BoolResponse
 
 
@@ -75,3 +75,27 @@ class GetFullUserInfoResponse:
     user: Optional[UserInfo] = None
     master: Optional[Master] = None
     errors: Optional[List[str]] = None
+
+
+@dataclass
+class ToysCategoriesResponse:
+    categories: Optional[Dict[str, int | str]] = None
+
+
+@dataclass
+class ToysTagsResponse:
+    tags: Optional[Dict[str, int | str]] = None
+
+
+@dataclass
+class ToysCatalogResponse(ToysCategoriesResponse, ToysTagsResponse):
+    current_page: Optional[int] = None
+    total_pages: Optional[int] = None
+    toys: Optional[List[Toy]] = None
+    error: Optional[str] = None
+    filters: Optional[ToysFilters] = None
+
+
+@dataclass
+class ToyByIDResponse(BoolResponse):
+    toy: Optional[Toy] = None

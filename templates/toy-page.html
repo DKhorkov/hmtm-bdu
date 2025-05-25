@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ toy.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/styles/toy-page.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="toy-page-container">
+    <div class="toy-images">
+        {% if toy.attachments %}
+            {% for attachment in toy.attachments %}
+                <img src="{{ attachment.link }}" alt="{{ toy.name }}" class="toy-image">
+            {% endfor %}
+        {% else %}
+            <img src="{{ url_for('static', path='/images/default_toy_image.png') }}" alt="Default toy image" class="toy-image">
+        {% endif %}
+    </div>
+
+    <div class="toy-details">
+        <h1>{{ toy.name }}</h1>
+        <p class="toy-price">{{ toy.price }} ₽</p>
+
+        <div class="toy-description">
+            <h2>Описание</h2>
+            <p>{{ toy.description }}</p>
+        </div>
+
+        <div class="toy-meta">
+            {% if toy.master and toy.master.user %}
+            <div class="toy-seller">
+                <h3>Продавец:</h3>
+                <div class="seller-info">
+                    {% if toy.master.user.avatar %}
+                    <img src="{{ toy.master.user.avatar }}" alt="Аватар продавца" class="seller-avatar">
+                    {% endif %}
+                    <span class="seller-name">ID: {{ toy.master.id }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <p><strong>Категория:</strong> {{ toy.category.name }}</p>
+            <p><strong>Дата создания:</strong> {{ toy.createdAt }}</p>
+
+            {% if toy.tags %}
+            <p><strong>Теги:</strong>
+                {% for tag in toy.tags %}
+                    {{ tag.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+            {% endif %}
+
+            <p><strong>Количество:</strong> {{ toy.quantity }}</p>
+        </div>
+
+        <button class="btn add-to-cart">Добавить в корзину</button>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,8 @@
-from typing import Dict, Optional, BinaryIO
+from typing import Dict, Optional, BinaryIO, List
 from pydantic import EmailStr
 from dataclasses import dataclass
+
+from src.sso.models import ToysFilters
 
 
 @dataclass(frozen=True)
@@ -168,4 +170,40 @@ class GetUserByEmailVariables:
     def to_dict(self) -> Dict[str, str]:
         return {
             "email": self.email
+        }
+
+
+@dataclass(frozen=True)
+class ToysCatalogVariables:
+    limit: int
+    offset: int
+    filters: ToysFilters
+
+    def to_dict(self) -> Dict[str, Dict[str, Dict[str, int]]]:
+        return {
+            "input": {
+                "pagination": {
+                    "limit": self.limit,
+                    "offset": self.offset,
+                },
+                "filters": {
+                    "search": self.filters.search,
+                    "priceCeil": self.filters.price_ceil,
+                    "priceFloor": self.filters.price_floor,
+                    "quantityFloor": self.filters.quantity_floor,
+                    "categoryID": self.filters.category_id,
+                    "tagIDs": self.filters.tags_id,
+                    "createdAtOrderByAsc": self.filters.created_at_order_by_asc,
+                }
+            }
+        }
+
+
+@dataclass(frozen=True)
+class ToyByIDVariables:
+    id: int
+
+    def to_dict(self) -> Dict[str, int]:
+        return {
+            "id": self.id,
         }

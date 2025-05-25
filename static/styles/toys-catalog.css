@@ -1,0 +1,493 @@
+:root {
+    --card-bg-color: #F5EDE4;
+    --card-border-color: #C9B09E;
+    --sidebar-width: 280px;
+    --primary-text-color: #5D4C3A;
+    --form-bg-color: #DBCBB9;
+    --form-border-color: #C9B09E;
+    --input-bg-color: #F5EDE4;
+    --btn-bg-color: #5D4C3A;
+    --btn-text-color: #F5EDE4;
+    --input-width: 100%;
+    --input-height: 40px;
+    --navbar-height: 73px;
+    --checkbox-selected-bg: #5D4C3A;
+    --checkbox-selected-text: #F5EDE4;
+    --btn-width: 120px;
+    --btn-height: 40px;
+    --list-max-height: 200px;
+    --price-color: #2ecc71; /* Зелёный цвет для цены */
+}
+
+.catalog-container {
+    display: flex;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 30px;
+    position: relative;
+    align-items: flex-start;
+}
+
+.filter-toggle-btn {
+    display: none;
+    padding: 10px 20px;
+    background: var(--btn-bg-color);
+    color: var(--btn-text-color);
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    width: var(--btn-width);
+    height: var(--btn-height);
+}
+
+.filter-toggle-btn:hover {
+    background: #3A332B;
+}
+
+.filters-section {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    background: var(--form-bg-color);
+    padding: 15px;
+    border-radius: 12px;
+    border: 2px solid var(--form-border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: static;
+    margin-top: 0;
+    max-height: none;
+    overflow-y: visible;
+}
+
+.filters-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.filters-header h2 {
+    font-size: 1.5em;
+    color: var(--primary-text-color);
+    margin: 0;
+}
+
+.filter-icon {
+    width: 1.5em;
+    height: 1.5em;
+    filter: invert(40%) sepia(5%) saturate(1000%) hue-rotate(0deg) brightness(90%) contrast(90%);
+}
+
+.filters-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px; /* Уменьшенное расстояние между названием и полем */
+}
+
+.price-range {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.price-input {
+    width: var(--input-width);
+    height: var(--input-height);
+    padding: 8px;
+    border: 2px solid var(--form-border-color);
+    border-radius: 6px;
+    background: var(--input-bg-color);
+}
+
+.form-input {
+    width: var(--input-width);
+    height: var(--input-height);
+    padding: 8px;
+    border: 2px solid var(--form-border-color);
+    border-radius: 6px;
+    background: var(--input-bg-color);
+}
+
+.category-list-container, .tag-list-container {
+    display: none;
+}
+
+.category-list-container.active, .tag-list-container.active {
+    display: block;
+}
+
+.category-search, .tag-search {
+    width: var(--input-width);
+    height: var(--input-height);
+    padding: 8px;
+    border: 2px solid var(--form-border-color);
+    border-radius: 6px;
+    background: var(--input-bg-color);
+    margin-bottom: 5px;
+}
+
+.custom-checkbox-list {
+    max-height: var(--list-max-height);
+    overflow-y: auto;
+    border: 1px solid var(--form-border-color);
+    border-radius: 6px;
+    padding: 5px;
+    background: var(--input-bg-color);
+}
+
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.custom-checkbox input {
+    display: none;
+}
+
+.custom-checkbox .checkbox-label {
+    position: relative;
+    padding-left: 30px;
+    color: var(--primary-text-color);
+    font-size: 0.95em;
+    user-select: none;
+}
+
+.custom-checkbox .checkbox-label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--form-border-color);
+    border-radius: 4px;
+    background: #fff;
+}
+
+.custom-checkbox input:checked + .checkbox-label::before {
+    background: var(--checkbox-selected-bg);
+    border-color: var(--checkbox-selected-bg);
+}
+
+.custom-checkbox input:checked + .checkbox-label::after {
+    content: '✔';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--checkbox-selected-text);
+    font-size: 14px;
+}
+
+.custom-checkbox:hover {
+    background: rgba(93, 76, 58, 0.1);
+}
+
+.filter-accordion {
+    position: relative;
+}
+
+.accordion-toggle {
+    width: 100%;
+    padding: 8px;
+    background: var(--btn-bg-color);
+    color: var(--btn-text-color);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.accordion-toggle:hover {
+    background: #3A332B;
+}
+
+.accordion-toggle.active + .category-list-container,
+.accordion-toggle.active + .tag-list-container {
+    display: block;
+}
+
+.apply-filters {
+    padding: 12px 28px;
+    background: var(--btn-bg-color);
+    color: var(--btn-text-color) !important;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none !important;
+    box-shadow: 0 4px 12px rgba(93, 76, 58, 0.25);
+    transition: all 0.3s ease;
+    width: var(--btn-width);
+    height: var(--btn-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.apply-filters:hover {
+    background: #3A332B;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(93, 76, 58, 0.35);
+}
+
+.apply-filters:active {
+    transform: translateY(1px);
+}
+
+/*.catalog-content {*/
+/*    flex: 1;*/
+/*    width: 100%;*/
+/*    margin-left: 0;*/
+/*    padding-top: 0;*/
+/*}*/
+.catalog-content {
+    flex: 1;
+    width: 100%;
+    margin-left: 0;
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.toys-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.toy-card {
+    background: var(--card-bg-color);
+    border: 2px solid var(--card-border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    padding: 15px;
+}
+
+.toy-card:hover {
+    transform: translateY(-5px);
+}
+
+.toy-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-bottom: 2px solid var(--card-border-color);
+    margin-bottom: 5px;
+}
+
+.toy-price {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--price-color);
+    margin: 5px 0;
+    text-align: left;
+}
+
+.toy-info {
+    padding: 0;
+}
+
+.toy-info p {
+    margin: 5px 0;
+    font-size: 1em;
+    color: var(--primary-text-color);
+}
+
+.toy-info .toy-name {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.toy-info p strong {
+    font-weight: 600;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 30px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.page-info {
+    font-weight: 500;
+    color: var(--primary-text-color);
+}
+
+.pagination-btn {
+    padding: 10px 20px;
+    background: var(--btn-bg-color);
+    color: var(--btn-text-color) !important;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none !important;
+    box-shadow: 0 4px 12px rgba(93, 76, 58, 0.25);
+    transition: all 0.3s ease;
+    width: var(--btn-width);
+    height: var(--btn-height);
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-btn:hover {
+    background: #3A332B;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(93, 76, 58, 0.35);
+}
+
+.pagination-btn:active {
+    transform: translateY(1px);
+}
+
+.no-toys {
+    text-align: center;
+    font-size: 1.2em;
+    color: var(--primary-text-color);
+    grid-column: 1 / -1;
+}
+
+.page-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-input {
+    width: 170px;
+    padding: 8px;
+    border: 2px solid var(--form-border-color);
+    border-radius: 6px;
+    background: var(--input-bg-color);
+    font-size: 1em;
+}
+
+@media (max-width: 992px) {
+    .filter-toggle-btn {
+        display: block;
+    }
+
+    .filters-section {
+        display: none;
+        position: fixed;
+        top: var(--navbar-height);
+        left: 0;
+        width: 100%;
+        height: calc(100% - var(--navbar-height));
+        background: var(--form-bg-color);
+        padding: 20px;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+
+    .filters-section.active {
+        display: block;
+    }
+
+    .catalog-content {
+        margin-left: 0;
+        width: 100%;
+        padding-top: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .toys-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pagination {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .page-search {
+        margin-top: 10px;
+    }
+}
+
+/* Кнопки фильтров */
+.filter-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-top: 10px !important;
+}
+
+.reset-filters,
+.apply-filters {
+    padding: 12px 28px !important;
+    background: var(--btn-bg-color);
+    color: var(--btn-text-color) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 12px rgba(93, 76, 58, 0.25) !important;
+    transition: all 0.3s ease !important;
+    width: var(--btn-width) !important;
+    height: var(--btn-height) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: normal !important;
+}
+
+.reset-filters {
+    background: var(--btn-bg-color);
+}
+
+.reset-filters:hover {
+    background: var(--btn-bg-color);
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(93, 76, 58, 0.35) !important;
+}
+
+.reset-filters:active {
+    transform: translateY(1px) !important;
+}
+
+/* Карточки игрушек */
+.toy-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.toy-card-link:hover .toy-card {
+    transform: translateY(-5px);
+}

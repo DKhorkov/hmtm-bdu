@@ -20,6 +20,8 @@ from src.sso.dependencies import (
     update_master as update_master_info_dependency,
     register_master as register_master_dependency,
     get_user_info as get_user_info_dependency,
+    toys_catalog as toys_catalog_dependency,
+    toy_by_id as toy_by_id_dependency,
 )
 from src.sso.dto import (
     LoginResponse,
@@ -35,6 +37,8 @@ from src.sso.dto import (
     UpdateMasterResponse,
     RegisterMasterResponse,
     GetFullUserInfoResponse,
+    ToysCatalogResponse,
+    ToyByIDResponse,
 )
 from src.sso.constants import FORGET_PASSWORD_TOKEN_NAME
 from src.request_utils import (
@@ -483,14 +487,14 @@ async def find_users_page(
 @router.post("/users/{query_params}", response_class=HTMLResponse, name="get_user_info")
 async def find_get_user_info(
         request: Request,
-        result: GetFullUserInfoResponse = Depends(get_user_info_dependency)
+        result: GetFullUserInfoResponse = Depends(get_user_info_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     if result.user is None:
-        encrypted_error = FernetEnvironmentsKey()
-        encrypted_error_key = encrypted_error.encrypt("user_not_found")
+        encrypted_error: str = encryptor.encrypt("user_not_found")
 
         return RedirectResponse(
-            url=f"/sso/find-users?error={encrypted_error_key}",
+            url=f"/sso/find-users?error={encrypted_error}",
             status_code=status.HTTP_303_SEE_OTHER
         )
 
@@ -500,3 +504,67 @@ async def find_get_user_info(
     }
 
     return templates.TemplateResponse(request=request, name="user-info.html", context=context)
+
+
+@router.get(path="/toys/catalog", response_class=HTMLResponse, name="toys_catalog")
+async def toys_catalog(
+        request: Request,
+        result: ToysCatalogResponse = Depends(toys_catalog_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
+):
+    current_user: GetMeResponse = await get_me_dependency(request=request)
+
+    if result.error is not None:
+        encrypted_error: str = encryptor.encrypt(result.error)
+
+        return RedirectResponse(
+            url=f"/?error={encrypted_error}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    context = {
+        "user": current_user.user if current_user.user else None,
+        "current_page": result.current_page,
+        "total_pages": result.total_pages,
+        "toys": result.toys,
+        "categories": result.categories,
+        "tags": result.tags,
+    }
+    response: Response = templates.TemplateResponse(
+        request=request,
+        name="toys-catalog.html",
+        context=context
+    )
+
+    for cookie in current_user.cookies:
+        response = set_cookie(response, cookie)
+
+    return response
+
+
+@router.get("/toys/catalog/{toy_id}", response_class=HTMLResponse, name="toy_by_id")
+async def toy_by_id(
+        request: Request,
+        result: ToyByIDResponse = Depends(toy_by_id_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
+):
+    current_user: GetMeResponse = await get_me_dependency(request=request)
+
+    if result.error is not None:
+        encrypted_error: str = encryptor.encrypt(result.error)
+
+        return RedirectResponse(
+            url=f"/sso/toys/catalog?error={encrypted_error}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    context = {
+        "user": current_user.user if current_user.user else None,
+        "toy": result.toy
+    }
+    response: Response = templates.TemplateResponse(request=request, name="toy-page.html", context=context)
+
+    for cookie in current_user.cookies:
+        response = set_cookie(response, cookie)
+
+    return response

@@ -10,6 +10,11 @@ from .sso import (
 
     GetMeQuery,
 
+    ToysCounterQuery,
+
+    AllToysCategoriesQuery,
+    AllToysTagsQuery,
+
     GetMasterByUserQuery,
     GetMasterByUserVariables,
 
@@ -18,6 +23,12 @@ from .sso import (
 
     GetUserByEmailQuery,
     GetUserByEmailVariables,
+
+    ToysCatalogQuery,
+    ToysCatalogVariables,
+
+    ToyByIDQuery,
+    ToyByIDVariables,
 
     RefreshTokensMutation,
 

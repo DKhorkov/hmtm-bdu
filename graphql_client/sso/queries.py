@@ -82,3 +82,91 @@ class GetUserByEmailQuery:
                 }
             """
         )
+
+
+class ToysCatalogQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query GetToysCatalog($input: ToysInput!) {
+                    toys(input: $input) {
+                        id
+                        master {id user {id avatar} info}
+                        category {name}
+                        name
+                        description
+                        price
+                        quantity
+                        createdAt
+                        tags{name}
+                        attachments{toyId link createdAt}
+                    }
+                }
+            """
+        )
+
+
+class ToysCounterQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query {
+                    toysCounter
+                }
+            """
+        )
+
+
+class AllToysCategoriesQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query {
+                    categories {
+                        id
+                        name
+                    }
+                }
+            """
+        )
+
+
+class AllToysTagsQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query {
+                    tags {
+                        id
+                        name
+                    }
+                }
+            """
+        )
+
+
+class ToyByIDQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query ToyByID($id: ID!) {
+                    toy(id: $id) {
+                        id
+                        master {id user {id avatar} info}
+                        category {name}
+                        name
+                        description
+                        price
+                        quantity
+                        createdAt
+                        tags{name}
+                        attachments{toyId link createdAt}
+                    }
+                }
+            """
+        )

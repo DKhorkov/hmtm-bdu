@@ -1,0 +1,80 @@
+.toy-page-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 40px;
+}
+
+.toy-images {
+    flex: 1;
+}
+
+.toy-image {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.toy-details {
+    flex: 1;
+}
+
+.toy-price {
+    font-size: 2em;
+    color: var(--price-color);
+    margin: 20px 0;
+}
+
+.toy-description {
+    margin: 30px 0;
+}
+
+.toy-meta {
+    background: var(--card-bg-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin: 30px 0;
+}
+
+.add-to-cart {
+    padding: 15px 30px;
+    background: var(--btn-bg-color);
+    color: var(--btn-text-color);
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .toy-page-container {
+        flex-direction: column;
+    }
+}
+
+.toy-seller {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.seller-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.seller-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.seller-name {
+    font-weight: 600;
+}

@@ -19,6 +19,7 @@ from src.sso.dependencies import (
     update_master,
     register_master,
     get_user_info,
+    toys_catalog
 )
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
@@ -33,7 +34,9 @@ from src.sso.dto import (
     GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse,
-    GetFullUserInfoResponse
+    GetFullUserInfoResponse,
+    ToysCategoriesResponse,
+    ToysTagsResponse,
 )
 
 
@@ -874,3 +877,81 @@ class TestGetUserInfo:
         assert result.master.info == "IT специалист"
         assert result.master.updated_at == "05.04.2023"
         assert not result.errors
+
+
+class TestToysCatalog:
+    @pytest.mark.asyncio
+    async def test_toys_catalog_success(self, mock_gql_client: AsyncMock) -> None:
+        mock_toys_categories = MagicMock(spec=ToysCategoriesResponse)
+        mock_toys_categories.categories = [
+            {
+                "id": 1,
+                "name": "Мягкая игрушка"
+            },
+            {
+                "id": 2,
+                "name": "Деревянная игрушка"
+            }
+        ]
+
+        mock_toys_tags = MagicMock(spec=ToysTagsResponse)
+        mock_toys_tags.tags = [
+            {
+                "id": 1,
+                "name": "Хлопок"
+            },
+            {
+                "id": 2,
+                "name": "Лён"
+            }
+        ]
+
+        mock_gql_response = MagicMock(spec=GQLResponse)
+        mock_gql_response.result = {
+            "toys": [
+                {
+                    "id": 1,
+                    "master": None,
+                    "category": None,
+                    "name": "Медведь",
+                    "description": None,
+                    "price": 0,
+                    "quantity": 0,
+                    "createdAt": None,
+                    "tags": [],
+                    "attachments": []
+                },
+            ],
+            "toysCounter": 1
+        }
+
+        mock_gql_client.side_effect = [
+            mock_gql_response,  # для основного запроса
+            mock_gql_response  # для запроса счетчика
+        ]
+
+        result = await toys_catalog(
+            page=1,
+            search=None,
+            max_price=None,
+            min_price=None,
+            quantity_floor=None,
+            categories=None,
+            tags=None,
+            sort_order=None,
+            all_toys_categories=mock_toys_categories,
+            all_toys_tags=mock_toys_tags,
+        )
+
+        assert result.categories == mock_toys_categories.categories
+        assert result.tags == mock_toys_tags.tags
+
+        assert len(result.toys) == 1
+        assert result.toys[0].name == "Медведь"
+
+        category_names = [c["name"] for c in result.categories]
+        assert "Мягкая игрушка" in category_names
+
+        tag_names = [t["name"] for t in result.tags]
+        assert "Хлопок" in tag_names
+        assert "Лён" in tag_names
