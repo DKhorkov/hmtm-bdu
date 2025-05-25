@@ -1,4 +1,4 @@
-from typing import Dict, Optional, BinaryIO, List
+from typing import Dict, Optional, BinaryIO, Union, List
 from pydantic import EmailStr
 from dataclasses import dataclass
 
@@ -179,7 +179,7 @@ class ToysCatalogVariables:
     offset: int
     filters: ToysFilters
 
-    def to_dict(self) -> Dict[str, Dict[str, Dict[str, int]]]:
+    def to_dict(self) -> Dict[str, Dict[str, Dict[str, Union[str, float, None, bool, int, List[int]]]]]:
         return {
             "input": {
                 "pagination": {

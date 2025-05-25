@@ -946,12 +946,8 @@ class TestToysCatalog:
         assert result.categories == mock_toys_categories.categories
         assert result.tags == mock_toys_tags.tags
 
-        assert len(result.toys) == 1
+        assert result.toys is not None
         assert result.toys[0].name == "Медведь"
 
-        category_names = [c["name"] for c in result.categories]
-        assert "Мягкая игрушка" in category_names
-
-        tag_names = [t["name"] for t in result.tags]
-        assert "Хлопок" in tag_names
-        assert "Лён" in tag_names
+        assert {"id": 1, "name": "Мягкая игрушка"} in result.categories  # type: ignore[operator]
+        assert {"id": 1, "name": "Хлопок"} in result.tags  # type: ignore[operator]

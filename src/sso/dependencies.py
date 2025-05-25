@@ -829,7 +829,7 @@ async def toys_catalog(
                 tags=toys["tags"],
                 attachments=toys["attachments"]
             )
-            result.toys.append(toy)
+            result.toys.append(toy)  # type: ignore[union-attr]
 
         total_toys_count: GQLResponse = await config.graphql_client.gql_query(
             query=ToysCounterQuery.to_gql(),

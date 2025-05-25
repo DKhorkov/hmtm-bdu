@@ -80,11 +80,13 @@ class GetFullUserInfoResponse:
 @dataclass
 class ToysCategoriesResponse:
     categories: Optional[Dict[str, int | str]] = None
+    error: Optional[str] = None
 
 
 @dataclass
 class ToysTagsResponse:
     tags: Optional[Dict[str, int | str]] = None
+    error: Optional[str] = None
 
 
 @dataclass

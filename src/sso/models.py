@@ -40,7 +40,7 @@ class UserInfo:
 class Toy:
     id: int
     master: Dict[str, Dict[str, str]]  # {"master": {"id": ..., user{"id": ..., ...}, ...}}
-    category: Dict[str, str] # name
+    category: Dict[str, str]  # {"name": ..., ...}
     name: str
     description: str
     price: float
