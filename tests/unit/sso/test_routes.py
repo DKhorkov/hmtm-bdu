@@ -17,7 +17,7 @@ class TestPages:
             ("/", 200, "text/html"),
             ("/sso/register", 200, "text/html"),
             ("/sso/login", 200, "text/html"),
-            ("/sso/profile", 200, "text/html"),
+            ("/profile/me", 200, "text/html"),
             ("/sso/logout", 200, "text/html"),
             ("/sso/verify-email-letter-form", 200, "text/html"),
         ]

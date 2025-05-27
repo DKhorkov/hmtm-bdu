@@ -5,7 +5,7 @@ from os import getenv
 from dotenv import load_dotenv, find_dotenv
 
 from src.constants import DEFAULT_ERROR_MESSAGE
-from src.sso.constants import REQUEST_ENVIRONMENTS_MAPPING
+from src.profile.constants import REQUEST_ENVIRONMENTS_MAPPING
 
 
 def extract_url_error_message(request: Request) -> Optional[str]:
@@ -51,3 +51,7 @@ class FernetEnvironmentsKey:
 
         except Exception:
             return None
+
+
+async def encryptor() -> FernetEnvironmentsKey:
+    return FernetEnvironmentsKey()

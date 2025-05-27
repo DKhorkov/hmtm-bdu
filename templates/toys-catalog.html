@@ -113,13 +113,14 @@
 
                         <div class="toy-info">
                             <p class="toy-name">{{ toy.name }}</p>
-                            <p><strong>Категории:</strong> {{ toy.category["name"] }}</p>
+                            <p><strong>Категории:</strong> {{ toy.category.name }}</p>
                             <p><strong>Дата создания:</strong> {{ toy.created_at }}</p>
-                            <p><strong>Теги:</strong>
+                            <div class="tags-container">
+                                <strong>Теги:</strong>
                                 {% for tag in toy.tags %}
-                                    {{ tag["name"] }}{% if not loop.last %}, {% endif %}
+                                    <span class="hashtag">#{{ tag.name }}</span>
                                 {% endfor %}
-                            </p>
+                            </div>
                         </div>
                     </div>
                 </a>

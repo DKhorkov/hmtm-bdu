@@ -92,15 +92,14 @@ class ToysCatalogQuery:
                 query GetToysCatalog($input: ToysInput!) {
                     toys(input: $input) {
                         id
-                        master {id user {id avatar} info}
                         category {name}
                         name
                         description
                         price
                         quantity
                         createdAt
-                        tags{name}
-                        attachments{toyId link createdAt}
+                        tags {name}
+                        attachments {link}
                     }
                 }
             """
@@ -157,15 +156,15 @@ class ToyByIDQuery:
                 query ToyByID($id: ID!) {
                     toy(id: $id) {
                         id
-                        master {id user {id avatar} info}
+                        master {id user {displayName avatar}}
                         category {name}
                         name
                         description
                         price
                         quantity
                         createdAt
-                        tags{name}
-                        attachments{toyId link createdAt}
+                        tags {name}
+                        attachments {link}
                     }
                 }
             """

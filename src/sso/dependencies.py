@@ -1,14 +1,11 @@
-import io
-
-from math import ceil as math_ceil
-from typing import Annotated, Dict, Optional, BinaryIO, List
-from fastapi import Form, Request, UploadFile, File, Depends, Query
+from typing import Annotated, Dict, Optional, List
+from fastapi import Form, Request
 
 from src.cookies import CookiesConfig
 from src.sso.datetime_parser import DatetimeParser
 from graphql_client.dto import GQLResponse
 from src.config import config
-from src.sso.constants import ERRORS_MAPPING, FORGET_PASSWORD_TOKEN_NAME, TOYS_FIXED_LIMIT
+from src.sso.constants import ERRORS_MAPPING, FORGET_PASSWORD_TOKEN_NAME
 from src.constants import DEFAULT_ERROR_MESSAGE
 from graphql_client import (
     RegisterUserVariables,
@@ -16,16 +13,10 @@ from graphql_client import (
     VerifyUserEmailVariables,
     SendVerifyEmailMessageVariables,
     SendForgetPasswordMessageVariables,
-    ChangePasswordVariables,
     ForgetPasswordVariables,
-    UpdateUserProfileVariables,
-    UpdateMasterVariables,
-    RegisterMasterVariables,
     GetMasterByUserVariables,
     GetUserByIDVariables,
     GetUserByEmailVariables,
-    ToysCatalogVariables,
-    ToyByIDVariables,
 
     RegisterUserMutation,
     LoginUserMutation,
@@ -33,21 +24,11 @@ from graphql_client import (
     RefreshTokensMutation,
     SendVerifyEmailMessageMutation,
     SendForgetPasswordMessageMutation,
-    ChangePasswordMutation,
     ChangeForgetPasswordMutation,
-    UpdateUserProfileMutation,
-    UpdateMasterMutation,
-    RegisterMasterMutation,
-
     GetUserByIDQuery,
     GetUserByEmailQuery,
-    ToysCatalogQuery,
     GetMeQuery,
     GetMasterByUserQuery,
-    ToysCounterQuery,
-    AllToysCategoriesQuery,
-    AllToysTagsQuery,
-    ToyByIDQuery,
 
     extract_error_message,
 
@@ -60,26 +41,15 @@ from src.sso.dto import (
     VerifyEmailResponse,
     SendVerifyEmailMessageResponse,
     SendForgetPasswordMessageResponse,
-    ChangePasswordResponse,
-    ChangeForgetPasswordResponse,
-    UpdateUserProfileResponse,
     RefreshTokensResponse,
-    GetUserIsMasterResponse,
-    UpdateMasterResponse,
-    RegisterMasterResponse,
     GetFullUserInfoResponse,
-    ToysCatalogResponse,
-    ToysCategoriesResponse,
-    ToysTagsResponse,
-    ToyByIDResponse,
 )
-from src.sso.models import Master, UserInfo, Toy, ToysFilters
+from src.profile.dto import ChangeForgetPasswordResponse
+from src.sso.models import (
+    UserInfo,
+)
+from src.profile.models import Master
 from src.sso.utils import user_from_dict
-from src.request_utils import FernetEnvironmentsKey
-
-
-async def encryptor() -> FernetEnvironmentsKey:
-    return FernetEnvironmentsKey()
 
 
 async def process_register(  # type: ignore[return]
@@ -386,259 +356,6 @@ async def change_forget_password(
     return result
 
 
-async def change_password(
-        request: Request,
-        old_password: Annotated[str, Form()],
-        new_password: Annotated[str, Form()],
-        current_user: GetMeResponse = Depends(get_me)
-) -> ChangePasswordResponse:
-    result: ChangePasswordResponse = ChangePasswordResponse()
-
-    if current_user.error:
-        result.error = "Пользователь не найден"
-        return result
-
-    actual_cookies: Dict[str, str] = request.cookies
-    if current_user.cookies:
-        result.cookies = current_user.cookies
-        for cookie in current_user.cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
-
-    try:
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=ChangePasswordMutation().to_gql(),
-            variable_values=ChangePasswordVariables(
-                old_password=old_password,
-                new_password=new_password
-            ).to_dict(),
-            cookies=actual_cookies,
-        )
-
-        result.result = True
-        result.headers = gql_response.headers  # type: ignore[assignment]
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка отправки формы для смены пароля"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def update_user_profile(
-        request: Request,
-        username: Annotated[str | None, Form()],
-        phone: Annotated[str | None, Form()],
-        telegram: Annotated[str | None, Form()],
-        avatar: Annotated[UploadFile | None, File()],
-        current_user: GetMeResponse = Depends(get_me),
-) -> UpdateUserProfileResponse:
-    result: UpdateUserProfileResponse = UpdateUserProfileResponse()
-    upload_file: Optional[BinaryIO] = None
-
-    if current_user.error:
-        result.error = "Пользователь не найден"
-        return result
-
-    actual_cookies: Dict[str, str] = request.cookies
-    if current_user.cookies:
-        result.cookies = current_user.cookies
-        for cookie in current_user.cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
-
-    try:
-        if avatar and avatar.size is not None and avatar.size > 0:
-            upload_file = io.BytesIO(await avatar.read())
-            upload_file.name = avatar.filename
-
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=UpdateUserProfileMutation().to_gql(),
-            variable_values=UpdateUserProfileVariables(
-                display_name=username,
-                phone=phone if (phone != "Отсутствует" and phone != "") else None,
-                telegram=telegram if (telegram != "Отсутствует" and telegram != "") else None,
-                avatar=upload_file,
-            ).to_dict(),
-            upload_files=True,
-            cookies=actual_cookies,
-        )
-
-        result.result = True
-        result.headers = gql_response.headers  # type: ignore[assignment]
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка изменения профиля"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def master_by_user(
-        user_id: str,
-        request: Request,
-        cookies: Optional[List[CookiesConfig]] = None,
-) -> GetUserIsMasterResponse:
-    result: GetUserIsMasterResponse = GetUserIsMasterResponse()
-
-    if not cookies and len(request.cookies) == 0:
-        result.error = "Пользователь не найден"
-        return result
-
-    actual_cookies: Dict[str, str] = request.cookies
-    if cookies:
-        for cookie in cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
-
-    try:
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=GetMasterByUserQuery().to_gql(),
-            variable_values=GetMasterByUserVariables(
-                id=user_id,
-            ).to_dict(),
-            cookies=actual_cookies,
-        )
-
-        if "errors" in gql_response.result:
-            raise Exception(gql_response.result["errors"][0])
-
-        result.master = Master(
-            id=gql_response.result["masterByUser"]["id"],
-            info=gql_response.result["masterByUser"]["info"],
-            created_at=DatetimeParser.parse(gql_response.result["masterByUser"]["createdAt"]),
-            updated_at=DatetimeParser.parse(gql_response.result["masterByUser"]["updatedAt"]),
-        )
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка изменения профиля"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def update_master(
-        request: Request,
-        info: Annotated[str | None, Form()],
-        current_user: GetMeResponse = Depends(get_me),
-) -> UpdateMasterResponse:
-    result: UpdateMasterResponse = UpdateMasterResponse()
-
-    if current_user.error:
-        result.error = "Пользователь не найден"
-        return result
-
-    actual_cookies: Dict[str, str] = request.cookies
-    if current_user.cookies:
-        result.cookies = current_user.cookies
-        for cookie in current_user.cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
-
-    try:
-        master: GetUserIsMasterResponse = await master_by_user(
-            user_id=current_user.user.id,  # type: ignore[union-attr]
-            request=request,
-            cookies=current_user.cookies,
-        )
-
-        if master.master is None:
-            result.error = "Не удалось найти мастера"
-            return result
-
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=UpdateMasterMutation().to_gql(),
-            variable_values=UpdateMasterVariables(
-                id=master.master.id,
-                info=info
-            ).to_dict(),
-            cookies=actual_cookies,
-        )
-
-        if "errors" in gql_response.result:
-            result.error = gql_response.result["errors"][0]["message"]
-            return result
-
-        result.result = True
-        result.headers = gql_response.headers  # type: ignore[assignment]
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка изменения профиля"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def register_master(
-        request: Request,
-        info: Annotated[str | None, Form()],
-        current_user: GetMeResponse = Depends(get_me),
-) -> RegisterMasterResponse:
-    result: RegisterMasterResponse = RegisterMasterResponse()
-
-    if current_user.error:
-        result.error = "Пользователь не найден"
-        return result
-
-    actual_cookies: Dict[str, str] = request.cookies
-    if current_user.cookies:
-        result.cookies = current_user.cookies
-        for cookie in current_user.cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
-
-    try:
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=RegisterMasterMutation().to_gql(),
-            variable_values=RegisterMasterVariables(
-                info=info,
-            ).to_dict(),
-            cookies=actual_cookies,
-        )
-
-        if "errors" in gql_response.result:
-            raise Exception(gql_response.result["errors"][0])
-
-        result.result = True
-        result.headers = gql_response.headers  # type: ignore[assignment]
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка изменения профиля"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
 async def get_user_info(
         query_params: str,
 ) -> GetFullUserInfoResponse:
@@ -707,193 +424,11 @@ async def get_user_info(
         error: str = ERRORS_MAPPING.get(
             extract_error_message(
                 error=str(err),
-                default_message="Ошибка изменения профиля"
+                default_message="Ошибка получения данных о пользователе"
             ),
             DEFAULT_ERROR_MESSAGE
         )
 
         result.errors.append(error)  # type: ignore[union-attr]
-
-    return result
-
-
-async def toys_categories() -> ToysCategoriesResponse:
-    result: ToysCategoriesResponse = ToysCategoriesResponse()
-
-    try:
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=AllToysCategoriesQuery.to_gql(),
-            variable_values={}
-        )
-
-        if "errors" in gql_response.result:
-            raise Exception(gql_response.result["errors"][0])
-
-        result.categories = gql_response.result["categories"]
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка изменения профиля"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def toys_tags():
-    result: ToysTagsResponse = ToysTagsResponse()
-
-    try:
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=AllToysTagsQuery.to_gql(),
-            variable_values={}
-        )
-
-        if "errors" in gql_response.result:
-            raise Exception(gql_response.result["errors"][0])
-
-        result.tags = gql_response.result["tags"]
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка изменения профиля"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def toys_catalog(
-        page: int = Query(default=1, ge=1, description="Номер страницы (по 10 записей на одной)"),
-        # Filters
-        search: Optional[str] = Query(default=None),
-        max_price: Optional[str] = Query(default=None),
-        min_price: Optional[str] = Query(default=None),
-        quantity_floor: Optional[str] = Query(default=None),
-        categories: Optional[int] = Query(default=None),
-        tags: Optional[List[int]] = Query(default=None),
-        sort_order: Optional[str] = Query(default=None),
-        # Others
-        all_toys_categories: ToysCategoriesResponse = Depends(toys_categories),
-        all_toys_tags: ToysTagsResponse = Depends(toys_tags),
-) -> ToysCatalogResponse:
-    result: ToysCatalogResponse = ToysCatalogResponse(toys=[])
-
-    result.filters = ToysFilters(
-        search=search if search else None,
-        price_floor=float(min_price) if min_price else None,
-        price_ceil=float(max_price) if max_price else None,
-        quantity_floor=int(quantity_floor) if quantity_floor else None,
-        category_id=categories,
-        tags_id=tags,
-        created_at_order_by_asc=True if sort_order == "oldest" else False,
-    )
-
-    try:
-        if page < 1:
-            raise Exception("Номер страницы должен быть не менее 1")
-        offset: int = (page - 1) * TOYS_FIXED_LIMIT
-
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=ToysCatalogQuery.to_gql(),
-            variable_values=ToysCatalogVariables(
-                offset=offset,
-                limit=TOYS_FIXED_LIMIT,
-                filters=result.filters
-            ).to_dict()
-        )
-
-        if "errors" in gql_response.result:
-            raise Exception(gql_response.result["errors"][0])
-
-        for toys in gql_response.result["toys"]:
-            toy = Toy(
-                id=toys["id"],
-                master=toys["master"],
-                category=toys["category"],
-                name=toys["name"],
-                description=toys["description"],
-                price=round(toys["price"], 2),
-                quantity=toys["quantity"],
-                created_at=DatetimeParser.parse(toys["createdAt"]),
-                tags=toys["tags"],
-                attachments=toys["attachments"]
-            )
-            result.toys.append(toy)  # type: ignore[union-attr]
-
-        total_toys_count: GQLResponse = await config.graphql_client.gql_query(
-            query=ToysCounterQuery.to_gql(),
-            variable_values={}
-        )
-
-        result.categories = all_toys_categories.categories
-        result.tags = all_toys_tags.tags
-        result.total_pages = math_ceil(total_toys_count.result["toysCounter"] / TOYS_FIXED_LIMIT)
-        result.current_page = page
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка отображения каталога"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def toy_by_id(
-        toy_id: int
-) -> ToyByIDResponse:
-    result: ToyByIDResponse = ToyByIDResponse()
-
-    try:
-        gql_response: GQLResponse = await config.graphql_client.gql_query(
-            query=ToyByIDQuery.to_gql(),
-            variable_values=ToyByIDVariables(
-                id=toy_id,
-            ).to_dict()
-        )
-
-        if "errors" in gql_response.result:
-            raise Exception(gql_response.result["errors"][0])
-
-        toy_response = gql_response.result["toy"]
-        result.toy = Toy(
-            id=toy_response["id"],
-            master=toy_response["master"],
-            category=toy_response["category"],
-            name=toy_response["name"],
-            description=toy_response["description"],
-            price=round(toy_response["price"], 2),
-            quantity=toy_response["quantity"],
-            created_at=DatetimeParser.parse(toy_response["createdAt"]),
-            tags=toy_response["tags"],
-            attachments=toy_response["attachments"]
-        )
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка отображения каталога"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
 
     return result

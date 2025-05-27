@@ -13,14 +13,16 @@ from src.sso.dependencies import (
     verify_email,
     get_me,
     change_forget_password,
-    update_user_profile,
+    get_user_info,
+)
+from src.profile.dependencies import (
     change_password,
+    update_user_profile,
     master_by_user,
     update_master,
-    register_master,
-    get_user_info,
-    toys_catalog
+    register_master
 )
+from src.toys.dependencies import toys_catalog, toy_by_id
 from graphql_client.client import GraphQLClient
 from graphql_client.dto import GQLResponse
 from src.sso.dto import (
@@ -28,16 +30,17 @@ from src.sso.dto import (
     GetMeResponse,
     RegisterResponse,
     VerifyEmailResponse,
-    ChangeForgetPasswordResponse,
+    GetFullUserInfoResponse,
+)
+from src.profile.dto import (
     UpdateUserProfileResponse,
     ChangePasswordResponse,
+    ChangeForgetPasswordResponse,
     GetUserIsMasterResponse,
     UpdateMasterResponse,
-    RegisterMasterResponse,
-    GetFullUserInfoResponse,
-    ToysCategoriesResponse,
-    ToysTagsResponse,
+    RegisterMasterResponse
 )
+from src.toys.dto import ToysCategoriesResponse, ToysTagsResponse, ToyByIDResponse
 
 
 @pytest.fixture(scope="function")
@@ -609,7 +612,7 @@ class TestUpdateMaster:
         mock_master.master.created_at = "27.04.2025"
         mock_master.master.updated_at = "27.04.2025"
 
-        with patch('src.sso.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
+        with patch('src.profile.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
             new_master_info = "New_test_master"
             mock_gql_client.return_value = mock_response
 
@@ -668,7 +671,7 @@ class TestUpdateMaster:
         mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
         mock_master.master = None
 
-        with patch('src.sso.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
+        with patch('src.profile.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
             new_master_info = "New_test_master"
 
             result: UpdateMasterResponse = await update_master(
@@ -884,35 +887,23 @@ class TestToysCatalog:
     async def test_toys_catalog_success(self, mock_gql_client: AsyncMock) -> None:
         mock_toys_categories = MagicMock(spec=ToysCategoriesResponse)
         mock_toys_categories.categories = [
-            {
-                "id": 1,
-                "name": "Мягкая игрушка"
-            },
-            {
-                "id": 2,
-                "name": "Деревянная игрушка"
-            }
+            {"id": 1, "name": "Мягкая игрушка"},
+            {"id": 2, "name": "Деревянная игрушка"}
         ]
 
         mock_toys_tags = MagicMock(spec=ToysTagsResponse)
         mock_toys_tags.tags = [
-            {
-                "id": 1,
-                "name": "Хлопок"
-            },
-            {
-                "id": 2,
-                "name": "Лён"
-            }
+            {"id": 1, "name": "Хлопок"},
+            {"id": 2, "name": "Лён"}
         ]
 
-        mock_gql_response = MagicMock(spec=GQLResponse)
-        mock_gql_response.result = {
+        # Первый ответ - для основного запроса
+        mock_gql_response1 = MagicMock(spec=GQLResponse)
+        mock_gql_response1.result = {
             "toys": [
                 {
                     "id": 1,
-                    "master": None,
-                    "category": None,
+                    "category": {"name": "Мягкая игрушка"},
                     "name": "Медведь",
                     "description": None,
                     "price": 0,
@@ -921,14 +912,14 @@ class TestToysCatalog:
                     "tags": [],
                     "attachments": []
                 },
-            ],
-            "toysCounter": 1
+            ]
         }
 
-        mock_gql_client.side_effect = [
-            mock_gql_response,  # для основного запроса
-            mock_gql_response  # для запроса счетчика
-        ]
+        # Второй ответ - для запроса счетчика
+        mock_gql_response2 = MagicMock(spec=GQLResponse)
+        mock_gql_response2.result = {"toysCounter": 1}
+
+        mock_gql_client.side_effect = [mock_gql_response1, mock_gql_response2]
 
         result = await toys_catalog(
             page=1,
@@ -943,11 +934,70 @@ class TestToysCatalog:
             all_toys_tags=mock_toys_tags,
         )
 
+        assert result.error is None
+
         assert result.categories == mock_toys_categories.categories
         assert result.tags == mock_toys_tags.tags
-
         assert result.toys is not None
         assert result.toys[0].name == "Медведь"
-
         assert {"id": 1, "name": "Мягкая игрушка"} in result.categories  # type: ignore[operator]
         assert {"id": 1, "name": "Хлопок"} in result.tags  # type: ignore[operator]
+
+
+class TestToyByID:
+    @pytest.mark.asyncio
+    async def test_toys_by_id_success(self, mock_gql_client: AsyncMock) -> None:
+        mock_toys_by_id = MagicMock(spec=GQLResponse)
+        mock_toys_by_id.result = {
+            "toy": {
+                "id": 999,
+                "master": {"id": 0, "user": {"avatar": "<AVATAR>", "displayName": "<USER>"}},
+                "category": {"name": "<CATEGORY>"},
+                "name": "<NAME>",
+                "description": "<DESCRIPTION>",
+                "price": 0,
+                "quantity": 0,
+                "createdAt": "2023-04-01T00:00:00Z",
+                "tags": [{"name": "<TAG1>"}, {"name": "<TAG2>"}, {"name": "<TAG3>"}],
+                "attachments": []
+            }
+        }
+
+        mock_gql_client.return_value = mock_toys_by_id
+
+        result: ToyByIDResponse = await toy_by_id(
+            toy_id=999
+        )
+
+        assert result.error is None
+        assert result.toy.id == 999  # type: ignore[union-attr]
+
+        assert result.toy.master is not None  # type: ignore[union-attr]
+        assert result.toy.master.id == 0  # type: ignore[union-attr]
+
+        assert result.toy.price == 0  # type: ignore[union-attr]
+        assert result.toy.quantity == 0  # type: ignore[union-attr]
+
+        assert result.toy.tags is not None  # type: ignore[union-attr]
+
+    @pytest.mark.asyncio
+    async def test_toys_by_id_failure(self, mock_gql_client: AsyncMock) -> None:
+        mock_toys_by_id = MagicMock(spec=GQLResponse)
+        mock_toys_by_id.result = {
+            "errors": [
+                {
+                    "message": "<ERROR>",
+                    "path": [
+                        "toy"
+                    ]
+                },
+            ]
+        }
+
+        mock_gql_client.return_value = mock_toys_by_id
+
+        result: ToyByIDResponse = await toy_by_id(
+            toy_id=999
+        )
+
+        assert result.error is not None

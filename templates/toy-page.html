@@ -1,60 +1,108 @@
+<!-- toy-page.html -->
 {% extends "base.html" %}
 
 {% block title %}{{ toy.name }}{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', path='/styles/toy-page.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="toy-page-container">
-    <div class="toy-images">
-        {% if toy.attachments %}
-            {% for attachment in toy.attachments %}
-                <img src="{{ attachment.link }}" alt="{{ toy.name }}" class="toy-image">
-            {% endfor %}
-        {% else %}
-            <img src="{{ url_for('static', path='/images/default_toy_image.png') }}" alt="Default toy image" class="toy-image">
-        {% endif %}
-    </div>
-
-    <div class="toy-details">
-        <h1>{{ toy.name }}</h1>
-        <p class="toy-price">{{ toy.price }} ₽</p>
-
-        <div class="toy-description">
-            <h2>Описание</h2>
-            <p>{{ toy.description }}</p>
-        </div>
-
-        <div class="toy-meta">
-            {% if toy.master and toy.master.user %}
-            <div class="toy-seller">
-                <h3>Продавец:</h3>
-                <div class="seller-info">
-                    {% if toy.master.user.avatar %}
-                    <img src="{{ toy.master.user.avatar }}" alt="Аватар продавца" class="seller-avatar">
-                    {% endif %}
-                    <span class="seller-name">ID: {{ toy.master.id }}</span>
+<div class="toy-page-wrapper">
+    <div class="toy-page-container">
+        <div class="toy-images">
+            {% if toy.attachments %}
+                <div class="image-gallery">
+                    {% for attachment in toy.attachments %}
+                        <div class="image-container">
+                            <img src="{{ attachment.link }}" alt="{{ toy.name }}" class="toy-image">
+                        </div>
+                    {% endfor %}
                 </div>
-            </div>
+            {% else %}
+                <div class="image-container">
+                    <img src="{{ url_for('static', path='/images/default_toy_image.png') }}" alt="Default toy image" class="toy-image">
+                </div>
             {% endif %}
-
-            <p><strong>Категория:</strong> {{ toy.category.name }}</p>
-            <p><strong>Дата создания:</strong> {{ toy.createdAt }}</p>
-
-            {% if toy.tags %}
-            <p><strong>Теги:</strong>
-                {% for tag in toy.tags %}
-                    {{ tag.name }}{% if not loop.last %}, {% endif %}
-                {% endfor %}
-            </p>
-            {% endif %}
-
-            <p><strong>Количество:</strong> {{ toy.quantity }}</p>
         </div>
 
-        <button class="btn add-to-cart">Добавить в корзину</button>
+        <div class="toy-details">
+            <div class="toy-card">
+                <div class="toy-header">
+                    <h1 class="toy-title">{{ toy.name }}</h1>
+                    <p class="toy-price">{{ "%.2f"|format(toy.price) }} ₽</p>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="toy-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-box-open"></i>
+                        <span>Осталось: {{ toy.quantity }} шт.</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Добавлено: {{ toy.created_at }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>Категория: {{ toy.category.name }}</span>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="toy-description">
+                    <h3>Описание</h3>
+                    <p>{{ toy.description }}</p>
+                </div>
+
+                {% if toy.tags %}
+                <div class="divider"></div>
+                <div class="toy-tags">
+                    <h3>Теги</h3>
+                    <div class="tags-container">
+                        {% for tag in toy.tags %}
+                            <span class="hashtag">#{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="divider"></div>
+
+                <button class="btn add-to-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    Добавить в корзину
+                </button>
+            </div>
+
+            <a href="{{ url_for('profile') }}" class="seller-card-link"> <!-- Заменить на переход в профиль мастера вместе с передачей id -->
+                <div class="seller-card">
+                    <div class="card-header">
+                        <h3>Продавец</h3>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="seller-info">
+                        {% if toy.master.user.avatar %}
+                        <img src="{{ toy.master.user.avatar }}" alt="Аватар" class="seller-avatar">
+                        {% else %}
+                        <div class="seller-avatar placeholder">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {% endif %}
+                        <div class="seller-details">
+                            <span class="seller-name">Имя: {{ toy.master.user.display_name }}</span>
+                            <span class="seller-id">ID: {{ toy.master.id }}</span>
+                            <span class="seller-rating">
+                                <i class="fas fa-star"></i> <!-- Вставить оценку и кол-во отзывов -->
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

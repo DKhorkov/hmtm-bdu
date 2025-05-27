@@ -2,7 +2,7 @@ from typing import Dict, Optional, BinaryIO, Union, List
 from pydantic import EmailStr
 from dataclasses import dataclass
 
-from src.sso.models import ToysFilters
+from src.toys.models import ToyFilters
 
 
 @dataclass(frozen=True)
@@ -177,7 +177,7 @@ class GetUserByEmailVariables:
 class ToysCatalogVariables:
     limit: int
     offset: int
-    filters: ToysFilters
+    filters: ToyFilters
 
     def to_dict(self) -> Dict[str, Dict[str, Dict[str, Union[str, float, None, bool, int, List[int]]]]]:
         return {
@@ -191,8 +191,8 @@ class ToysCatalogVariables:
                     "priceCeil": self.filters.price_ceil,
                     "priceFloor": self.filters.price_floor,
                     "quantityFloor": self.filters.quantity_floor,
-                    "categoryID": self.filters.category_id,
-                    "tagIDs": self.filters.tags_id,
+                    "categoryIDs": self.filters.category_ids,
+                    "tagIDs": self.filters.tag_ids,
                     "createdAtOrderByAsc": self.filters.created_at_order_by_asc,
                 }
             }

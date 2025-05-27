@@ -299,7 +299,7 @@
 .toy-price {
     font-size: 1.5em;
     font-weight: 600;
-    color: var(--price-color);
+    color: #4CAF50;
     margin: 5px 0;
     text-align: left;
 }

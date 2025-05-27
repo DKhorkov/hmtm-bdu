@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from src.sso.datetime_parser import DatetimeParser
-from src.sso.models import User
+from src.profile.models import User
 
 
 def user_from_dict(user_data: Dict[str, Any]) -> User:
