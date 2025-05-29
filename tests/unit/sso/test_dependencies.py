@@ -11,10 +11,10 @@ from src.sso.dependencies import (
     process_register,
     process_login,
     verify_email,
-    get_me,
     change_forget_password,
     get_user_info,
 )
+from src.common.dependencies import get_me
 from src.profile.dependencies import (
     change_password,
     update_user_profile,

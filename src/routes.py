@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from src.cookies import set_cookie
 from src.sso.dto import GetMeResponse
-from src.sso import get_me as get_me_dependency
+from src.common.dependencies import get_me as get_me_dependency
 from src.utils import extract_url_error_message
 
 main_router = APIRouter(tags=["Main"])

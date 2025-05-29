@@ -20,7 +20,7 @@ from graphql_client.dto import GQLResponse
 from src.config import config
 from src.constants import DEFAULT_ERROR_MESSAGE
 from src.cookies import CookiesConfig
-from src.sso import get_me
+from src.common.dependencies import get_me
 from src.sso.constants import ERRORS_MAPPING
 from src.sso.datetime_parser import DatetimeParser
 from src.sso.dto import GetMeResponse

@@ -1,22 +1,80 @@
-from typing import Union
+from typing import Optional, List, Dict
 
-from fastapi import Depends, status
-from fastapi.responses import RedirectResponse
+from starlette.requests import Request
 
-from src.sso import get_me as get_me_dependency
-from src.sso.dto import GetMeResponse
-from src.utils import (
-    FernetEnvironmentsKey,
-    encryptor as encryptor_dependency
-)
+from graphql_client import GetMeQuery, extract_error_message
+from graphql_client.dto import GQLResponse
+from src.config import config
+from src.constants import DEFAULT_ERROR_MESSAGE
+from src.cookies import CookiesConfig
+from src.sso.constants import ERRORS_MAPPING
+from src.sso.dependencies import refresh_tokens
+from src.sso.dto import GetMeResponse, RefreshTokensResponse
+from src.sso.utils import user_from_dict
 
 
-async def active_user_session(
-        current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
-) -> Union[RedirectResponse, None]:
-    if current_user.user is None:
-        encrypted_error: str = encryptor.encrypt(str(current_user.error))
-        return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
+async def get_me(
+        request: Request,
+        cookies: Optional[List[CookiesConfig]] = None
+) -> GetMeResponse:
+    result: GetMeResponse = GetMeResponse()
 
-    return None
+    if not cookies and len(request.cookies) == 0:
+        result.error = "Пользователь не найден"
+        return result
+
+    actual_cookies: Dict[str, str] = request.cookies
+    if cookies:
+        for cookie in cookies:
+            actual_cookies[cookie.KEY] = cookie.VALUE
+
+    try:
+        if request.cookies:
+            gql_response: GQLResponse = await config.graphql_client.gql_query(
+                query=GetMeQuery.to_gql(),
+                variable_values={},
+                cookies=actual_cookies
+            )
+            if "errors" in gql_response.result:
+                raise Exception
+
+            result.user = user_from_dict(gql_response.result["me"])
+
+    except Exception:
+        try:
+            refreshed_tokens: RefreshTokensResponse = await refresh_tokens(request=request, cookies=cookies)
+
+            if refreshed_tokens.error is not None:
+                result.error = refreshed_tokens.error
+                return result
+
+            result.headers = refreshed_tokens.headers
+            result.cookies = refreshed_tokens.cookies
+
+            actual_cookies = {}
+            for cookie in refreshed_tokens.cookies:
+                actual_cookies[cookie.KEY] = cookie.VALUE
+
+            gql_get_me: GQLResponse = await config.graphql_client.gql_query(
+                query=GetMeQuery.to_gql(),
+                variable_values={},
+                cookies=actual_cookies
+            )
+
+            if "errors" in gql_get_me.result:
+                result.error = gql_get_me.result["errors"][0]["message"]
+                return result
+
+            result.user = user_from_dict(gql_get_me.result["me"])
+
+        except Exception as err:
+            error = ERRORS_MAPPING.get(
+                extract_error_message(
+                    error=str(err),
+                    default_message="Ошибка проверки cookies"
+                ),
+                DEFAULT_ERROR_MESSAGE
+            )
+            result.error = error
+
+    return result

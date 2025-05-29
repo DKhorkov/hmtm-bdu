@@ -6,9 +6,7 @@ from src.cookies import set_cookie
 from src.utils import FernetEnvironmentsKey, encryptor as encryptor_dependency
 from src.sso.dto import GetMeResponse
 from src.toys.dto import ToysCatalogResponse, ToyByIDResponse
-from src.sso.dependencies import (
-    get_me as get_me_dependency,
-)
+from src.common.dependencies import get_me as get_me_dependency
 from src.toys.dependencies import (
     toys_catalog as toys_catalog_dependency,
     toy_by_id as toy_by_id_dependency,

@@ -93,7 +93,7 @@ async def toys_tags():
 
 
 async def toys_catalog(
-        page: int = Query(default=1, ge=1, description="Номер страницы (по 12 записей на одной)"),
+        page: int = Query(default=1, ge=1, description=f"Номер страницы (по {TOYS_PER_PAGE} записей на одной)"),
         # Filters
         search: Optional[str] = Query(default=None),
         max_price: Optional[str] = Query(default=None),

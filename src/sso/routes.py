@@ -9,12 +9,12 @@ from src.sso.dependencies import (
     process_register as process_register_dependency,
     process_login as process_login_dependency,
     verify_email as verify_email_dependency,
-    get_me as get_me_dependency,
     send_verify_email_message as send_verify_email_message_dependency,
     send_forget_password_message as send_forget_password_message_dependency,
     change_forget_password as change_forget_password_dependency,
     get_user_info as get_user_info_dependency,
 )
+from src.common.dependencies import get_me as get_me_dependency
 from src.sso.dto import (
     LoginResponse,
     GetMeResponse,
