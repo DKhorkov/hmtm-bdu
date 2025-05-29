@@ -214,7 +214,7 @@ async def update_master(
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=UpdateMasterMutation().to_gql(),
             variable_values=UpdateMasterVariables(
-                id=master.master.id,
+                id=master.master.id,  # type: ignore[union-attr]
                 info=info
             ).to_dict(),
             cookies=actual_cookies,

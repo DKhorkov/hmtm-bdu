@@ -10,13 +10,19 @@ from src.profile.dependencies import (
     update_user_profile as update_user_profile_dependency,
     master_by_user as master_by_user_dependency,
     update_master as update_master_info_dependency,
-    register_master as register_master_dependency
+    register_master as register_master_dependency,
 )
+from src.common.dependencies import active_user_session as check_active_user_session_dependency
 from src.sso.dto import (
     GetMeResponse
 )
-from src.profile.dto import UpdateUserProfileResponse, ChangePasswordResponse, GetUserIsMasterResponse, \
-    UpdateMasterResponse, RegisterMasterResponse
+from src.profile.dto import (
+    UpdateUserProfileResponse,
+    ChangePasswordResponse,
+    GetUserIsMasterResponse,
+    UpdateMasterResponse,
+    RegisterMasterResponse
+)
 from src.utils import (
     extract_url_error_message,
     extract_url_success_status_message,
@@ -25,13 +31,18 @@ from src.utils import (
 )
 
 templates = Jinja2Templates(directory="templates")
-router = APIRouter(prefix="/profile", tags=["Profile"])
+router = APIRouter(
+    prefix="/profile",
+    tags=["Profile"],
+    dependencies=[Depends(check_active_user_session_dependency)]
+)
 
 
-@router.get("/me", response_class=HTMLResponse, name="profile")
+@router.get("/me", response_class=HTMLResponse, name="profile", dependencies=[])
 async def profile_page(
         request: Request,
-        current_user: GetMeResponse = Depends(get_me_dependency)
+        current_user: GetMeResponse = Depends(get_me_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     if current_user.user is not None:
         master: GetUserIsMasterResponse = await master_by_user_dependency(
@@ -57,20 +68,16 @@ async def profile_page(
 
         return response
 
-    return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
+    encrypted_error = encryptor.encrypt(str(current_user.error))
+    return RedirectResponse(url=f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/change-password", response_class=HTMLResponse, name="change-password")
 async def process_change_password(
-        current_user: GetMeResponse = Depends(get_me_dependency),
         result: ChangePasswordResponse = Depends(change_password_dependency),
         encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     """ Ручка авторизованного пользователя для смены пароля - Процесс """
-    if current_user.user is None:
-        encrypted_error: str = encryptor.encrypt(str(current_user.error))
-        return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
-
     if result.error is not None:
         encrypted_error_key: str = encryptor.encrypt(str(result.error))
 
@@ -93,17 +100,10 @@ async def process_change_password(
 
 @router.post("/update_user_profile", response_class=HTMLResponse, name="update_user_profile")
 async def process_update_user_profile(
-        request: Request,
         result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
         encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     """ Ручка авторизованного пользователя для изменения данных о себе: никнейм, телеграм, телефон - Процесс """
-    current_user: GetMeResponse = await get_me_dependency(request=request, cookies=result.cookies)
-
-    if current_user.user is None:
-        encrypted_error: str = encryptor.encrypt(str(current_user.error))
-        return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
-
     if result.error is not None:
         encrypted_error: str = encryptor.encrypt(str(result.error))  # type: ignore[no-redef]
 
@@ -126,14 +126,9 @@ async def process_update_user_profile(
 
 @router.post("/update-master", response_class=HTMLResponse, name="update-master")
 async def process_update_master(
-        current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateMasterResponse = Depends(update_master_info_dependency),
         encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
-    if current_user.user is None:
-        encrypted_error: str = encryptor.encrypt(str(current_user.error))
-        return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
-
     if result.error is not None:
         encrypted_error: str = encryptor.encrypt(str(result.error))  # type: ignore[no-redef]
 
@@ -156,14 +151,9 @@ async def process_update_master(
 
 @router.post("/register-master", response_class=HTMLResponse, name="register-master")
 async def register_master(
-        current_user: GetMeResponse = Depends(get_me_dependency),
         result: RegisterMasterResponse = Depends(register_master_dependency),
         encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
-    if current_user.user is None:
-        encrypted_error: str = encryptor.encrypt(str(current_user.error))
-        return RedirectResponse(f"/sso/login?error={encrypted_error}", status_code=status.HTTP_303_SEE_OTHER)
-
     if result.error is not None:
         encrypted_error: str = encryptor.encrypt(str(result.error))  # type: ignore[no-redef]
 
@@ -172,8 +162,7 @@ async def register_master(
             status_code=status.HTTP_303_SEE_OTHER
         )
 
-    encrypted_message: FernetEnvironmentsKey = FernetEnvironmentsKey()
-    encrypted_message_key: str = encrypted_message.encrypt("Вы успешно стали мастером!")
+    encrypted_message_key: str = encryptor.encrypt("Вы успешно стали мастером!")
 
     response: Response = RedirectResponse(
         url=f"/profile/me?message={encrypted_message_key}&tab=master",

@@ -20,12 +20,12 @@ class ToyCategory:
 
 
 @dataclass
-class ToyTags:
+class ToyTag:
     name: str
 
 
 @dataclass
-class ToyAttachments:
+class ToyAttachment:
     link: str
 
 
@@ -38,8 +38,8 @@ class BaseToyModel:
     price: float
     quantity: int
     created_at: str
-    tags: List[ToyTags]
-    attachments: List[ToyAttachments]
+    tags: List[ToyTag]
+    attachments: List[ToyAttachment]
 
 
 @dataclass

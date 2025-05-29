@@ -27,8 +27,8 @@ from src.toys.dto import (
 from src.toys.models import (
     UserForToyCard,
     ToyCategory,
-    ToyTags,
-    ToyAttachments,
+    ToyTag,
+    ToyAttachment,
     ToyForCatalog,
     ToyForCard,
     ToyFilters,
@@ -144,8 +144,8 @@ async def toys_catalog(
                 price=round(toy_response["price"], 2),
                 quantity=toy_response["quantity"],
                 created_at=DatetimeParser.parse(toy_response["createdAt"]),
-                tags=[ToyTags(name=tag["name"]) for tag in toy_response["tags"]],
-                attachments=[ToyAttachments(link=attachments["link"]) for attachments in toy_response["attachments"]],
+                tags=[ToyTag(name=tag["name"]) for tag in toy_response["tags"]],
+                attachments=[ToyAttachment(link=attachments["link"]) for attachments in toy_response["attachments"]],
             )
             result.toys.append(toy)  # type: ignore[union-attr]
 
@@ -205,8 +205,8 @@ async def toy_by_id(
             price=round(toy_response["price"], 2),
             quantity=toy_response["quantity"],
             created_at=DatetimeParser.parse(toy_response["createdAt"]),
-            tags=[ToyTags(name=tag["name"]) for tag in toy_response["tags"]],
-            attachments=[ToyAttachments(link=attachments["link"]) for attachments in toy_response["attachments"]],
+            tags=[ToyTag(name=tag["name"]) for tag in toy_response["tags"]],
+            attachments=[ToyAttachment(link=attachments["link"]) for attachments in toy_response["attachments"]],
         )
 
     except Exception as err:
