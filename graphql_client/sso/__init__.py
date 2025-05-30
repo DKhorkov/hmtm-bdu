@@ -25,10 +25,17 @@ from .variables import (
     GetMasterByUserVariables,
     GetUserByIDVariables,
     GetUserByEmailVariables,
+    ToysCatalogVariables,
+    ToyByIDVariables,
 )
 from .queries import (
     GetMeQuery,
     GetMasterByUserQuery,
     GetUserByIDQuery,
-    GetUserByEmailQuery
+    GetUserByEmailQuery,
+    ToysCatalogQuery,
+    ToysCounterQuery,
+    AllToysCategoriesQuery,
+    AllToysTagsQuery,
+    ToyByIDQuery,
 )

@@ -1,7 +1,7 @@
 from typing import List
 
 from graphql_client.dto import GQLResponse
-from src.cookies import CookiesConfig
+from src.common.cookies import CookiesConfig
 from graphql_client.cookie import Cookie as GQLCookie, CookiesParser
 
 

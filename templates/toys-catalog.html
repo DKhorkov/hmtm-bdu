@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог игрушек{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/styles/toys-catalog.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="catalog-container">
+    <button class="filter-toggle-btn" id="filter-toggle-btn">Показать фильтры</button>
+
+    <aside class="filters-section">
+        <div class="filters-header">
+            <img src="{{ url_for('static', path='/images/filter_icon.png') }}" alt="Фильтры" class="filter-icon">
+            <h2>Фильтры</h2>
+        </div>
+        <form class="filters-form" method="get" action="{{ url_for('toys_catalog') }}">
+            <div class="filter-group">
+                <label>Поиск:</label>
+                <input type="text" name="search" placeholder="Название или описание" class="form-input" aria-label="Фильтр по названию или описанию" value="{{ request.query_params.get('search', '') }}">
+            </div>
+
+            <div class="filter-group">
+                <label>Минимальное кол-во:</label>
+                <input type="number" name="quantity_floor" placeholder="Количество от" class="form-input" aria-label="Минимальное кол-во игрушек" value="{{ request.query_params.get('quantity_floor', '') }}">
+            </div>
+
+            <div class="filter-group">
+                <label>Диапазон цены:</label>
+                <div class="price-range">
+                    <input type="number" step="any" name="min_price" placeholder="Мин" class="price-input" aria-label="Минимальная цена" value="{{ request.query_params.get('min_price', '') }}">
+                    <span>-</span>
+                    <input type="number" step="any" name="max_price" placeholder="Макс" class="price-input" aria-label="Максимальная цена" value="{{ request.query_params.get('max_price', '') }}">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Категории:</label>
+                <div class="filter-accordion">
+                    <button type="button" class="accordion-toggle" data-target="category-list">Выбрать категории</button>
+                    <div class="category-list-container">
+                        <input type="text" class="category-search form-input" placeholder="Поиск категорий..." aria-label="Поиск категорий">
+                        <div class="category-list custom-checkbox-list" id="category-list">
+                            {% set selected_categories = request.query_params.get('categories', '').split(',') if request.query_params.get('categories') else [] %}
+                            {% for category in categories %}
+                            <label class="custom-checkbox">
+                                <input type="checkbox" name="categories" value="{{ category.id }}" aria-label="Выбор категории {{ category.name }}" {% if category.id|string in selected_categories %}checked{% endif %}>
+                                <span class="checkbox-label">{{ category.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Теги:</label>
+                <div class="filter-accordion">
+                    <button type="button" class="accordion-toggle" data-target="tag-list">Выбрать теги</button>
+                    <div class="tag-list-container">
+                        <input type="text" class="tag-search form-input" placeholder="Поиск тегов..." aria-label="Поиск тегов">
+                        <div class="tag-list custom-checkbox-list" id="tag-list">
+                            {% set selected_tags = request.query_params.getlist('tags') %}
+                            {% for tag in tags %}
+                            <label class="custom-checkbox">
+                                <input type="checkbox" name="tags" value="{{ tag.id }}" aria-label="Выбор тега {{ tag.name }}" {% if tag.id|string in selected_tags %}checked{% endif %}>
+                                <span class="checkbox-label">{{ tag.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Сортировка по дате:</label>
+                <select name="sort_order" class="form-input" aria-label="Сортировка по дате создания">
+                    <option value="newest" {% if request.query_params.get('sort_order', 'newest') == 'newest' %}selected{% endif %}>Сначала новые</option>
+                    <option value="oldest" {% if request.query_params.get('sort_order') == 'oldest' %}selected{% endif %}>Сначала старые</option>
+                </select>
+            </div>
+
+            <div class="filter-buttons">
+                {% set has_filters = (request.query_params.get('search') and request.query_params.get('search').strip()) or
+                                     (request.query_params.get('quantity_floor') and request.query_params.get('quantity_floor').strip()) or
+                                     (request.query_params.get('min_price') and request.query_params.get('min_price').strip()) or
+                                     (request.query_params.get('max_price') and request.query_params.get('max_price').strip()) or
+                                     request.query_params.get('categories') or
+                                     request.query_params.getlist('tags') or
+                                     (request.query_params.get('sort_order') and request.query_params.get('sort_order') != 'newest') %}
+                {% if has_filters %}
+                <a href="{{ url_for('toys_catalog') }}" class="btn reset-filters" aria-label="Сбросить фильтры">Сбросить</a>
+                {% endif %}
+                <button type="submit" class="btn apply-filters" id="apply-filters-btn" aria-label="Применить фильтры">Применить</button>
+            </div>
+        </form>
+    </aside>
+
+    <main class="catalog-content">
+        <div class="toys-grid">
+            {% if toys %}
+                {% for toy in toys %}
+                <a href="{{ url_for('toy_by_id', toy_id=toy.id) }}" class="toy-card-link">
+                    <div class="toy-card">
+                        {% if toy.attachments and toy.attachments|length > 0 %}
+                        <img src="{{ toy.attachments[0].url }}" alt="{{ toy.name }}" class="toy-image">
+                        {% else %}
+                        <img src="{{ url_for('static', path='/images/default_toy_image.png') }}" alt="Default toy image" class="toy-image">
+                        {% endif %}
+
+                        <h3 class="toy-price">{{ toy.price }} ₽</h3>
+
+                        <div class="toy-info">
+                            <p class="toy-name">{{ toy.name }}</p>
+                            <p><strong>Категории:</strong> {{ toy.category.name }}</p>
+                            <p><strong>Дата создания:</strong> {{ toy.created_at }}</p>
+                            <div class="tags-container">
+                                <strong>Теги:</strong>
+                                {% for tag in toy.tags %}
+                                    <span class="hashtag">#{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="no-toys">Игрушек не найдено</p>
+            {% endif %}
+        </div>
+
+        <div class="pagination">
+            {% if current_page > 1 %}
+            <a href="{{ url_for('toys_catalog') }}?{% for key, value in request.query_params.items() if key != 'page' %}{{ key }}={{ value }}&{% endfor %}page={{ current_page - 1 }}" class="btn pagination-btn">← Назад</a>
+            {% endif %}
+
+            <span class="page-info">Страница {{ current_page }} из {{ total_pages }}</span>
+
+            {% if current_page < total_pages %}
+            <a href="{{ url_for('toys_catalog') }}?{% for key, value in request.query_params.items() if key != 'page' %}{{ key }}={{ value }}&{% endfor %}page={{ current_page + 1 }}" class="btn pagination-btn">Вперед →</a>
+            {% endif %}
+
+            <div class="page-search">
+                <label for="page-input">Поиск по странице:</label>
+                <input type="number" id="page-input" min="1" max="{{ total_pages }}" placeholder="Номер страницы" class="page-input">
+                <button class="btn pagination-btn" id="go-to-page-btn">Перейти</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const totalPages = {{ total_pages|default(1) }};
+</script>
+<script src="/scripts/toys-catalog.js"></script>
+{% endblock %}

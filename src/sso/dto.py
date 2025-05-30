@@ -1,18 +1,9 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
-from src.sso.models import User, Master, UserInfo
-from src.dto import BaseResponse, BoolResponse
-
-
-@dataclass
-class GetMeResponse(BaseResponse):
-    user: Optional[User] = None
-
-
-@dataclass
-class UpdateUserProfileResponse(BoolResponse):
-    pass
+from src.sso.models import UserInfo
+from src.profile.models import Master
+from src.common.dto import BoolResponse
 
 
 @dataclass
@@ -22,6 +13,11 @@ class RegisterResponse(BoolResponse):
 
 @dataclass
 class LoginResponse(BoolResponse):
+    pass
+
+
+@dataclass
+class ChangeForgetPasswordResponse(BoolResponse):
     pass
 
 
@@ -37,36 +33,6 @@ class SendVerifyEmailMessageResponse(BoolResponse):
 
 @dataclass
 class SendForgetPasswordMessageResponse(BoolResponse):
-    pass
-
-
-@dataclass
-class ChangePasswordResponse(BoolResponse):
-    pass
-
-
-@dataclass
-class ChangeForgetPasswordResponse(BoolResponse):
-    pass
-
-
-@dataclass
-class RefreshTokensResponse(BoolResponse):
-    pass
-
-
-@dataclass
-class GetUserIsMasterResponse(BoolResponse):
-    master: Optional[Master] = None
-
-
-@dataclass
-class UpdateMasterResponse(BoolResponse):
-    pass
-
-
-@dataclass
-class RegisterMasterResponse(BoolResponse):
     pass
 
 
