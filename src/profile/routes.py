@@ -20,8 +20,12 @@ from src.profile.dto import (
     UpdateMasterResponse,
     RegisterMasterResponse
 )
-from src.common.utils import extract_url_error_message, extract_url_success_status_message, FernetEnvironmentsKey, \
+from src.common.utils import (
+    extract_url_error_message,
+    extract_url_success_status_message,
+    FernetEnvironmentsKey,
     encryptor as encryptor_dependency
+)
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter(prefix="/profile", tags=["Profile"])
