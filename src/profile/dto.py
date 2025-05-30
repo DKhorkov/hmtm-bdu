@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from src.dto import BoolResponse
+from src.common.dto import BoolResponse
 from src.profile.models import Master
 
 
@@ -12,11 +12,6 @@ class UpdateUserProfileResponse(BoolResponse):
 
 @dataclass
 class ChangePasswordResponse(BoolResponse):
-    pass
-
-
-@dataclass
-class ChangeForgetPasswordResponse(BoolResponse):
     pass
 
 

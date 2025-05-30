@@ -9,7 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from src.routes import main_router
+from src.root.routes import main_router
 from src.sso.routes import router as sso_router
 from src.toys.routes import router as toys_router
 from src.profile.routes import router as profile_router

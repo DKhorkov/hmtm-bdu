@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Depends, status, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
-from src.cookies import set_cookie
+from src.common.cookies import set_cookie
 from src.sso.dependencies import (
     process_register as process_register_dependency,
     process_login as process_login_dependency,
@@ -17,20 +17,16 @@ from src.sso.dependencies import (
 from src.common.dependencies import get_me as get_me_dependency
 from src.sso.dto import (
     LoginResponse,
-    GetMeResponse,
     RegisterResponse,
     VerifyEmailResponse,
     SendVerifyEmailMessageResponse,
     SendForgetPasswordMessageResponse,
-    GetFullUserInfoResponse,
+    GetFullUserInfoResponse, ChangeForgetPasswordResponse,
 )
-from src.profile.dto import ChangeForgetPasswordResponse
+from src.common.dto import GetMeResponse
 from src.sso.constants import FORGET_PASSWORD_TOKEN_NAME
-from src.utils import (
-    FernetEnvironmentsKey,
-    extract_url_error_message,
-    extract_url_success_status_message, encryptor as encryptor_dependency
-)
+from src.common.utils import extract_url_error_message, extract_url_success_status_message, FernetEnvironmentsKey, \
+    encryptor as encryptor_dependency
 
 router = APIRouter(prefix="/sso", tags=["SSO"])
 templates = Jinja2Templates(directory="templates")
@@ -193,11 +189,11 @@ async def process_verify_email_letter(
 @router.get("/forget-password-form", response_class=RedirectResponse, name="forget-password-form")
 async def forget_password_form_page(
         request: Request,
-        current_user: GetMeResponse = Depends(get_me_dependency)
+        current_user: GetMeResponse = Depends(get_me_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     """ Восстановление пароля для не аутентифицированного пользователя - Форма """
     if current_user.user is not None:
-        encryptor: FernetEnvironmentsKey = FernetEnvironmentsKey()
         encrypted_error = encryptor.encrypt("Для смены забытого пароля вам необходима форма в профиле")
 
         return RedirectResponse(
@@ -218,10 +214,10 @@ async def forget_password_form_page(
 @router.post("/forget-password-form", response_class=HTMLResponse, name="forget-password-form")
 async def process_send_forget_password_message(
         current_user: GetMeResponse = Depends(get_me_dependency),
-        result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency)
+        result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency),
+        encryptor: FernetEnvironmentsKey = Depends(encryptor_dependency)
 ):
     """ Восстановление пароля в профиле через форму - Процесс"""
-    encryptor: FernetEnvironmentsKey = FernetEnvironmentsKey()
     encrypted_success_message = encryptor.encrypt(
         "Письмо о смене пароля отправлено на почту, указанную при регистрации!"
     )
@@ -239,7 +235,7 @@ async def process_send_forget_password_message(
         )
 
     if result.error is not None:
-        encrypted_error = encryptor.encrypt(str(result.error))
+        encrypted_error = encryptor.encrypt(result.error)
         return RedirectResponse(
             url=f"/sso/forget-password-form?error={encrypted_error}",
             status_code=status.HTTP_303_SEE_OTHER

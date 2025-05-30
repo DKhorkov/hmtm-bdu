@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Dict, Optional, List
+from typing import Optional, Dict, List
 
-from src.cookies import CookiesConfig
+from src.common.cookies import CookiesConfig
+from src.common.models import User
 
 
 @dataclass
@@ -12,5 +13,15 @@ class BaseResponse:
 
 
 @dataclass
+class GetMeResponse(BaseResponse):
+    user: Optional[User] = None
+
+
+@dataclass
 class BoolResponse(BaseResponse):
     result: bool = False
+
+
+@dataclass
+class RefreshTokensResponse(BoolResponse):
+    pass

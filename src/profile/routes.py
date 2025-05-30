@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from src.cookies import set_cookie
+from src.common.cookies import set_cookie
 from src.common.dependencies import get_me as get_me_dependency
 from src.profile.dependencies import (
     change_password as change_password_dependency,
@@ -12,9 +12,7 @@ from src.profile.dependencies import (
     update_master as update_master_info_dependency,
     register_master as register_master_dependency
 )
-from src.sso.dto import (
-    GetMeResponse
-)
+from src.common.dto import GetMeResponse
 from src.profile.dto import (
     UpdateUserProfileResponse,
     ChangePasswordResponse,
@@ -22,12 +20,8 @@ from src.profile.dto import (
     UpdateMasterResponse,
     RegisterMasterResponse
 )
-from src.utils import (
-    extract_url_error_message,
-    extract_url_success_status_message,
-    FernetEnvironmentsKey,
+from src.common.utils import extract_url_error_message, extract_url_success_status_message, FernetEnvironmentsKey, \
     encryptor as encryptor_dependency
-)
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter(prefix="/profile", tags=["Profile"])

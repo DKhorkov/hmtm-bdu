@@ -103,7 +103,6 @@ ignore =
     E133,
     E203,
     E402,
-    W503
 
 # Specify the list of error codes you wish Flake8 to report.
 # flake8-quotes package adds flake8 warnings with the prefix Q0.

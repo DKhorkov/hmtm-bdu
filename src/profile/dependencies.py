@@ -17,13 +17,13 @@ from graphql_client import (
     RegisterMasterVariables
 )
 from graphql_client.dto import GQLResponse
-from src.config import config
-from src.constants import DEFAULT_ERROR_MESSAGE
-from src.cookies import CookiesConfig
+from src.common.config import config
+from src.common.constants import DEFAULT_ERROR_MESSAGE
+from src.common.cookies import CookiesConfig
 from src.common.dependencies import get_me
 from src.sso.constants import ERRORS_MAPPING
-from src.sso.datetime_parser import DatetimeParser
-from src.sso.dto import GetMeResponse
+from src.common.datetime_parser import DatetimeParser
+from src.common.dto import GetMeResponse
 from src.profile.dto import (
     UpdateUserProfileResponse,
     ChangePasswordResponse,
@@ -208,8 +208,7 @@ async def update_master(
         )
 
         if master.master is None:
-            result.error = "Не удалось найти мастера"
-            return result
+            raise Exception({"message": "Не удалось найти мастера"})
 
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=UpdateMasterMutation().to_gql(),
@@ -221,8 +220,7 @@ async def update_master(
         )
 
         if "errors" in gql_response.result:
-            result.error = gql_response.result["errors"][0]["message"]
-            return result
+            raise Exception(gql_response.result["errors"][0]["message"])
 
         result.result = True
         result.headers = gql_response.headers  # type: ignore[assignment]

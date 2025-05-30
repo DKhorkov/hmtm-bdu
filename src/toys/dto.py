@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, List
 
-from src.dto import BaseResponse, BoolResponse
+from src.common.dto import BaseResponse, BoolResponse
 from src.toys.models import ToyForCatalog, ToyFilters, ToyForCard
 
 

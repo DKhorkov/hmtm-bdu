@@ -2,7 +2,7 @@ import pytest
 
 from contextlib import nullcontext as does_not_raise
 
-from src.sso.datetime_parser import DatetimeParser
+from src.common.datetime_parser import DatetimeParser
 
 
 class TestDatetimeParser:

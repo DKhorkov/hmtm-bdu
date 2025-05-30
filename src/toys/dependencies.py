@@ -13,11 +13,11 @@ from graphql_client import (
     ToyByIDVariables
 )
 from graphql_client.dto import GQLResponse
-from src.config import config
-from src.constants import DEFAULT_ERROR_MESSAGE
+from src.common.config import config
+from src.common.constants import DEFAULT_ERROR_MESSAGE
 from src.sso.constants import ERRORS_MAPPING
 from src.toys.constants import TOYS_PER_PAGE
-from src.sso.datetime_parser import DatetimeParser
+from src.common.datetime_parser import DatetimeParser
 from src.toys.dto import (
     ToysCategoriesResponse,
     ToysTagsResponse,
@@ -200,6 +200,7 @@ async def toy_by_id(
                 )
             ),
             category=ToyCategory(name=toy_response["category"]["name"]),
+
             name=toy_response["name"],
             description=toy_response["description"],
             price=round(toy_response["price"], 2),

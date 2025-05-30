@@ -1,8 +1,6 @@
 from typing import Dict
 
 ERRORS_MAPPING: Dict[str, str] = {
-    "Пользователь не авторизован": "Пользователь не авторизован",
-
     'rpc error: code = FailedPrecondition desc = password does not meet the requirements':
         "Пароль не соответствует требованиям: 8+ символов, A-Z, a-z, 0-9, спецсимвол.",
 
@@ -29,8 +27,6 @@ ERRORS_MAPPING: Dict[str, str] = {
 
     'rpc error: code = Unauthenticated desc = wrong password': "Неверный email или пароль",
 
-    'rpc error: code = NotFound desc = user not found': "Пользователь не найден",
-
     'permission denied: User with this email has not confirmed it':
         """
             Необходимо подтвердить email, пожалуйста проверьте свой почтовый ящик.
@@ -46,11 +42,6 @@ ERRORS_MAPPING: Dict[str, str] = {
     "invalid file extension=.webp":
         "Файл с расширением webp не поддерживается к загрузке",
 
-    "accessToken cookie not found": "Токен авторизации не был найден, пожалуйста, обновите страницу",
-
-    "rpc error: code = Unauthenticated desc = JWT token is invalid or has expired%!(EXTRA string=)":
-        "Некорректный или просроченный токен",
-
     "rpc error: code = FailedPrecondition desc = telegram not meet the requirements":
         "Некорректное имя пользователя для telegram",
 
@@ -63,6 +54,11 @@ ERRORS_MAPPING: Dict[str, str] = {
     'rpc error: code = AlreadyExists desc = master already exists':
         "Мастер уже зарегестрирован",
 
+    "rpc error: code = NotFound desc = user not found":
+        "Пользователь не найден",
+
+    "Не удалось найти мастера":
+        "Не удалось найти мастера"
 }
 
 FORGET_PASSWORD_TOKEN_NAME: str = "forget_password_token"

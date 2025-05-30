@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from graphql_client.client import GraphQLClient
 from graphql_client.interface import GraphQLInterface
-from src.enums import Environments
+from src.common.enums import Environments
 
 load_dotenv(find_dotenv('.env'))
 

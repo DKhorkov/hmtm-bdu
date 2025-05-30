@@ -1,5 +1,18 @@
 from typing import Dict
 
+DEFAULT_ERROR_MESSAGE: str = "Неизвестная ошибка"
+
+ERRORS_MAPPING: Dict[str, str] = {
+    "Пользователь не авторизован": "Пользователь не авторизован",
+
+    'rpc error: code = NotFound desc = user not found': "Пользователь не найден",
+
+    "accessToken cookie not found": "Токен авторизации не был найден, пожалуйста, обновите страницу",
+
+    "rpc error: code = Unauthenticated desc = JWT token is invalid or has expired%!(EXTRA string=)":
+        "Некорректный или просроченный токен",
+}
+
 REQUEST_ENVIRONMENTS_MAPPING: Dict[str, str] = {
     "user_not_found": "Пользователь не найден!",
 

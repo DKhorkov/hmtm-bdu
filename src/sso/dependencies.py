@@ -1,12 +1,11 @@
-from typing import Annotated, Dict, Optional, List
+from typing import Annotated, Dict, Optional
 from fastapi import Form, Request
 
-from src.cookies import CookiesConfig
-from src.sso.datetime_parser import DatetimeParser
+from src.common.datetime_parser import DatetimeParser
 from graphql_client.dto import GQLResponse
-from src.config import config
+from src.common.config import config
 from src.sso.constants import ERRORS_MAPPING, FORGET_PASSWORD_TOKEN_NAME
-from src.constants import DEFAULT_ERROR_MESSAGE
+from src.common.constants import DEFAULT_ERROR_MESSAGE
 from graphql_client import (
     RegisterUserVariables,
     LoginUserVariables,
@@ -21,7 +20,6 @@ from graphql_client import (
     RegisterUserMutation,
     LoginUserMutation,
     VerifyUserEmailMutation,
-    RefreshTokensMutation,
     SendVerifyEmailMessageMutation,
     SendForgetPasswordMessageMutation,
     ChangeForgetPasswordMutation,
@@ -39,10 +37,8 @@ from src.sso.dto import (
     VerifyEmailResponse,
     SendVerifyEmailMessageResponse,
     SendForgetPasswordMessageResponse,
-    RefreshTokensResponse,
-    GetFullUserInfoResponse,
+    GetFullUserInfoResponse, ChangeForgetPasswordResponse,
 )
-from src.profile.dto import ChangeForgetPasswordResponse
 from src.sso.models import (
     UserInfo,
 )
@@ -139,48 +135,6 @@ async def verify_email(  # type: ignore[return]
             extract_error_message(
                 error=str(err),
                 default_message="Ошибка подтверждения email"
-            ),
-            DEFAULT_ERROR_MESSAGE
-        )
-
-        result.error = error
-
-    return result
-
-
-async def refresh_tokens(
-        request: Request,
-        cookies: Optional[List[CookiesConfig]] = None
-) -> RefreshTokensResponse:
-    result: RefreshTokensResponse = RefreshTokensResponse()
-
-    actual_cookies: Dict[str, str] = request.cookies
-    if cookies:
-        for cookie in cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
-
-    try:
-        gql_refresh_tokens: GQLResponse = await config.graphql_client.gql_query(
-            query=RefreshTokensMutation.to_gql(),
-            variable_values={},
-            cookies=actual_cookies
-        )
-
-        if "errors" in gql_refresh_tokens.result:
-            result.error = gql_refresh_tokens.result["errors"][0]["message"]
-            return result
-
-        result.result = True
-        result.headers = gql_refresh_tokens.headers  # type: ignore[assignment]
-
-        if gql_refresh_tokens.headers is not None:
-            result.cookies = GQLResponseProcessor(gql_response=gql_refresh_tokens).get_cookies()
-
-    except Exception as err:
-        error: str = ERRORS_MAPPING.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка обновления токенов"
             ),
             DEFAULT_ERROR_MESSAGE
         )

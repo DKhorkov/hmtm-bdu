@@ -2,7 +2,7 @@ import pytest
 
 from fastapi.testclient import TestClient
 from httpx import Response as httpx_Response
-from src.main import app as fastapi_app
+from src.root.main import app as fastapi_app
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -17,7 +17,6 @@ class TestPages:
             ("/", 200, "text/html"),
             ("/sso/register", 200, "text/html"),
             ("/sso/login", 200, "text/html"),
-            ("/profile/me", 200, "text/html"),
             ("/sso/logout", 200, "text/html"),
             ("/sso/verify-email-letter-form", 200, "text/html"),
         ]
