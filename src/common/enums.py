@@ -6,5 +6,3 @@ class Environments(str, Enum):
     TEST = "TEST"
     DEVELOPMENT = "DEVELOPMENT"
     LOCAL = "LOCAL"
-
-
