@@ -4,8 +4,8 @@ from typing import Awaitable, Callable
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request, Response
 
-from src.common.logger_config import logger
-from src.common.enums import Levels
+from src.logging.config import logger
+from src.logging.enums import Levels
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):

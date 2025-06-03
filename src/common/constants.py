@@ -1,8 +1,6 @@
 from typing import Dict
 from pathlib import Path
 
-from aiologger import Logger  # type: ignore[import-untyped]
-
 DEFAULT_ERROR_MESSAGE: str = "Неизвестная ошибка"
 
 ERRORS_MAPPING: Dict[str, str] = {
@@ -64,8 +62,6 @@ REQUEST_ENVIRONMENTS_MAPPING: Dict[str, str] = {
     'Необходима почта, указанная при регистрации':
         'Необходима почта, указанная при регистрации'
 }
-
-LOGGERS_BY_DATE: Dict[str, Logger] = {}  # Словарь для хранения логгеров по датам
 
 # __file__ - путь к текущему файлу
 # .resolve() - преобразует в абсолютный путь

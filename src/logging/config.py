@@ -1,13 +1,16 @@
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from datetime import datetime
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 from pathlib import Path
+from typing import Dict
 
 from aiologger import Logger  # type: ignore[import-untyped]
 from aiologger.handlers.files import AsyncFileHandler  # type: ignore[import-untyped]
-from aiologger.formatters.base import Formatter   # type: ignore[import-untyped]
+from aiologger.formatters.base import Formatter  # type: ignore[import-untyped]
 
-from src.common.constants import LOGGERS_BY_DATE, PROJECT_ROOT_FROM_COMMON as PROJECT_ROOT
-from src.common.enums import Levels
+from src.common.constants import PROJECT_ROOT_FROM_COMMON as PROJECT_ROOT
+from src.logging.enums import Levels
+
+LOGGERS_BY_DATE: Dict[str, Logger] = {}  # Словарь для хранения логгеров по датам
 
 
 async def logger(level: Levels, message: str, logger_name: str = "HMTM_BDU") -> None:
@@ -55,20 +58,19 @@ async def logger(level: Levels, message: str, logger_name: str = "HMTM_BDU") -> 
         custom_logger = LOGGERS_BY_DATE[current_date]
 
     log_level = level_mapping.get(level)
-    if log_level is not None:
-        if log_level == DEBUG:
+    match log_level:
+        case _ if log_level == DEBUG:
             await custom_logger.debug(message)
-        elif log_level == INFO:
+        case _ if log_level == INFO:
             await custom_logger.info(message)
-        elif log_level == WARNING:
+        case _ if log_level == WARNING:
             await custom_logger.warning(message)
-        elif log_level == ERROR:
+        case _ if log_level == ERROR:
             await custom_logger.error(message)
-        elif log_level == CRITICAL:
+        case _ if log_level == CRITICAL:
             await custom_logger.critical(message)
-
-    else:
-        await custom_logger.error(f"Недопустимый уровень логирования: {level}, сообщение: {message}")
+        case _:
+            await custom_logger.error(f"Недопустимый уровень логирования: {level}, сообщение: {message}")
 
 
 async def shutdown_loggers():
