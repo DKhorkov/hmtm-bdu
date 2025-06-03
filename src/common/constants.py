@@ -1,4 +1,5 @@
 from typing import Dict
+from pathlib import Path
 
 DEFAULT_ERROR_MESSAGE: str = "Неизвестная ошибка"
 
@@ -61,3 +62,10 @@ REQUEST_ENVIRONMENTS_MAPPING: Dict[str, str] = {
     'Необходима почта, указанная при регистрации':
         'Необходима почта, указанная при регистрации'
 }
+
+# __file__ - путь к текущему файлу
+# .resolve() - преобразует в абсолютный путь
+# .parent - поднимаемся в src/common/
+# .parent - поднимаемся в src/
+# .parent - поднимаемся в корень проекта (hmtm-bdu/)
+PROJECT_ROOT_FROM_COMMON = Path(__file__).resolve().parent.parent.parent
