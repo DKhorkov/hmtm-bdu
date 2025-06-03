@@ -14,7 +14,7 @@ from src.sso.routes import router as sso_router
 from src.toys.routes import router as toys_router
 from src.profile.routes import router as profile_router
 from src.root.utils import lifespan
-from src.common.middlewares import LoggerMiddleware
+from src.logging.middlewares import LoggerMiddleware
 
 app = FastAPI(lifespan=lifespan)
 

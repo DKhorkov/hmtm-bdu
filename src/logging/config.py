@@ -1,5 +1,5 @@
 from datetime import datetime
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+from logging import DEBUG
 from pathlib import Path
 from typing import Dict
 
@@ -15,14 +15,6 @@ LOGGERS_BY_DATE: Dict[str, Logger] = {}  # Словарь для хранени�
 
 async def logger(level: Levels, message: str, logger_name: str = "HMTM_BDU") -> None:
     """Асинхронный логгер с записью в файл, организованный по датам"""
-    level_mapping = {
-        Levels.DEBUG: DEBUG,
-        Levels.INFO: INFO,
-        Levels.WARNING: WARNING,
-        Levels.ERROR: ERROR,
-        Levels.CRITICAL: CRITICAL
-    }
-
     formatter: Formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     current_date: str = datetime.now().strftime("%d.%m.%Y")
@@ -57,17 +49,17 @@ async def logger(level: Levels, message: str, logger_name: str = "HMTM_BDU") -> 
     else:
         custom_logger = LOGGERS_BY_DATE[current_date]
 
-    log_level = level_mapping.get(level)
+    log_level: str = level.value
     match log_level:
-        case _ if log_level == DEBUG:
+        case "DEBUG":
             await custom_logger.debug(message)
-        case _ if log_level == INFO:
+        case "INFO":
             await custom_logger.info(message)
-        case _ if log_level == WARNING:
+        case "WARNING":
             await custom_logger.warning(message)
-        case _ if log_level == ERROR:
+        case "ERROR":
             await custom_logger.error(message)
-        case _ if log_level == CRITICAL:
+        case "CRITICAL":
             await custom_logger.critical(message)
         case _:
             await custom_logger.error(f"Недопустимый уровень логирования: {level}, сообщение: {message}")
@@ -76,7 +68,7 @@ async def logger(level: Levels, message: str, logger_name: str = "HMTM_BDU") -> 
 async def shutdown_loggers():
     """Более безопасное закрытие с поэтапной очисткой"""
     for date in list(LOGGERS_BY_DATE.keys()):
-        logs = LOGGERS_BY_DATE.get(date)
+        logs: Logger = LOGGERS_BY_DATE.get(date)
         if logs:
             try:
                 await logs.shutdown()
