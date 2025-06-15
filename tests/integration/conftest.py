@@ -3,7 +3,7 @@ from typing import AsyncGenerator, Any
 import pytest
 import pytest_asyncio
 
-from src.cache.config import RedisConfig
+from src.cache.config import Redis
 from tests.integration.cache.constants import (
     TEST_REDIS_HOST,
     TEST_REDIS_PORT,
@@ -11,10 +11,9 @@ from tests.integration.cache.constants import (
 )
 
 
-@pytest.mark.redis
 @pytest_asyncio.fixture(scope="function")
-async def mock_redis_connection() -> AsyncGenerator[RedisConfig, Any]:
-    redis: RedisConfig = RedisConfig(
+async def mock_redis_connection() -> AsyncGenerator[Redis, Any]:
+    redis: Redis = Redis(
         host=TEST_REDIS_HOST,
         port=TEST_REDIS_PORT,
         password=TEST_REDIS_PASSWORD

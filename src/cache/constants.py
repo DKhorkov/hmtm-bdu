@@ -1,2 +1,8 @@
-REDIS_CONNECTION_ERROR: str = "Ошибка 111, Redis-сервер оффлайн!"
-REDIS_AUTHENTICATION_ERROR: str = "Пароль к Redis не указан или не подходит!"
+from typing import Dict
+
+REDIS_ERRORS: Dict[str, str] = {
+    "Error 111": "Подключение к Redis не удалось, проверьте состояние сервера!",
+    "Authentication required": "Аутентификация не удалась, проверьте пароль"
+}
+
+DEFAULT_REDIS_ERROR_MESSAGE: str = "Неизвестная ошибка Redis"

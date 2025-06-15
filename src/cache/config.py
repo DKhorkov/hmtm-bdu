@@ -4,62 +4,66 @@ from pickle import loads as pickle_loads, dumps as pickle_dumps
 
 from dotenv import load_dotenv, find_dotenv
 
+load_dotenv(find_dotenv(".env"))
+
 from redis.asyncio import (
     Redis as AsyncRedis,
     ConnectionPool as AsyncRedisConnectionPool
 )
-from redis.exceptions import (
-    ConnectionError as RedisConnectionError,
-    AuthenticationError as RedisAuthenticationError,
-)
-
-from src.logging.config import logger
-from src.logging.enums import Levels
-from src.cache.constants import REDIS_CONNECTION_ERROR, REDIS_AUTHENTICATION_ERROR
+from src.cache.ulits import redis_error_handler
 
 
-class RedisConfig:
-    load_dotenv(find_dotenv(".env"))
-
+class Redis:
     def __init__(
             self,
             host: str = getenv("HMTM_BDU_REDIS_HOST", default="localhost"),
             port: int = int(getenv("HMTM_BDU_REDIS_PORT", default=6381)),
-            password: str = getenv("HMTM_BDU_REDIS_PASSWORD", default="")
+            password: str = getenv("HMTM_BDU_REDIS_PASSWORD", default=""),
+            db: int = 0,
+            decode_responses: bool = False,
+            encoding: str = "utf-8",
+            max_connections: int = 10,
     ):
         self.__host = host
         self.__port = port
         self.__password = password
+        self.__db = db
+        self.__decode_responses = decode_responses
+        self.__encoding = encoding
+        self.__max_connections = max_connections
+
         self._session: Optional[AsyncRedis] = None
 
-    async def connect(self) -> Optional[Literal[True]]:
+    async def connect(self) -> None:
         try:
             pool: AsyncRedisConnectionPool = AsyncRedisConnectionPool(
-                # Main
                 host=self.__host,
                 port=self.__port,
-                db=0,
-                # Encode/decode:
-                decode_responses=False,
-                encoding="utf-8",
-                # Pools:
-                max_connections=10,
-                # Secure:
+                db=self.__db,
+                decode_responses=self.__decode_responses,
+                encoding=self.__encoding,
+                max_connections=self.__max_connections,
                 password=self.__password,
             )
 
-            redis: AsyncRedis = AsyncRedis(connection_pool=pool)
-            await redis.ping()
+            redis_pool: AsyncRedis = AsyncRedis(connection_pool=pool)
 
-            self._session = redis
+            self._session = redis_pool
 
-            return True
+        except Exception as error:
+            await redis_error_handler(error=error)
 
-        except RedisAuthenticationError:
-            raise RedisAuthenticationError(REDIS_AUTHENTICATION_ERROR)
+    async def ping(self) -> Optional[Literal[True]]:
+        try:
+            if self._session is not None:
+                await self._session.ping()
+                return True
 
-        except RedisConnectionError:
-            raise RedisConnectionError(REDIS_CONNECTION_ERROR)
+            else:
+                return None
+
+        except Exception as error:
+            await redis_error_handler(error=error)
 
     async def get(
             self,
@@ -76,37 +80,27 @@ class RedisConfig:
             else:
                 return None
 
-        except RedisConnectionError:
-            await logger(level=Levels.CRITICAL, message=REDIS_CONNECTION_ERROR)
-            raise RedisConnectionError(REDIS_CONNECTION_ERROR)
-
         except Exception as error:
-            await logger(level=Levels.ERROR, message=str(error))
-            return None
+            await redis_error_handler(error=error)
 
     async def set(
             self,
             key: str,
             data: Any,
-            ttl_per_seconds: int
+            ttl: int
     ) -> Optional[Literal[True]]:
         try:
             if self._session is not None:
                 serialized_data: bytes = pickle_dumps(data)
-                await self._session.set(name=key, value=serialized_data, ex=ttl_per_seconds)
+                await self._session.set(name=key, value=serialized_data, ex=ttl)
 
                 return True
 
             else:
                 return None
 
-        except RedisConnectionError:
-            await logger(level=Levels.CRITICAL, message=REDIS_CONNECTION_ERROR)
-            raise RedisConnectionError(REDIS_CONNECTION_ERROR)
-
         except Exception as error:
-            await logger(level=Levels.ERROR, message=str(error))
-            return None
+            await redis_error_handler(error=error)
 
     async def delete(self, key: str) -> Optional[Literal[True]]:
         try:
@@ -118,13 +112,8 @@ class RedisConfig:
             else:
                 return None
 
-        except RedisConnectionError:
-            await logger(level=Levels.CRITICAL, message=REDIS_CONNECTION_ERROR)
-            raise RedisConnectionError(REDIS_CONNECTION_ERROR)
-
         except Exception as error:
-            await logger(level=Levels.ERROR, message=str(error))
-            return None
+            await redis_error_handler(error=error)
 
     async def close(self) -> Optional[Literal[True]]:
         try:
@@ -136,10 +125,8 @@ class RedisConfig:
             else:
                 return None
 
-        except RedisConnectionError:
-            await logger(level=Levels.CRITICAL, message=REDIS_CONNECTION_ERROR)
-            raise RedisConnectionError(REDIS_CONNECTION_ERROR)
-
         except Exception as error:
-            await logger(level=Levels.ERROR, message=str(error))
-            return None
+            await redis_error_handler(error=error)
+
+
+redis: Redis = Redis()

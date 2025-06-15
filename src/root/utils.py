@@ -4,13 +4,14 @@ from fastapi import FastAPI
 
 from src.logging.config import logger, shutdown_loggers
 from src.logging.enums import Levels
-from src.cache.config import RedisConfig
+from src.cache.config import redis
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        await RedisConfig().connect()
+        await redis.connect()
+        await redis.ping()
         await logger(level=Levels.INFO, message="SERVICE WAS LAUNCHED CORRECTLY")
         # When starting
         yield
@@ -23,4 +24,4 @@ async def lifespan(app: FastAPI):
 
     finally:
         await shutdown_loggers()
-        await RedisConfig().close()
+        await redis.close()

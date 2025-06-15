@@ -13,6 +13,7 @@ from graphql_client import (
     ToyByIDVariables
 )
 from graphql_client.dto import GQLResponse
+from src.cache.ttl_models import CacheTTL
 from src.common.config import config
 from src.common.constants import DEFAULT_ERROR_MESSAGE
 from src.sso.constants import ERRORS_MAPPING
@@ -93,7 +94,7 @@ async def toys_tags():
     return result
 
 
-@redis_cache(ttl_per_seconds=300)
+@redis_cache(ttl=CacheTTL.TOYS.TOYS_CATALOG)
 async def toys_catalog(
         page: int = Query(default=1, ge=1, description=f"Номер страницы (по {TOYS_PER_PAGE} записей на одной)"),
         # Filters
@@ -175,7 +176,7 @@ async def toys_catalog(
     return result
 
 
-@redis_cache(ttl_per_seconds=86400)
+@redis_cache(ttl=CacheTTL.TOYS.TOY_BY_ID)
 async def toy_by_id(
         toy_id: int
 ) -> ToyByIDResponse:
