@@ -1,24 +1,28 @@
-from os import getenv
 from typing import Any, Optional, Literal
 from pickle import loads as pickle_loads, dumps as pickle_dumps
-
-from dotenv import load_dotenv, find_dotenv
-
-load_dotenv(find_dotenv(".env"))
 
 from redis.asyncio import (
     Redis as AsyncRedis,
     ConnectionPool as AsyncRedisConnectionPool
 )
 from src.cache.ulits import redis_error_handler
+from src.cache.constants import (
+    HOST,
+    PORT,
+    PASSWORD,
+    DB,
+    DECODE_RESPONSES,
+    ENCODING,
+    MAX_CONNECTIONS,
+)
 
 
 class Redis:
     def __init__(
             self,
-            host: str = getenv("HMTM_BDU_REDIS_HOST", default="localhost"),
-            port: int = int(getenv("HMTM_BDU_REDIS_PORT", default=6381)),
-            password: str = getenv("HMTM_BDU_REDIS_PASSWORD", default=""),
+            host: str,
+            port: int,
+            password: str,
             db: int = 0,
             decode_responses: bool = False,
             encoding: str = "utf-8",
@@ -129,4 +133,12 @@ class Redis:
             await redis_error_handler(error=error)
 
 
-redis: Redis = Redis()
+redis: Redis = Redis(
+    host=HOST,
+    port=PORT,
+    password=PASSWORD,
+    db=DB,
+    decode_responses=DECODE_RESPONSES,
+    encoding=ENCODING,
+    max_connections=MAX_CONNECTIONS,
+)
