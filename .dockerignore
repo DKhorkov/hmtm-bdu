@@ -4,7 +4,8 @@ __pycache__
 *.pyc
 
 # Tests
-tests/
+**/tests/
+**/tests/**/*
 
 # Others
 .flake8
@@ -12,6 +13,12 @@ tests/
 LICENSE
 pyproject.toml
 README.md
+pytest.ini
+requirements.txt
+scripts/Taskfile.yml
 
 # env
 .env*
+
+# Workflows
+**/github/workflows/
