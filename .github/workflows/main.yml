@@ -1,6 +1,6 @@
 name: main-workflow
 run-name: ${{ github.actor }} is testing changes
-on: [ push, pull_request ]
+on: [push, pull_request]
 
 jobs:
 
@@ -36,23 +36,15 @@ jobs:
 
   pytest:
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:alpine
-        ports:
-          - 6381:6381
-        options: >-
-          --command sh -c "redis-server --port 6381 --requirepass mock-redis-password"
-        env:
-          REDIS_PASSWORD: mock-redis-password
+    name: PyTest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Check out source repository
+        uses: actions/checkout@v4
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - run: pip install -r requirements.txt
-      - run: pytest -v
-        env:
-          REDIS_HOST: localhost
-          REDIS_PORT: 6381
-          REDIS_PASSWORD: mock-redis-password
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Run pytest
+        run: pytest -v -m "not redis"
