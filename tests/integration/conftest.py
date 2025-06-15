@@ -10,6 +10,7 @@ from tests.integration.cache.constants import (
     TEST_REDIS_PASSWORD
 )
 
+
 @pytest.mark.redis
 @pytest_asyncio.fixture(scope="function")
 async def mock_redis_connection() -> AsyncGenerator[RedisConfig, Any]:
