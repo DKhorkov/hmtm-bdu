@@ -42,6 +42,7 @@ jobs:
         ports:
           - 6381:6379
         options: >-
+          --requirepass mock-redis-password
           --health-cmd "redis-cli -a mock-redis-password ping"
           --health-interval 10s
           --health-timeout 5s
