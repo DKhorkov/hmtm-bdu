@@ -6,13 +6,26 @@ services:
       - .env
     build:
       context: ../..  # Путь до корня проекта (Т.к deploy/local) - (../..)
-      dockerfile: deploy/prod/Dockerfile  # Путь к Dockerfile относительно корня проекта
+      dockerfile: deploy/prod/Dockerfile  # Путь к Dockerfile относительно КОРНЯ проекта!
     ports:
-      - "${HMTM_BDU_OUTER_PORT}:${HMTM_BDU_INNER_PORT}"  # Берем переменные из env-file
+      - "${HMTM_BDU_OUTER_PORT}:${HMTM_BDU_INNER_PORT}"  # Проброс портов
     volumes: # Синхронизируем и записываем файлы(в данном случае - логи) на хосте и контейнере
-      - ../../logs/hmtm_bdu:/app/logs
+      - ../../logs:/app/logs
     networks:
       - hmtm_network  # Подключение сети для "общения" с другими сервисами в той же сети по имени сервиса
+    depends_on:
+      - hmtm_redis
+
+  hmtm_redis:
+    container_name: hmtm_redis
+    image: redis:alpine
+    env_file:
+      - .env
+    command: ["redis-server", "--port", "${HMTM_BDU_REDIS_PORT}", "--requirepass", "${HMTM_BDU_REDIS_PASSWORD}"]
+    volumes:
+      - ../../logs:/app/logs
+    networks:
+      - hmtm_network
 
 networks:
   hmtm_network:

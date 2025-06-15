@@ -1,4 +1,5 @@
 from dotenv import load_dotenv, find_dotenv
+
 from os import getenv
 from dataclasses import dataclass
 
