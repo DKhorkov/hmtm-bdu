@@ -13,6 +13,7 @@ from graphql_client import (
     ToyByIDVariables
 )
 from graphql_client.dto import GQLResponse
+from src.cache.ttl_models import CacheTTL
 from src.common.config import config
 from src.common.constants import DEFAULT_ERROR_MESSAGE
 from src.sso.constants import ERRORS_MAPPING
@@ -25,15 +26,16 @@ from src.toys.dto import (
     ToyByIDResponse
 )
 from src.toys.models import (
-    UserForToyCard,
     ToyCategory,
     ToyTag,
     ToyAttachment,
     ToyForCatalog,
-    ToyForCard,
     ToyFilters,
-    MasterForToyCard
+    ToyForCard,
+    MasterForToyCard,
+    UserForToyCard,
 )
+from src.cache.wrappings import redis_cache
 
 
 async def toys_categories() -> ToysCategoriesResponse:
@@ -92,6 +94,7 @@ async def toys_tags():
     return result
 
 
+@redis_cache(ttl=CacheTTL.TOYS.TOYS_CATALOG)
 async def toys_catalog(
         page: int = Query(default=1, ge=1, description=f"Номер страницы (по {TOYS_PER_PAGE} записей на одной)"),
         # Filters
@@ -173,6 +176,7 @@ async def toys_catalog(
     return result
 
 
+@redis_cache(ttl=CacheTTL.TOYS.TOY_BY_ID)
 async def toy_by_id(
         toy_id: int
 ) -> ToyByIDResponse:
@@ -189,25 +193,24 @@ async def toy_by_id(
         if "errors" in gql_response.result:
             raise Exception(gql_response.result["errors"][0])
 
-        toy_response = gql_response.result["toy"]
+        response = gql_response.result["toy"]
         result.toy = ToyForCard(
-            id=toy_response["id"],
+            id=response["id"],
             master=MasterForToyCard(
-                id=toy_response["master"]["id"],
+                id=response["master"]["id"],
                 user=UserForToyCard(
-                    avatar=toy_response["master"]["user"]["avatar"],
-                    display_name=toy_response["master"]["user"]["displayName"],
+                    avatar=response["master"]["user"]["avatar"],
+                    display_name=response["master"]["user"]["displayName"],
                 )
             ),
-            category=ToyCategory(name=toy_response["category"]["name"]),
-
-            name=toy_response["name"],
-            description=toy_response["description"],
-            price=round(toy_response["price"], 2),
-            quantity=toy_response["quantity"],
-            created_at=DatetimeParser.parse(toy_response["createdAt"]),
-            tags=[ToyTag(name=tag["name"]) for tag in toy_response["tags"]],
-            attachments=[ToyAttachment(link=attachments["link"]) for attachments in toy_response["attachments"]],
+            category=ToyCategory(name=response["category"]["name"]),
+            name=response["name"],
+            description=response["description"],
+            price=round(response["price"], 2),
+            quantity=response["quantity"],
+            created_at=DatetimeParser.parse(response["createdAt"]),
+            tags=[ToyTag(name=tag["name"]) for tag in response["tags"]],
+            attachments=[ToyAttachment(link=attachments["link"]) for attachments in response["attachments"]],
         )
 
     except Exception as err:
