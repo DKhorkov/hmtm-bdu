@@ -18,9 +18,9 @@ from src.cache.constants import (
 class Redis:
     def __init__(
             self,
-            host: str = getenv("HMTM_BDU_REDIS_HOST", default="localhost"),
-            port: int = int(getenv("HMTM_BDU_REDIS_PORT", default=6381)),
-            password: str = getenv("HMTM_BDU_REDIS_PASSWORD", default=""),
+            host: str,
+            port: int,
+            password: str,
             db: int = 0,
             decode_responses: bool = False,
             encoding: str = "utf-8",
@@ -132,6 +132,9 @@ class Redis:
 
 
 redis: Redis = Redis(
+    host=getenv("HMTM_BDU_REDIS_HOST", default="localhost"),
+    port=int(getenv("HMTM_BDU_REDIS_PORT", default=6381)),
+    password=getenv("HMTM_BDU_REDIS_PASSWORD", default=""),
     db=DB,
     decode_responses=DECODE_RESPONSES,
     encoding=ENCODING,
