@@ -6,8 +6,8 @@ from redis.asyncio import (
     Redis as AsyncRedis,
     ConnectionPool as AsyncRedisConnectionPool
 )
-from src.redis.ulits import redis_error_handler
-from src.redis.constants import (
+from src.cache.ulits import redis_error_handler
+from src.cache.constants import (
     DB,
     DECODE_RESPONSES,
     ENCODING,
@@ -132,9 +132,6 @@ class Redis:
 
 
 redis: Redis = Redis(
-    host=HOST,
-    port=PORT,
-    password=PASSWORD,
     db=DB,
     decode_responses=DECODE_RESPONSES,
     encoding=ENCODING,

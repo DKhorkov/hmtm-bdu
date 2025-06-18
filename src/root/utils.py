@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from src.logging.config import logger, shutdown_loggers
 from src.logging.enums import Levels
-from src.redis.config import redis
+from src.cache.redis import redis
 
 
 @asynccontextmanager

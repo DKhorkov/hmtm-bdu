@@ -6,7 +6,7 @@ from redis.exceptions import (
 )
 from src.logging.config import logger
 from src.logging.enums import Levels
-from src.redis.constants import REDIS_ERRORS, DEFAULT_REDIS_ERROR_MESSAGE
+from src.cache.constants import REDIS_ERRORS, DEFAULT_REDIS_ERROR_MESSAGE
 
 
 async def redis_error_handler(error: Exception) -> NoReturn:
