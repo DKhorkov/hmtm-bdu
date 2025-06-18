@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Callable, Any, Optional
 
-from src.cache.config import redis
+from src.redis.config import redis
 from src.logging.config import logger
 from src.logging.enums import Levels
 

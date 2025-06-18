@@ -6,7 +6,7 @@ from redis.exceptions import (
 )
 from src.logging.config import logger
 from src.logging.enums import Levels
-from src.cache.constants import REDIS_ERRORS, DEFAULT_REDIS_ERROR_MESSAGE
+from src.redis.constants import REDIS_ERRORS, DEFAULT_REDIS_ERROR_MESSAGE
 
 
 async def redis_error_handler(error: Exception) -> NoReturn:
@@ -16,14 +16,12 @@ async def redis_error_handler(error: Exception) -> NoReturn:
         else REDIS_ERRORS.get(str(error), DEFAULT_REDIS_ERROR_MESSAGE)
     )
 
+    await logger(level=Levels.ERROR, message=error_message)
     if isinstance(error, RedisConnectionError):
-        await logger(level=Levels.ERROR, message=error_message)
         raise RedisConnectionError(error_message)
 
     elif isinstance(error, RedisAuthenticationError):
-        await logger(level=Levels.ERROR, message=error_message)
         raise RedisAuthenticationError(error_message)
 
     else:
-        await logger(level=Levels.ERROR, message=error_message)
         raise Exception(error_message)

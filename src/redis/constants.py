@@ -1,5 +1,4 @@
 from typing import Dict
-from os import getenv
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv(".env"))
@@ -12,9 +11,6 @@ REDIS_ERRORS: Dict[str, str] = {
 DEFAULT_REDIS_ERROR_MESSAGE: str = "Неизвестная ошибка Redis"
 
 # Redis environments:
-HOST: str = getenv("HMTM_BDU_REDIS_HOST", default="localhost")
-PORT: int = int(getenv("HMTM_BDU_REDIS_PORT", default=6381))
-PASSWORD: str = getenv("HMTM_BDU_REDIS_PASSWORD", default="")
 DB: int = 0
 DECODE_RESPONSES: bool = False
 ENCODING: str = "utf-8"

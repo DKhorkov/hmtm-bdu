@@ -16,7 +16,7 @@ class Toys:
 
 
 class Test:
-    ONE_SECOND: int = 1 * 60
+    ONE_MINUTE: int = 1 * 60
 
 
 class CacheTTL:

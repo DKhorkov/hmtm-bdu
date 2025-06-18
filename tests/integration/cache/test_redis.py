@@ -2,13 +2,13 @@ import pytest
 
 pytestmark = pytest.mark.usefixtures("mock_redis_connection")
 
-from src.cache.ttl_models import CacheTTL
+from src.redis.ttl_models import CacheTTL
 
 from tests.integration.cache.constants import (
     TEST_REDIS_KEY,
     TEST_REDIS_RETURN_VALUE,
 )
-from src.cache.config import Redis
+from src.redis.config import Redis
 
 
 @pytest.mark.redis
@@ -20,7 +20,7 @@ class TestRedis:
         set_redis_data = await mock_redis_connection.set(
             key=TEST_REDIS_KEY,
             data=TEST_REDIS_RETURN_VALUE,
-            ttl=CacheTTL.TEST.ONE_SECOND
+            ttl=CacheTTL.TEST.ONE_MINUTE
         )
         assert set_redis_data is True
 

@@ -13,7 +13,7 @@ from graphql_client import (
     ToyByIDVariables
 )
 from graphql_client.dto import GQLResponse
-from src.cache.ttl_models import CacheTTL
+from src.redis.ttl_models import CacheTTL
 from src.common.config import config
 from src.common.constants import DEFAULT_ERROR_MESSAGE
 from src.sso.constants import ERRORS_MAPPING
@@ -35,7 +35,7 @@ from src.toys.models import (
     MasterForToyCard,
     UserForToyCard,
 )
-from src.cache.wrappings import redis_cache
+from src.redis.wrappings import redis_cache
 
 
 async def toys_categories() -> ToysCategoriesResponse:
