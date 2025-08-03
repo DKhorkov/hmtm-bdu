@@ -111,9 +111,7 @@ class ToysCounterQuery:
     def to_gql() -> DocumentNode:
         return gql(
             """
-                query {
-                    toysCounter
-                }
+                query AllToysCounter($filters: ToysFilters) { toysCounter(filters: $filters) }
             """
         )
 
@@ -166,6 +164,34 @@ class ToyByIDQuery:
                         tags {name}
                         attachments {link}
                     }
+                }
+            """
+        )
+
+
+class MastersCatalogQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query GetMastersCatalog($input: MastersInput) {
+                    masters(input: $input) {
+                        id
+                        info
+                        createdAt
+                    }
+                }
+            """
+        )
+
+
+class MastersCounterQuery:
+    @staticmethod
+    def to_gql() -> DocumentNode:
+        return gql(
+            """
+                query AllMastersCounter($filters: MastersFilters) {
+                    mastersCounter(filters: $filters)
                 }
             """
         )

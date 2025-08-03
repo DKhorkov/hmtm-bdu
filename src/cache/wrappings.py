@@ -19,10 +19,9 @@ def redis_cache(ttl: int) -> Callable:
                 if redis_response is not None:
                     return redis_response
 
-                else:
-                    func_response: Any = await func(*args, **kwargs)
-                    await redis.set(key=key, data=func_response, ttl=ttl)
-                    return func_response
+                func_response: Any = await func(*args, **kwargs)
+                await redis.set(key=key, data=func_response, ttl=ttl)
+                return func_response
 
             except Exception as error:
                 await logger(level=Levels.ERROR, message=str(error))

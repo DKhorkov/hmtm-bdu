@@ -10,7 +10,8 @@ from graphql_client import (
     ToysCatalogVariables,
     ToysCounterQuery,
     ToyByIDQuery,
-    ToyByIDVariables
+    ToyByIDVariables,
+    ToysCounterFiltersVariables
 )
 from graphql_client.dto import GQLResponse
 from src.cache.ttl_models import CacheTTL
@@ -96,7 +97,7 @@ async def toys_tags():
 
 @redis_cache(ttl=CacheTTL.TOYS.TOYS_CATALOG)
 async def toys_catalog(
-        page: int = Query(default=1, ge=1, description=f"Номер страницы (по {TOYS_PER_PAGE} записей на одной)"),
+        page: int = Query(default=1, ge=1, description=f"Номер страницы (по {TOYS_PER_PAGE} записей на страницу)"),
         # Filters
         search: Optional[str] = Query(default=None),
         max_price: Optional[str] = Query(default=None),
@@ -109,7 +110,7 @@ async def toys_catalog(
         all_toys_categories: ToysCategoriesResponse = Depends(toys_categories),
         all_toys_tags: ToysTagsResponse = Depends(toys_tags),
 ) -> ToysCatalogResponse:
-    result: ToysCatalogResponse = ToysCatalogResponse(toys=[])
+    result: ToysCatalogResponse = ToysCatalogResponse()
 
     result.filters = ToyFilters(
         search=search if search else None,
@@ -154,7 +155,9 @@ async def toys_catalog(
 
         total_toys_count: GQLResponse = await config.graphql_client.gql_query(
             query=ToysCounterQuery.to_gql(),
-            variable_values={}
+            variable_values=ToysCounterFiltersVariables(
+                filters=result.filters
+            ).to_dict()
         )
 
         result.categories = all_toys_categories.categories

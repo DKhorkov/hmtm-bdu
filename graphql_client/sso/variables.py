@@ -1,8 +1,9 @@
-from typing import Dict, Optional, BinaryIO, Union, List
+from typing import Dict, Optional, BinaryIO, Union, List, Any
 from pydantic import EmailStr
 from dataclasses import dataclass
 
 from src.toys.models import ToyFilters
+from src.masters.models import MastersFilters
 
 
 @dataclass(frozen=True)
@@ -206,4 +207,56 @@ class ToyByIDVariables:
     def to_dict(self) -> Dict[str, int]:
         return {
             "id": self.id,
+        }
+
+
+@dataclass(frozen=True)
+class ToysCounterFiltersVariables:
+    filters: ToyFilters
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "filters": {
+                "search": self.filters.search,
+                "priceCeil": self.filters.price_ceil,
+                "priceFloor": self.filters.price_floor,
+                "quantityFloor": self.filters.quantity_floor,
+                "categoryIDs": self.filters.category_ids,
+                "tagIDs": self.filters.tag_ids,
+                "createdAtOrderByAsc": self.filters.created_at_order_by_asc,
+            }
+        }
+
+
+@dataclass(frozen=True)
+class MastersCatalogVariables:
+    limit: int
+    offset: int
+    filters: MastersFilters
+
+    def to_dict(self) -> Dict[str, Dict[str, Any]]:
+        return {
+            "input": {
+                "pagination": {
+                    "limit": self.limit,
+                    "offset": self.offset,
+                },
+                "filters": {
+                    "search": self.filters.search,
+                    "createdAtOrderByAsc": self.filters.created_at_order_by_asc,
+                }
+            }
+        }
+
+
+@dataclass(frozen=True)
+class MasterCounterVariables:
+    filters: MastersFilters
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "filters": {
+                "search": self.filters.search,
+                "createdAtOrderByAsc": self.filters.created_at_order_by_asc,
+            }
         }

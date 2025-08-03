@@ -1,18 +1,16 @@
 from typing import Any, Optional, Literal
 from pickle import loads as pickle_loads, dumps as pickle_dumps
+from dotenv import load_dotenv, find_dotenv
 from os import getenv
+from ast import literal_eval
 
 from redis.asyncio import (
     Redis as AsyncRedis,
     ConnectionPool as AsyncRedisConnectionPool
 )
 from src.cache.ulits import redis_error_handler
-from src.cache.constants import (
-    DB,
-    DECODE_RESPONSES,
-    ENCODING,
-    MAX_CONNECTIONS,
-)
+
+load_dotenv(find_dotenv(".env"))
 
 
 class Redis:
@@ -21,10 +19,10 @@ class Redis:
             host: str,
             port: int,
             password: str,
-            db: int = 0,
-            decode_responses: bool = False,
-            encoding: str = "utf-8",
-            max_connections: int = 10,
+            db: int,
+            decode_responses: bool,
+            encoding: str,
+            max_connections: int,
     ):
         self.__host = host
         self.__port = port
@@ -135,8 +133,8 @@ redis: Redis = Redis(
     host=getenv("HMTM_BDU_REDIS_HOST", default="localhost"),
     port=int(getenv("HMTM_BDU_REDIS_PORT", default=6381)),
     password=getenv("HMTM_BDU_REDIS_PASSWORD", default=""),
-    db=DB,
-    decode_responses=DECODE_RESPONSES,
-    encoding=ENCODING,
-    max_connections=MAX_CONNECTIONS,
+    db=int(getenv("HMTM_BDU_REDIS_DB", default=0)),
+    decode_responses=literal_eval(getenv("HMTM_BDU_REDIS_DECODE_RESPONSES", default="False")),  # type: ignore
+    encoding=getenv("HMTM_BDU_REDIS_ENCODING", default="utf-8"),
+    max_connections=int(getenv("HMTM_BDU_REDIS_MAX_CONNECTIONS", default=5)),
 )

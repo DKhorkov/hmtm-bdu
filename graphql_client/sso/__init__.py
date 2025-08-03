@@ -27,6 +27,9 @@ from .variables import (
     GetUserByEmailVariables,
     ToysCatalogVariables,
     ToyByIDVariables,
+    MastersCatalogVariables,
+    ToysCounterFiltersVariables,
+    MasterCounterVariables,
 )
 from .queries import (
     GetMeQuery,
@@ -38,4 +41,6 @@ from .queries import (
     AllToysCategoriesQuery,
     AllToysTagsQuery,
     ToyByIDQuery,
+    MastersCatalogQuery,
+    MastersCounterQuery,
 )

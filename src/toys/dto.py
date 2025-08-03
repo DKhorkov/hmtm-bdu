@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Dict, List
 
 from src.common.dto import BaseResponse, BoolResponse
@@ -19,7 +19,7 @@ class ToysTagsResponse(BaseResponse):
 class ToysCatalogResponse(ToysCategoriesResponse, ToysTagsResponse):
     current_page: Optional[int] = None
     total_pages: Optional[int] = None
-    toys: Optional[List[ToyForCatalog]] = None
+    toys: List[ToyForCatalog] = field(default_factory=list)
     filters: Optional[ToyFilters] = None
 
 

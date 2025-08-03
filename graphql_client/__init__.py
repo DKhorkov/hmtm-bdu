@@ -26,6 +26,7 @@ from .sso import (
 
     ToysCatalogQuery,
     ToysCatalogVariables,
+    ToysCounterFiltersVariables,
 
     ToyByIDQuery,
     ToyByIDVariables,
@@ -52,6 +53,12 @@ from .sso import (
 
     RegisterMasterVariables,
     RegisterMasterMutation,
+
+    MastersCatalogVariables,
+    MastersCatalogQuery,
+
+    MastersCounterQuery,
+    MasterCounterVariables
 )
 
 from .client import GraphQLClient

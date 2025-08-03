@@ -1,0 +1,1 @@
+MASTERS_PER_PAGE: int = 12

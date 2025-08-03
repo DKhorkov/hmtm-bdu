@@ -16,7 +16,11 @@ async def mock_redis_connection() -> AsyncGenerator[Redis, Any]:
     redis: Redis = Redis(
         host=TEST_REDIS_HOST,
         port=TEST_REDIS_PORT,
-        password=TEST_REDIS_PASSWORD
+        password=TEST_REDIS_PASSWORD,
+        db=0,
+        decode_responses=False,
+        max_connections=4,
+        encoding="utf-8",
     )
 
     try:
