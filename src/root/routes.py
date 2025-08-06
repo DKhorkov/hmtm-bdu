@@ -30,6 +30,6 @@ async def home_page(
     )
 
     for cookie in current_user.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response

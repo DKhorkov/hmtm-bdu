@@ -116,7 +116,7 @@ async def process_login(
 
     response: Response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     for cookie in result.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response
 

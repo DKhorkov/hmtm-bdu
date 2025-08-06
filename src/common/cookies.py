@@ -14,7 +14,7 @@ class CookiesConfig:
     PATH: str = "/"
 
 
-def set_cookie(response: Response, cookie_config: CookiesConfig) -> Response:
+def set_cookie(response: Response, cookie_config: CookiesConfig) -> None:
     response.set_cookie(
         key=cookie_config.KEY,
         value=cookie_config.VALUE,
@@ -24,8 +24,6 @@ def set_cookie(response: Response, cookie_config: CookiesConfig) -> Response:
         samesite=cookie_config.SAME_SITE,
         path=cookie_config.PATH
     )
-
-    return response
 
 
 def delete_cookie(response: Response, cookie_config: CookiesConfig) -> Response:

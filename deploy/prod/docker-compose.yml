@@ -21,7 +21,13 @@ services:
     image: redis:alpine
     env_file:
       - .env
-    command: ["redis-server", "--port", "${HMTM_BDU_REDIS_PORT}", "--requirepass", "${HMTM_BDU_REDIS_PASSWORD}"]
+    command: [
+      "redis-server",
+      "--port", "${HMTM_BDU_REDIS_PORT}",
+      "--requirepass", "${HMTM_BDU_REDIS_PASSWORD}",
+      "--maxmemory", "${HMTM_BDU_REDIS_MAXMEMORY}",
+      "--maxmemory-policy", "${HMTM_BDU_REDIS_MAXMEMORY_POLICY}"
+    ]
     volumes:
       - ../../logs:/app/logs
     networks:

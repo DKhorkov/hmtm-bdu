@@ -15,6 +15,10 @@ class Toys:
     TOYS_CATALOG: int = 5 * 60  # 5 min
 
 
+class Masters:
+    MASTERS_CATALOG: int = 5 * 60
+
+
 class Test:
     ONE_MINUTE: int = 1 * 60
 
@@ -24,5 +28,6 @@ class CacheTTL:
     SSO = Sso()
     PROFILE = Profile()
     TOYS = Toys()
+    MASTERS = Masters()
     TEST = Test()
     DEFAULT: int = 5 * 60  # 5 min

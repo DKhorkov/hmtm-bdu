@@ -46,7 +46,7 @@ async def toys_catalog(
     )
 
     for cookie in current_user.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response
 
@@ -73,6 +73,6 @@ async def toy_by_id(
     response: Response = templates.TemplateResponse(request=request, name="toy-page.html", context=context)
 
     for cookie in current_user.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response

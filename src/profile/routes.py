@@ -56,7 +56,7 @@ async def profile_page(
         )
 
         for cookie in current_user.cookies:
-            response = set_cookie(response, cookie)
+            set_cookie(response, cookie)
 
         return response
 
@@ -89,7 +89,7 @@ async def process_change_password(
     )
 
     for cookie in result.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response
 
@@ -122,7 +122,7 @@ async def process_update_user_profile(
     )
 
     for cookie in result.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response
 
@@ -152,7 +152,7 @@ async def process_update_master(
     )
 
     for cookie in result.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response
 
@@ -184,6 +184,6 @@ async def register_master(
     )
 
     for cookie in result.cookies:
-        response = set_cookie(response, cookie)
+        set_cookie(response, cookie)
 
     return response

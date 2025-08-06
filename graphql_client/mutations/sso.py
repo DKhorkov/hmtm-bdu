@@ -20,12 +20,6 @@ class VerifyUserEmailMutation:
         return gql("mutation VerifyUserEmail($input: VerifyUserEmailInput!) {verifyUserEmail(input: $input)}")
 
 
-class RefreshTokensMutation:
-    @staticmethod
-    def to_gql() -> DocumentNode:
-        return gql("mutation { refreshTokens }")
-
-
 class SendVerifyEmailMessageMutation:
     @staticmethod
     def to_gql() -> DocumentNode:
@@ -48,51 +42,11 @@ class SendForgetPasswordMessageMutation:
         )
 
 
-class ChangePasswordMutation:
-    @staticmethod
-    def to_gql() -> DocumentNode:
-        return gql(
-            """
-                mutation ChangePassword($input: ChangePasswordInput!) {changePassword(input: $input)}
-            """
-        )
-
-
 class ChangeForgetPasswordMutation:
     @staticmethod
     def to_gql() -> DocumentNode:
         return gql(
             """
                 mutation ChangeForgetPassword($input: ForgetPasswordInput!) {forgetPassword(input: $input)}
-            """
-        )
-
-
-class UpdateUserProfileMutation:
-    @staticmethod
-    def to_gql() -> DocumentNode:
-        return gql(
-            """
-                mutation UpdateUserProfile($input: UpdateUserProfileInput!) {updateUserProfile(input: $input)}
-            """
-        )
-
-
-class UpdateMasterMutation:
-    @staticmethod
-    def to_gql() -> DocumentNode:
-        return gql(
-            """
-                mutation UpdateMaster($input: UpdateMasterInput!) {updateMaster(input: $input)}
-            """
-        )
-
-
-class RegisterMasterMutation:
-    @staticmethod
-    def to_gql() -> DocumentNode:
-        return gql(
-            """
-                mutation RegisterMaster($input: RegisterMasterInput!) {registerMaster(input: $input)}
             """
         )
