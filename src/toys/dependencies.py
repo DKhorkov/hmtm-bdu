@@ -2,16 +2,18 @@ from typing import Optional, List
 from math import ceil as math_ceil
 from fastapi import Query, Depends
 
-from graphql_client import (
-    AllToysCategoriesQuery,
-    extract_error_message,
-    AllToysTagsQuery,
-    ToysCatalogQuery,
+from graphql_client import extract_error_message
+from graphql_client.variables.toys import (
     ToysCatalogVariables,
-    ToysCounterQuery,
-    ToyByIDQuery,
     ToyByIDVariables,
     ToysCounterFiltersVariables
+)
+from graphql_client.queries.toys import (
+    ToysCatalogQuery,
+    ToysCounterQuery,
+    AllToysCategoriesQuery,
+    AllToysTagsQuery,
+    ToyByIDQuery
 )
 from graphql_client.dto import GQLResponse
 from src.cache.ttl_models import CacheTTL

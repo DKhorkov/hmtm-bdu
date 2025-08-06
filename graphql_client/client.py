@@ -18,7 +18,7 @@ class GraphQLClient:
             query: DocumentNode,
             variable_values: Optional[Dict[str, Any]],
             cookies: Optional[Dict[str, str]] = None,
-            upload_files: bool = False,
+            upload_files: bool = False
     ) -> GQLResponse:
         cookies = cookies if cookies else {}
         transport = AIOHTTPTransport(url=self.__url, cookies=cookies)

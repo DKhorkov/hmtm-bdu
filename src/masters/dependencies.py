@@ -3,12 +3,14 @@ from math import ceil as math_ceil
 
 from fastapi import Query
 
-from graphql_client import (
-    extract_error_message,
-    MastersCatalogQuery,
+from graphql_client import extract_error_message
+from graphql_client.variables.masters import (
     MastersCatalogVariables,
-    MastersCounterQuery,
-    MasterCounterVariables,
+    MasterCounterVariables
+)
+from graphql_client.queries.masters import (
+    MastersCatalogQuery,
+    MastersCounterQuery
 )
 from graphql_client.dto import GQLResponse
 from src.common.config import config
@@ -16,7 +18,10 @@ from src.common.constants import DEFAULT_ERROR_MESSAGE
 from src.common.datetime_parser import DatetimeParser
 from src.masters.constants import MASTERS_PER_PAGE
 from src.masters.dto import MastersCatalogResponse
-from src.masters.models import MasterForCatalog, MastersFilters
+from src.masters.models import (
+    MasterForCatalog,
+    MastersFilters
+)
 from src.sso.constants import ERRORS_MAPPING
 from src.cache.wrappings import redis_cache
 from src.cache.ttl_models import CacheTTL

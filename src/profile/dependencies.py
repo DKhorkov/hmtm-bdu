@@ -1,21 +1,23 @@
-from io import BytesIO as io_BytesIO
-from typing import Annotated, Dict, Optional, BinaryIO, List
+from io import BytesIO
+from typing import Annotated, Dict, Optional, List
 from fastapi import Form, Depends, UploadFile, File
 from fastapi.requests import Request
 
-from graphql_client import (
-    ChangePasswordMutation,
-    ChangePasswordVariables,
-    extract_error_message,
-    UpdateUserProfileMutation,
+from graphql_client import extract_error_message
+from graphql_client.variables.profile import (
     UpdateUserProfileVariables,
-    GetMasterByUserQuery,
-    GetMasterByUserVariables,
-    UpdateMasterMutation,
     UpdateMasterVariables,
-    RegisterMasterMutation,
-    RegisterMasterVariables
+    RegisterMasterVariables,
+    GetMasterByUserVariables,
+    ChangePasswordVariables
 )
+from graphql_client.mutations.profile import (
+    ChangePasswordMutation,
+    UpdateUserProfileMutation,
+    UpdateMasterMutation,
+    RegisterMasterMutation
+)
+from graphql_client.queries.profile import GetMasterByUserQuery
 from graphql_client.dto import GQLResponse
 from src.common.config import config
 from src.common.constants import DEFAULT_ERROR_MESSAGE
@@ -88,7 +90,7 @@ async def update_user_profile(
         current_user: GetMeResponse = Depends(get_me),
 ) -> UpdateUserProfileResponse:
     result: UpdateUserProfileResponse = UpdateUserProfileResponse()
-    upload_file: Optional[BinaryIO] = None
+    upload_file: Optional[BytesIO] = None
 
     if current_user.error:
         result.error = "Пользователь не найден"
@@ -102,8 +104,8 @@ async def update_user_profile(
 
     try:
         if avatar and avatar.size is not None and avatar.size > 0:
-            upload_file = io_BytesIO(await avatar.read())
-            upload_file.name = avatar.filename
+            upload_file: BytesIO = BytesIO(await avatar.read())  # type: ignore
+            upload_file.name = avatar.filename  # type: ignore
 
         gql_response: GQLResponse = await config.graphql_client.gql_query(
             query=UpdateUserProfileMutation().to_gql(),

@@ -7,37 +7,38 @@ from src.common.config import config
 from src.sso.constants import ERRORS_MAPPING, FORGET_PASSWORD_TOKEN_NAME
 from src.common.constants import DEFAULT_ERROR_MESSAGE
 from graphql_client import (
+    extract_error_message,
+    ResponseProcessor as GQLResponseProcessor,
+)
+from graphql_client.variables.sso import (
     RegisterUserVariables,
     LoginUserVariables,
     VerifyUserEmailVariables,
     SendVerifyEmailMessageVariables,
     SendForgetPasswordMessageVariables,
     ForgetPasswordVariables,
-    GetMasterByUserVariables,
     GetUserByIDVariables,
-    GetUserByEmailVariables,
-
+    GetUserByEmailVariables
+)
+from graphql_client.queries.sso import GetUserByIDQuery, GetUserByEmailQuery
+from graphql_client.mutations.sso import (
     RegisterUserMutation,
     LoginUserMutation,
     VerifyUserEmailMutation,
     SendVerifyEmailMessageMutation,
     SendForgetPasswordMessageMutation,
-    ChangeForgetPasswordMutation,
-    GetUserByIDQuery,
-    GetUserByEmailQuery,
-    GetMasterByUserQuery,
-
-    extract_error_message,
-
-    ResponseProcessor as GQLResponseProcessor,
+    ChangeForgetPasswordMutation
 )
+from graphql_client.variables.profile import GetMasterByUserVariables
+from graphql_client.queries.profile import GetMasterByUserQuery
 from src.sso.dto import (
     LoginResponse,
     RegisterResponse,
     VerifyEmailResponse,
     SendVerifyEmailMessageResponse,
     SendForgetPasswordMessageResponse,
-    GetFullUserInfoResponse, ChangeForgetPasswordResponse,
+    GetFullUserInfoResponse,
+    ChangeForgetPasswordResponse,
 )
 from src.sso.models import (
     UserInfo,

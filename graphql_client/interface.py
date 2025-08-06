@@ -12,7 +12,7 @@ class GraphQLInterface(Protocol):
             query: DocumentNode,
             variable_values: Dict[str, Any],
             cookies: Optional[Dict[str, str]] = None,
-            upload_files: bool = False,
+            upload_files: bool = False
     ) -> GQLResponse:
         """Реализация запроса через клиент"""
         pass

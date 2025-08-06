@@ -2,11 +2,11 @@ from typing import Optional, List, Dict
 
 from fastapi.requests import Request
 from graphql_client import (
-    GetMeQuery,
     extract_error_message,
-    RefreshTokensMutation,
     ResponseProcessor as GQLResponseProcessor
 )
+from graphql_client.mutations.common import RefreshTokensMutation
+from graphql_client.queries.common import GetMeQuery
 from graphql_client.dto import GQLResponse
 from src.common.config import config
 from src.common.constants import DEFAULT_ERROR_MESSAGE, ERRORS_MAPPING
