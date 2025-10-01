@@ -2,7 +2,7 @@ import pytest
 
 from fastapi.testclient import TestClient
 from httpx import Response as httpx_Response
-from src.root.main import app as fastapi_app
+from src.core.main import app as fastapi_app
 
 
 @pytest.fixture(scope="function", autouse=True)

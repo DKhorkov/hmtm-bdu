@@ -5,15 +5,14 @@ from gql import Client
 from graphql_client.dto import GQLResponse
 from aiohttp import ServerDisconnectedError
 
-from src.logging.config import logger
-from src.logging.enums import Levels
+from src.core.logger.enums import Levels
 
 
 class GraphQLClient:
     def __init__(self, url: str) -> None:
         self.__url = url
 
-    async def gql_query(
+    async def execute(
             self,
             query: DocumentNode,
             variable_values: Optional[Dict[str, Any]],
@@ -38,7 +37,9 @@ class GraphQLClient:
                 )
 
             except ServerDisconnectedError as error:
-                await logger(
+                from src.core.config import config  # Ленивая загрузка. Решает проблему циклическим импортов
+
+                await config.logger.write_log(
                     level=Levels.CRITICAL,
                     message=f"ServerDisconnectedError | Query: {print_ast(query)}",
                 )

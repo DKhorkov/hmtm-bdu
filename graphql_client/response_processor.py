@@ -1,7 +1,7 @@
 from typing import List
 
 from graphql_client.dto import GQLResponse
-from src.common.cookies import CookiesConfig
+from src.core.common.cookies import CookiesConfig
 from graphql_client.cookie import Cookie as GQLCookie, CookiesParser
 
 
@@ -11,7 +11,7 @@ class ResponseProcessor:
 
     def get_cookies(self) -> List[CookiesConfig]:
         gql_cookies: List[GQLCookie] = CookiesParser.parse(self.__response.headers)  # type: ignore[arg-type]
-        processed_cookies: List[CookiesConfig] = list()
+        processed_cookies: List[CookiesConfig] = []
         for gql_cookie in gql_cookies:
             cookie: CookiesConfig = CookiesConfig(
                 KEY=gql_cookie.key,
