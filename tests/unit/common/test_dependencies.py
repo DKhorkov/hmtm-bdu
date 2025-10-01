@@ -7,8 +7,8 @@ from multidict import CIMultiDictProxy, CIMultiDict
 from fastapi.requests import Request
 
 from graphql_client.dto import GQLResponse
-from src.common.dependencies import get_me
-from src.common.dto import GetMeResponse
+from src.core.common.dependencies import get_me
+from src.core.common.dto import GetMeResponse
 
 
 class TestGetMeDependency:

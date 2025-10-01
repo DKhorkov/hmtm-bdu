@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, Any
 
-from src.masters.models import MastersFilters
+from src.domains.masters.models import MastersFilters
 
 
 @dataclass(frozen=True)

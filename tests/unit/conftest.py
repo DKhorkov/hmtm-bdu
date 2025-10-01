@@ -6,13 +6,13 @@ from multidict import CIMultiDict, CIMultiDictProxy
 
 from graphql_client import GraphQLClient
 from graphql_client.dto import GQLResponse
-from src.common.dto import GetMeResponse
+from src.core.common.dto import GetMeResponse
 
 
 @pytest.fixture(scope="function")
 def mock_gql_client() -> Generator[AsyncMock, None, None]:
     """Фикстура через декоратор @patch не работает из-за особенностей pytest-а"""
-    with patch.object(target=GraphQLClient, attribute="gql_query", new_callable=AsyncMock) as mock:
+    with patch.object(target=GraphQLClient, attribute="execute", new_callable=AsyncMock) as mock:
         yield mock
 
 

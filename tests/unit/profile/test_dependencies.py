@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch, MagicMock
 from graphql import DocumentNode
 from typing import Dict
 from fastapi.requests import Request
-from src.profile.dependencies import (
+from src.domains.profile.dependencies import (
     change_password,
     update_user_profile,
     master_by_user,
@@ -15,7 +15,7 @@ from src.profile.dependencies import (
     register_master
 )
 from graphql_client.dto import GQLResponse
-from src.profile.dto import (
+from src.domains.profile.dto import (
     UpdateUserProfileResponse,
     ChangePasswordResponse,
     GetUserIsMasterResponse,
@@ -226,7 +226,7 @@ class TestUpdateMaster:
         mock_request.cookies = {}
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
-        mock_response.result = {"gql_query_status": True}
+        mock_response.result = {"execute_status": True}
         mock_response.headers = {}
 
         mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
@@ -236,7 +236,7 @@ class TestUpdateMaster:
         mock_master.master.created_at = "27.04.2025"
         mock_master.master.updated_at = "27.04.2025"
 
-        with patch('src.profile.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
+        with patch('src.domains.profile.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
             new_master_info = "New_test_master"
             mock_gql_client.return_value = mock_response
 
@@ -257,7 +257,7 @@ class TestUpdateMaster:
         mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
-        mock_response.result = {"gql_query_status": True}
+        mock_response.result = {"execute_status": True}
 
         mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
         mock_master.master.id = 1
@@ -290,12 +290,12 @@ class TestUpdateMaster:
         mock_request.cookies = {}  # Добавляем cookies
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
-        mock_response.result = {"gql_query_status": True}
+        mock_response.result = {"execute_status": True}
 
         mock_master: MagicMock = MagicMock(spec=GetUserIsMasterResponse)
         mock_master.master = None
 
-        with patch('src.profile.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
+        with patch('src.domains.profile.dependencies.master_by_user', new=AsyncMock(return_value=mock_master)):
             new_master_info = "New_test_master"
 
             result: UpdateMasterResponse = await update_master(
@@ -314,7 +314,7 @@ class TestRegisterMaster:
         mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
-        mock_response.result = {"gql_query_status": True}
+        mock_response.result = {"execute_status": True}
 
         master_info = "New_master"
 
@@ -336,7 +336,7 @@ class TestRegisterMaster:
         mock_request: MagicMock = MagicMock(spec=Request)
 
         mock_response: MagicMock = MagicMock(spec=GQLResponse)
-        mock_response.result = {"gql_query_status": True}
+        mock_response.result = {"execute_status": True}
 
         mock_get_me.error = "accessToken not found"
 

@@ -5,13 +5,13 @@ pytestmark = pytest.mark.usefixtures("mock_gql_client")
 from unittest.mock import AsyncMock, MagicMock
 
 from graphql_client.dto import GQLResponse
-from src.toys.dependencies import (
+from src.domains.toys.dependencies import (
     toys_catalog,
     toy_by_id,
     toys_tags,
     toys_categories,
 )
-from src.toys.dto import (
+from src.domains.toys.dto import (
     ToysCategoriesResponse,
     ToysTagsResponse,
     ToyByIDResponse,

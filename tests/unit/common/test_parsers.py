@@ -2,7 +2,7 @@ import pytest
 
 from contextlib import nullcontext as does_not_raise
 
-from src.common.datetime_parser import DatetimeParser
+from src.core.common.parsers import Parse
 
 
 class TestDatetimeParser:
@@ -22,4 +22,4 @@ class TestDatetimeParser:
             expectation
     ) -> None:
         with expectation:
-            assert DatetimeParser().parse(iso_date_str) == expected_result
+            assert Parse.datetime(iso_date_str) == expected_result

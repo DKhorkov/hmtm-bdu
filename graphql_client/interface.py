@@ -7,7 +7,7 @@ from graphql_client.dto import GQLResponse
 
 @runtime_checkable
 class GraphQLInterface(Protocol):
-    async def gql_query(
+    async def execute(
             self,
             query: DocumentNode,
             variable_values: Dict[str, Any],
