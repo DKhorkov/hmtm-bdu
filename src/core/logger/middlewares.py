@@ -7,7 +7,7 @@ from starlette.responses import Response
 
 
 from src.core.logger.enums import Levels
-from src.core.config import config
+from src.core.logger.logger import Logger
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):
@@ -17,12 +17,13 @@ class LoggerMiddleware(BaseHTTPMiddleware):
             call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response | None:
         start_time: float = perf_counter()
+        logger: Logger = request.app.state.logger
 
         try:
             response: Response = await call_next(request)
             process_time: float = perf_counter() - start_time
 
-            await config.logger.write_log(
+            await logger.write_log(
                 level=Levels.INFO,
                 message=f"URL: {request.url.path} Статус: {response.status_code} Время запроса: {round(process_time, 5)}",
             )
@@ -30,7 +31,7 @@ class LoggerMiddleware(BaseHTTPMiddleware):
             return response
 
         except Exception as error:
-            await config.logger.write_log(
+            await logger.write_log(
                 level=Levels.ERROR,
                 message=f"URL: {request.url.path} Статус: {Levels.ERROR} Ошибка: {error}"
             )

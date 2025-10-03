@@ -23,11 +23,9 @@ from src.domains.sso.dto import (
 )
 from src.core.common.dto import GetMeResponse
 from src.domains.sso.constants import FORGET_PASSWORD_TOKEN_NAME
-from src.core.common.utils import (
-    Cryptography,
-    Extract
-)
-from src.core.config import config
+from src.core.common.extractors import UrlExtractors
+from src.core.common.encryptor import Cryptography
+from src.core.state import GlobalAppState
 
 router = APIRouter(prefix="/sso", tags=["SSO"])
 templates = Jinja2Templates(directory="templates")
@@ -37,7 +35,7 @@ templates = Jinja2Templates(directory="templates")
 async def register_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     """ Регистрация пользователя - Форма """
     if current_user.user is not None:
@@ -80,7 +78,7 @@ async def process_register(
 async def login_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     """ Аутентификация пользователя - Форма """
     if current_user.user is not None:
@@ -92,8 +90,8 @@ async def login_page(
         request=request,
         name="login.html",
         context={
-            "success_message": Extract.success_message_from_url(request=request, cryptography=encryptor),
-            "error_message": Extract.error_from_url(request=request, cryptography=encryptor),
+            "success_message": UrlExtractors.success_message_from_url(request=request, cryptography=encryptor),
+            "error_message": UrlExtractors.error_from_url(request=request, cryptography=encryptor),
         }
     )
 
@@ -152,7 +150,7 @@ async def logout(request: Request):
 async def verify_email_letter_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     """ Повторная отправка письма подтверждения почты - Форма """
     if current_user.user is not None:
@@ -191,7 +189,7 @@ async def process_verify_email_letter(
 async def forget_password_form_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     """ Восстановление пароля для не аутентифицированного пользователя - Форма """
     if current_user.user is not None:
@@ -206,7 +204,7 @@ async def forget_password_form_page(
         request=request,
         name="forget-password-form.html",
         context={
-            "error_message": Extract.error_from_url(request=request, cryptography=encryptor)
+            "error_message": UrlExtractors.error_from_url(request=request, cryptography=encryptor)
         }
     )
 
@@ -215,7 +213,7 @@ async def forget_password_form_page(
 async def process_send_forget_password_message(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: SendForgetPasswordMessageResponse = Depends(send_forget_password_message_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     """ Восстановление пароля в профиле через форму - Процесс"""
     encrypted_success_message = encryptor.encrypt(
@@ -295,14 +293,14 @@ async def process_change_forget_password(
 async def find_users_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     return templates.TemplateResponse(
         request=request,
         name="find-users-form.html",
         context={
             "user": current_user.user if current_user.user else None,
-            "error_message": Extract.error_from_url(request=request, cryptography=encryptor),
+            "error_message": UrlExtractors.error_from_url(request=request, cryptography=encryptor),
         }
     )
 
@@ -311,7 +309,7 @@ async def find_users_page(
 async def get_user_info(
         request: Request,
         result: GetFullUserInfoResponse = Depends(get_user_info_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     if result.user is None:
         encrypted_error: str = encryptor.encrypt("user_not_found")

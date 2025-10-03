@@ -1,9 +1,9 @@
 from typing import Optional
 from math import ceil as math_ceil
 
-from fastapi import Query
+from fastapi import Query, Depends
 
-from graphql_client import extract_error_message
+from graphql_client import extract_error_message, GraphQLClient
 from graphql_client.variables.masters import (
     MastersCatalogVariables,
     MasterCounterVariables
@@ -13,9 +13,9 @@ from graphql_client.queries.masters import (
     MastersCounterQuery
 )
 from graphql_client.dto import GQLResponse
-from src.core.config import config
 from src.core.common.constants import DEFAULT_ERROR_MESSAGE
-from src.core.common.parsers import Parse
+from src.core.common.parsers import DatetimeParsers
+from src.core.state import GlobalAppState
 from src.domains.masters.constants import MASTERS_PER_PAGE
 from src.domains.masters.dto import MastersCatalogResponse
 from src.domains.masters.models import (
@@ -27,8 +27,9 @@ from src.core.cache.wrappers import RedisWrappers
 from src.core.cache.ttl_dto import CacheTTL
 
 
-@RedisWrappers.redis_cache(ttl=CacheTTL.MASTERS.MASTERS_CATALOG, redis=config.redis_as_cache)
+@RedisWrappers.redis_cache(ttl=CacheTTL.MASTERS.MASTERS_CATALOG)
 async def masters_catalog(
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),  # noqa
         page: int = Query(default=1, ge=1, description=f"Номер страницы (по {MASTERS_PER_PAGE} записей на страницу)"),
         search: Optional[str] = Query(default=""),
         sort_order: Optional[str] = Query(default=None),
@@ -41,11 +42,11 @@ async def masters_catalog(
         offset: int = (page - 1) * MASTERS_PER_PAGE
 
         result.filters = MastersFilters(
-            search=search,  # type: ignore[arg-type]
+            search=search,  # type: ignore
             created_at_order_by_asc=True if sort_order == "oldest" else False,
         )
 
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=MastersCatalogQuery.to_gql(),
             variable_values=MastersCatalogVariables(
                 limit=MASTERS_PER_PAGE,
@@ -57,7 +58,7 @@ async def masters_catalog(
         if "errors" in gql_response.result:
             raise Exception(gql_response.result["errors"][0])
 
-        total_masters_count: GQLResponse = await config.graphql_client.execute(
+        total_masters_count: GQLResponse = await gql_client.execute(
             query=MastersCounterQuery.to_gql(),
             variable_values=MasterCounterVariables(
                 filters=result.filters,
@@ -69,7 +70,7 @@ async def masters_catalog(
                 MasterForCatalog(
                     id=master["id"],
                     info=master["info"],
-                    created_at=Parse.datetime(master["createdAt"]),
+                    created_at=DatetimeParsers.parse_iso_format(master["createdAt"]),
                 )
             )
 

@@ -22,6 +22,7 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     name: Mypy
+    needs: flake8
     steps:
       - name: Check out source repository
         uses: actions/checkout@v4
@@ -37,6 +38,7 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     name: PyTest
+    needs: mypy
     steps:
       - name: Check out source repository
         uses: actions/checkout@v4
@@ -47,4 +49,4 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements.txt
       - name: Run pytest
-        run: pytest -v -m "not redis"
+        run: pytest -v -m "not mock_redis_connection"

@@ -4,15 +4,18 @@ from typing import Any, Dict
 from src.core.common.dto import User
 
 
-class Parse:
+class DatetimeParsers:
 
     @staticmethod
-    def datetime(iso_date: str) -> str:
+    def parse_iso_format(iso_date: str) -> str:
         try:
             return datetime.strptime(iso_date, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%d.%m.%Y")
 
         except Exception:
             return "Ошибка загрузки формата даты"
+
+
+class ModelsParsers:
 
     @staticmethod
     def user_from_dict(user: Dict[str, Any]) -> User:
@@ -26,6 +29,6 @@ class Parse:
             telegram=user["telegram"],
             telegram_confirmed=user["telegramConfirmed"],
             avatar=user["avatar"],
-            created_at=Parse.datetime(user["createdAt"]),
-            updated_at=Parse.datetime(user["updatedAt"]),
+            created_at=DatetimeParsers.parse_iso_format(user["createdAt"]),
+            updated_at=DatetimeParsers.parse_iso_format(user["updatedAt"]),
         )
