@@ -1,27 +1,12 @@
 from typing import Optional
 
-from cryptography.fernet import Fernet
 from fastapi import Request
 
 from src.core.common.constants import DEFAULT_ERROR_MESSAGE, REQUEST_ENVIRONMENTS_MAPPING
+from src.core.common.encryptor import Cryptography
 
 
-class Cryptography:
-    def __init__(self, secret_key: str):
-        self.__cipher = Fernet(key=secret_key)
-
-    def encrypt(self, key: str) -> str:
-        return self.__cipher.encrypt(key.encode("utf-8")).decode("utf-8")
-
-    def decrypt(self, key: str) -> Optional[str]:
-        try:
-            return self.__cipher.decrypt(key.encode("utf-8")).decode("utf-8")
-
-        except Exception:
-            return None
-
-
-class Extract:
+class UrlExtractors:
 
     @staticmethod
     def error_from_url(request: Request, cryptography: Cryptography) -> Optional[str]:

@@ -17,11 +17,10 @@ from graphql_client.queries.toys import (
 )
 from graphql_client.dto import GQLResponse
 from src.core.cache.ttl_dto import CacheTTL
-from src.core.config import config
 from src.core.common.constants import DEFAULT_ERROR_MESSAGE
 from src.domains.sso.constants import SSO_ERROR_MAPPER
 from src.domains.toys.constants import TOYS_PER_PAGE
-from src.core.common.parsers import Parse
+from src.core.common.parsers import DatetimeParsers
 from src.domains.toys.dto import (
     ToysCategoriesResponse,
     ToysTagsResponse,
@@ -39,13 +38,17 @@ from src.domains.toys.models import (
     UserForToyCard,
 )
 from src.core.cache.wrappers import RedisWrappers
+from src.core.state import GlobalAppState
+from graphql_client.client import GraphQLClient
 
 
-async def toys_categories() -> ToysCategoriesResponse:
+async def toys_categories(
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client)
+) -> ToysCategoriesResponse:
     result: ToysCategoriesResponse = ToysCategoriesResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=AllToysCategoriesQuery.to_gql(),
             variable_values={}
         )
@@ -69,11 +72,13 @@ async def toys_categories() -> ToysCategoriesResponse:
     return result
 
 
-async def toys_tags():
+async def toys_tags(
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client)
+) -> ToysTagsResponse:
     result: ToysTagsResponse = ToysTagsResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=AllToysTagsQuery.to_gql(),
             variable_values={}
         )
@@ -97,10 +102,11 @@ async def toys_tags():
     return result
 
 
-@RedisWrappers.redis_cache(ttl=CacheTTL.TOYS.TOYS_CATALOG, redis=config.redis_as_cache)
+@RedisWrappers.redis_cache(ttl=CacheTTL.TOYS.TOYS_CATALOG)
 async def toys_catalog(
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
+
         page: int = Query(default=1, ge=1, description=f"Номер страницы (по {TOYS_PER_PAGE} записей на страницу)"),
-        # Filters
         search: Optional[str] = Query(default=None),
         max_price: Optional[str] = Query(default=None),
         min_price: Optional[str] = Query(default=None),
@@ -108,7 +114,7 @@ async def toys_catalog(
         categories: Optional[List[int]] = Query(default=None),
         tags: Optional[List[int]] = Query(default=None),
         sort_order: Optional[str] = Query(default=None),
-        # Others
+
         all_toys_categories: ToysCategoriesResponse = Depends(toys_categories),
         all_toys_tags: ToysTagsResponse = Depends(toys_tags),
 ) -> ToysCatalogResponse:
@@ -129,7 +135,7 @@ async def toys_catalog(
             raise Exception("Номер страницы должен быть не менее 1")
         offset: int = (page - 1) * TOYS_PER_PAGE
 
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=ToysCatalogQuery.to_gql(),
             variable_values=ToysCatalogVariables(
                 offset=offset,
@@ -149,13 +155,13 @@ async def toys_catalog(
                 description=toy_response["description"],
                 price=round(toy_response["price"], 2),
                 quantity=toy_response["quantity"],
-                created_at=Parse.datetime(toy_response["createdAt"]),
+                created_at=DatetimeParsers.parse_iso_format(toy_response["createdAt"]),
                 tags=[ToyTag(name=tag["name"]) for tag in toy_response["tags"]],
                 attachments=[ToyAttachment(link=attachments["link"]) for attachments in toy_response["attachments"]],
             )
             result.toys.append(toy)  # type: ignore[union-attr]
 
-        total_toys_count: GQLResponse = await config.graphql_client.execute(
+        total_toys_count: GQLResponse = await gql_client.execute(
             query=ToysCounterQuery.to_gql(),
             variable_values=ToysCounterFiltersVariables(
                 filters=result.filters
@@ -181,14 +187,15 @@ async def toys_catalog(
     return result
 
 
-@RedisWrappers.redis_cache(ttl=CacheTTL.TOYS.TOY_BY_ID, redis=config.redis_as_cache)
+@RedisWrappers.redis_cache(ttl=CacheTTL.TOYS.TOY_BY_ID)
 async def toy_by_id(
-        toy_id: int
+        toy_id: int,
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
 ) -> ToyByIDResponse:
     result: ToyByIDResponse = ToyByIDResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=ToyByIDQuery.to_gql(),
             variable_values=ToyByIDVariables(
                 id=toy_id,
@@ -213,7 +220,7 @@ async def toy_by_id(
             description=response["description"],
             price=round(response["price"], 2),
             quantity=response["quantity"],
-            created_at=Parse.datetime(response["createdAt"]),
+            created_at=DatetimeParsers.parse_iso_format(response["createdAt"]),
             tags=[ToyTag(name=tag["name"]) for tag in response["tags"]],
             attachments=[ToyAttachment(link=attachments["link"]) for attachments in response["attachments"]],
         )

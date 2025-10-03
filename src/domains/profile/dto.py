@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from src.core.common.dto import BoolResponse
-from src.domains.profile.models import Master
+from src.domains.profile.schemas import Master
 
 
 @dataclass

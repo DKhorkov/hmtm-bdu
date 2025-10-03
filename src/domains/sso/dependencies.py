@@ -1,14 +1,14 @@
 from typing import Annotated, Dict, Optional
-from fastapi import Form, Request
+from fastapi import Form, Request, Depends
 
-from src.core.common.parsers import Parse
+from src.core.common.parsers import DatetimeParsers
 from graphql_client.dto import GQLResponse
-from src.core.config import config
+from src.core.state import GlobalAppState
 from src.domains.sso.constants import SSO_ERROR_MAPPER, FORGET_PASSWORD_TOKEN_NAME
 from src.core.common.constants import DEFAULT_ERROR_MESSAGE
 from graphql_client import (
     extract_error_message,
-    ResponseProcessor as GQLResponseProcessor,
+    ResponseProcessor as GQLResponseProcessor, GraphQLClient,
 )
 from graphql_client.variables.sso import (
     RegisterUserVariables,
@@ -43,18 +43,19 @@ from src.domains.sso.dto import (
 from src.domains.sso.models import (
     UserInfo,
 )
-from src.domains.profile.models import Master
+from src.domains.profile.schemas import Master
 
 
 async def process_register(  # type: ignore[return]
         email: Annotated[str, Form()],
         password: Annotated[str, Form()],
-        display_name: Annotated[str, Form()]
+        display_name: Annotated[str, Form()],
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
 ) -> RegisterResponse:
     result: RegisterResponse = RegisterResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=RegisterUserMutation.to_gql(),
             variable_values=RegisterUserVariables(
                 display_name=display_name,
@@ -82,12 +83,13 @@ async def process_register(  # type: ignore[return]
 
 async def process_login(  # type: ignore[return]
         email: Annotated[str, Form()],
-        password: Annotated[str, Form()]
+        password: Annotated[str, Form()],
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client)
 ) -> LoginResponse:
     result: LoginResponse = LoginResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=LoginUserMutation.to_gql(),
             variable_values=LoginUserVariables(
                 email=email,
@@ -115,13 +117,14 @@ async def process_login(  # type: ignore[return]
     return result
 
 
-async def verify_email(  # type: ignore[return]
-        verify_email_token: str
+async def verify_email(
+        verify_email_token: str,
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client)
 ) -> VerifyEmailResponse:
     result: VerifyEmailResponse = VerifyEmailResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=VerifyUserEmailMutation.to_gql(),
             variable_values=VerifyUserEmailVariables(
                 verify_email_token=verify_email_token,
@@ -146,12 +149,13 @@ async def verify_email(  # type: ignore[return]
 
 
 async def send_verify_email_message(
-        email: Annotated[str, Form()]
+        email: Annotated[str, Form()],
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
 ) -> SendVerifyEmailMessageResponse:
     result: SendVerifyEmailMessageResponse = SendVerifyEmailMessageResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=SendVerifyEmailMessageMutation().to_gql(),
             variable_values=SendVerifyEmailMessageVariables(
                 email=email
@@ -176,12 +180,13 @@ async def send_verify_email_message(
 
 
 async def send_forget_password_message(
-        email: Annotated[str, Form()]
+        email: Annotated[str, Form()],
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
 ) -> SendForgetPasswordMessageResponse:
     result: SendForgetPasswordMessageResponse = SendForgetPasswordMessageResponse()
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=SendForgetPasswordMessageMutation().to_gql(),
             variable_values=SendForgetPasswordMessageVariables(
                 email=email
@@ -207,7 +212,8 @@ async def send_forget_password_message(
 
 async def change_forget_password(
         request: Request,
-        new_password: Annotated[str, Form()]
+        new_password: Annotated[str, Form()],
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
 ) -> ChangeForgetPasswordResponse:
     result: ChangeForgetPasswordResponse = ChangeForgetPasswordResponse()
     try:
@@ -216,7 +222,7 @@ async def change_forget_password(
             result.error = "Ошибка: Токен не найден, попробуйте перейти по ссылке из письма повторно"
             return result
 
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=ChangeForgetPasswordMutation().to_gql(),
             variable_values=ForgetPasswordVariables(
                 forget_password_token=forget_password_token,
@@ -243,6 +249,7 @@ async def change_forget_password(
 
 async def get_user_info(
         query_params: str,
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client)
 ) -> GetFullUserInfoResponse:
     result: GetFullUserInfoResponse = GetFullUserInfoResponse(errors=[])
 
@@ -251,7 +258,7 @@ async def get_user_info(
 
     try:
         if query_params.isdigit():
-            user_response: GQLResponse = await config.graphql_client.execute(
+            user_response: GQLResponse = await gql_client.execute(
                 query=GetUserByIDQuery().to_gql(),
                 variable_values=GetUserByIDVariables(
                     id=int(query_params),
@@ -264,7 +271,7 @@ async def get_user_info(
             query_key = "user"
 
         else:
-            user_response: GQLResponse = await config.graphql_client.execute(  # type: ignore[no-redef]
+            user_response: GQLResponse = await gql_client.execute(  # type: ignore[no-redef]
                 query=GetUserByEmailQuery().to_gql(),
                 variable_values=GetUserByEmailVariables(
                     email=query_params,
@@ -285,10 +292,10 @@ async def get_user_info(
             phone=user_info[query_key]["phone"],
             telegram=user_info[query_key]["telegram"],
             avatar=user_info[query_key]["avatar"],
-            created_at=Parse.datetime(user_info[query_key]["createdAt"]),
+            created_at=DatetimeParsers.parse_iso_format(user_info[query_key]["createdAt"]),
         )
 
-        master: GQLResponse = await config.graphql_client.execute(
+        master: GQLResponse = await gql_client.execute(
             query=GetMasterByUserQuery().to_gql(),
             variable_values=GetMasterByUserVariables(
                 id=result.user.id,
@@ -299,8 +306,8 @@ async def get_user_info(
             result.master = Master(
                 id=master.result["masterByUser"]["id"],
                 info=master.result["masterByUser"]["info"],
-                created_at=Parse.datetime(master.result["masterByUser"]["createdAt"]),
-                updated_at=Parse.datetime(master.result["masterByUser"]["updatedAt"]),
+                created_at=DatetimeParsers.parse_iso_format(master.result["masterByUser"]["createdAt"]),
+                updated_at=DatetimeParsers.parse_iso_format(master.result["masterByUser"]["updatedAt"]),
             )
         else:
             result.errors.append(master.result["errors"][0]["message"])  # type: ignore[union-attr]

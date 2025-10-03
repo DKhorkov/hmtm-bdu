@@ -6,9 +6,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from src.core.common.cookies import set_cookie
 from src.core.common.dto import GetMeResponse
-from src.core.common.utils import Cryptography
+from src.core.common.encryptor import Cryptography
 from src.core.common.dependencies import get_me as get_me_dependency
-from src.core.config import config
+from src.core.state import GlobalAppState
 from src.domains.masters.dependencies import masters_catalog as masters_catalog_dependency
 from src.domains.masters.dto import MastersCatalogResponse
 
@@ -21,7 +21,7 @@ async def masters_catalog(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: MastersCatalogResponse = Depends(masters_catalog_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor),
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     if result.error:
         encrypted_error: str = encryptor.encrypt(result.error)

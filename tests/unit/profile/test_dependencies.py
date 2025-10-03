@@ -1,5 +1,7 @@
 import pytest
 
+from src.domains.profile.schemas import GetUserWithMasterResponse
+
 pytestmark = pytest.mark.usefixtures("mock_get_me", "mock_gql_client")
 
 from unittest.mock import AsyncMock, patch, MagicMock
@@ -10,7 +12,7 @@ from fastapi.requests import Request
 from src.domains.profile.dependencies import (
     change_password,
     update_user_profile,
-    master_by_user,
+    user_with_master,
     update_master,
     register_master
 )
@@ -168,10 +170,7 @@ class TestGetMasterByUser:
 
         mock_gql_client.return_value = mock_response
 
-        result: GetUserIsMasterResponse = await master_by_user(
-            user_id=mock_response.result["masterByUser"]["id"],
-            request=mock_request,
-        )
+        result: GetUserWithMasterResponse = await user_with_master()
 
         assert result.master.id == "1"  # type: ignore[union-attr]
         assert result.master.info == "Test_master"  # type: ignore[union-attr]
@@ -183,12 +182,9 @@ class TestGetMasterByUser:
         mock_request: MagicMock = MagicMock(spec=Request)
         mock_request.cookies = {}
 
-        result: GetUserIsMasterResponse = await master_by_user(
-            user_id="1",
-            request=mock_request
-        )
+        result: GetUserWithMasterResponse = await user_with_master()
 
-        assert result.result is False
+        assert result.result is False  # type: ignore
         assert result.error == "Пользователь не найден"
 
     @pytest.mark.asyncio
@@ -210,12 +206,9 @@ class TestGetMasterByUser:
         }
         mock_gql_client.return_value = mock_response
 
-        result: GetUserIsMasterResponse = await master_by_user(
-            user_id="1",
-            request=mock_request
-        )
+        result: GetUserWithMasterResponse = await user_with_master()
 
-        assert result.result is False
+        assert result.result is False  # type: ignore
         assert result.error == "Пользователь не является мастером"
 
 
@@ -242,8 +235,7 @@ class TestUpdateMaster:
 
             result: UpdateMasterResponse = await update_master(
                 request=mock_request,
-                info=new_master_info,
-                current_user=mock_get_me
+                info=new_master_info
             )
 
             assert result.result is True
@@ -273,8 +265,7 @@ class TestUpdateMaster:
 
         result: UpdateMasterResponse = await update_master(
             request=mock_request,
-            info=new_master_info,
-            current_user=mock_get_me
+            info=new_master_info
         )
 
         assert result.result is False
@@ -300,8 +291,7 @@ class TestUpdateMaster:
 
             result: UpdateMasterResponse = await update_master(
                 request=mock_request,
-                info=new_master_info,
-                current_user=mock_get_me
+                info=new_master_info
             )
 
             assert result.result is False

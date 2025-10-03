@@ -1,9 +1,9 @@
 from io import BytesIO
-from typing import Annotated, Dict, Optional, List
+from typing import Annotated, Dict, Optional
 from fastapi import Form, Depends, UploadFile, File
 from fastapi.requests import Request
 
-from graphql_client import extract_error_message
+from graphql_client import extract_error_message, GraphQLClient
 from graphql_client.variables.profile import (
     UpdateUserProfileVariables,
     UpdateMasterVariables,
@@ -19,27 +19,26 @@ from graphql_client.mutations.profile import (
 )
 from graphql_client.queries.profile import GetMasterByUserQuery
 from graphql_client.dto import GQLResponse
-from src.core.config import config
 from src.core.common.constants import DEFAULT_ERROR_MESSAGE
-from src.core.common.cookies import CookiesConfig
 from src.core.common.dependencies import get_me
+from src.core.state import GlobalAppState
 from src.domains.sso.constants import SSO_ERROR_MAPPER
-from src.core.common.parsers import Parse
+from src.core.common.parsers import DatetimeParsers
 from src.core.common.dto import GetMeResponse
 from src.domains.profile.dto import (
     UpdateUserProfileResponse,
     ChangePasswordResponse,
-    GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse
 )
-from src.domains.profile.models import Master
+from src.domains.profile.schemas import Master, GetUserWithMasterResponse
 
 
 async def change_password(
         request: Request,
         old_password: Annotated[str, Form()],
         new_password: Annotated[str, Form()],
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
         current_user: GetMeResponse = Depends(get_me)
 ) -> ChangePasswordResponse:
     result: ChangePasswordResponse = ChangePasswordResponse()
@@ -55,7 +54,7 @@ async def change_password(
             actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=ChangePasswordMutation().to_gql(),
             variable_values=ChangePasswordVariables(
                 old_password=old_password,
@@ -87,7 +86,8 @@ async def update_user_profile(
         phone: Annotated[str | None, Form()],
         telegram: Annotated[str | None, Form()],
         avatar: Annotated[UploadFile | None, File()],
-        current_user: GetMeResponse = Depends(get_me),
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
+        current_user: GetMeResponse = Depends(get_me)
 ) -> UpdateUserProfileResponse:
     result: UpdateUserProfileResponse = UpdateUserProfileResponse()
     upload_file: Optional[BytesIO] = None
@@ -107,7 +107,7 @@ async def update_user_profile(
             upload_file: BytesIO = BytesIO(await avatar.read())  # type: ignore
             upload_file.name = avatar.filename  # type: ignore
 
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=UpdateUserProfileMutation().to_gql(),
             variable_values=UpdateUserProfileVariables(
                 display_name=username,
@@ -136,46 +136,47 @@ async def update_user_profile(
     return result
 
 
-async def master_by_user(
-        user_id: str,
-        request: Request,
-        cookies: Optional[List[CookiesConfig]] = None,
-) -> GetUserIsMasterResponse:
-    result: GetUserIsMasterResponse = GetUserIsMasterResponse()
+async def user_with_master(
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
+        current_user: GetMeResponse = Depends(get_me)
+) -> GetUserWithMasterResponse:
+    result: GetUserWithMasterResponse = GetUserWithMasterResponse()
 
-    if not cookies and len(request.cookies) == 0:
-        result.error = "Пользователь не найден"
+    if not current_user.user:
+        result.error = current_user.error
         return result
 
-    actual_cookies: Dict[str, str] = request.cookies
-    if cookies:
-        for cookie in cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
+    actual_cookies: Dict[str, str] = {}
+    result.user = current_user.user
+    result.cookies = current_user.cookies
+
+    for cookie in current_user.cookies:
+        actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=GetMasterByUserQuery().to_gql(),
             variable_values=GetMasterByUserVariables(
-                id=user_id,
+                id=current_user.user.id,
             ).to_dict(),
             cookies=actual_cookies,
         )
 
         if "errors" in gql_response.result:
-            raise Exception(gql_response.result["errors"][0])
+            return result
 
         result.master = Master(
             id=gql_response.result["masterByUser"]["id"],
             info=gql_response.result["masterByUser"]["info"],
-            created_at=Parse.datetime(gql_response.result["masterByUser"]["createdAt"]),
-            updated_at=Parse.datetime(gql_response.result["masterByUser"]["updatedAt"]),
+            created_at=DatetimeParsers.parse_iso_format(gql_response.result["masterByUser"]["createdAt"]),
+            updated_at=DatetimeParsers.parse_iso_format(gql_response.result["masterByUser"]["updatedAt"]),
         )
 
     except Exception as err:
         error: str = SSO_ERROR_MAPPER.get(
             extract_error_message(
                 error=str(err),
-                default_message="Ошибка получения данных о мастере"
+                default_message="Ошибка получения данных о пользователе"
             ),
             DEFAULT_ERROR_MESSAGE
         )
@@ -188,44 +189,39 @@ async def master_by_user(
 async def update_master(
         request: Request,
         info: Annotated[str | None, Form()],
-        current_user: GetMeResponse = Depends(get_me),
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
+        _user_with_master: GetUserWithMasterResponse = Depends(user_with_master)
 ) -> UpdateMasterResponse:
     result: UpdateMasterResponse = UpdateMasterResponse()
 
-    if current_user.error:
-        result.error = "Пользователь не найден"
+    if not _user_with_master.user:
+        result.error = _user_with_master.error
         return result
 
     actual_cookies: Dict[str, str] = request.cookies
-    if current_user.cookies:
-        result.cookies = current_user.cookies
-        for cookie in current_user.cookies:
+    if _user_with_master.cookies:
+        result.cookies = _user_with_master.cookies
+        for cookie in _user_with_master.cookies:
             actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
-        master: GetUserIsMasterResponse = await master_by_user(
-            user_id=current_user.user.id,  # type: ignore[union-attr]
-            request=request,
-            cookies=current_user.cookies,
-        )
-
-        if master.master is None:
+        if _user_with_master.master is None:
             raise Exception({"message": "Не удалось найти мастера"})
 
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=UpdateMasterMutation().to_gql(),
             variable_values=UpdateMasterVariables(
-                id=master.master.id,  # type: ignore[union-attr]
+                id=_user_with_master.master.id,
                 info=info
             ).to_dict(),
-            cookies=actual_cookies,
+            cookies=actual_cookies
         )
 
         if "errors" in gql_response.result:
             raise Exception(gql_response.result["errors"][0]["message"])
 
         result.result = True
-        result.headers = gql_response.headers  # type: ignore[assignment]
+        result.headers = gql_response.headers  # type: ignore
 
     except Exception as err:
         error: str = SSO_ERROR_MAPPER.get(
@@ -244,7 +240,8 @@ async def update_master(
 async def register_master(
         request: Request,
         info: Annotated[str | None, Form()],
-        current_user: GetMeResponse = Depends(get_me),
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
+        current_user: GetMeResponse = Depends(get_me)
 ) -> RegisterMasterResponse:
     result: RegisterMasterResponse = RegisterMasterResponse()
 
@@ -259,7 +256,7 @@ async def register_master(
             actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
-        gql_response: GQLResponse = await config.graphql_client.execute(
+        gql_response: GQLResponse = await gql_client.execute(
             query=RegisterMasterMutation().to_gql(),
             variable_values=RegisterMasterVariables(
                 info=info,

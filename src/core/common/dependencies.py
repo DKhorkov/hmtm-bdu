@@ -1,24 +1,23 @@
 from typing import Optional, List, Dict
 
+from fastapi import Depends
 from fastapi.requests import Request
 
-from graphql_client import (
-    extract_error_message,
-    ResponseProcessor as GQLResponseProcessor
-)
+from graphql_client import extract_error_message, ResponseProcessor as GQLResponseProcessor, GraphQLClient
 from graphql_client.mutations.common import RefreshTokensMutation
 from graphql_client.queries.common import GetMeQuery
 from graphql_client.dto import GQLResponse
-from src.core.config import config
 from src.core.common.constants import DEFAULT_ERROR_MESSAGE, COMMON_ERRORS_MAPPER
 from src.core.common.cookies import CookiesConfig
 from src.core.common.dto import GetMeResponse, RefreshTokensResponse
-from src.core.common.parsers import Parse
+from src.core.common.parsers import ModelsParsers
+from src.core.state import GlobalAppState
 
 
 async def get_me(
         request: Request,
-        cookies: Optional[List[CookiesConfig]] = None
+        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
+        cookies: Optional[List[CookiesConfig]] = None,
 ) -> GetMeResponse:
     result: GetMeResponse = GetMeResponse()
 
@@ -33,7 +32,7 @@ async def get_me(
 
     try:
         if request.cookies:
-            gql_response: GQLResponse = await config.graphql_client.execute(
+            gql_response: GQLResponse = await gql_client.execute(
                 query=GetMeQuery.to_gql(),
                 variable_values={},
                 cookies=actual_cookies
@@ -41,11 +40,15 @@ async def get_me(
             if "errors" in gql_response.result:
                 raise Exception
 
-            result.user = Parse.user_from_dict(gql_response.result["me"])
+            result.user = ModelsParsers.user_from_dict(gql_response.result["me"])
 
     except Exception:
         try:
-            refreshed_tokens: RefreshTokensResponse = await refresh_tokens(request=request, cookies=cookies)
+            refreshed_tokens: RefreshTokensResponse = await refresh_tokens(
+                request=request,
+                cookies=cookies,
+                gql_client=gql_client
+            )
 
             if refreshed_tokens.error is not None:
                 raise Exception(refreshed_tokens.error)
@@ -57,7 +60,7 @@ async def get_me(
             for cookie in refreshed_tokens.cookies:
                 actual_cookies[cookie.KEY] = cookie.VALUE
 
-            gql_get_me: GQLResponse = await config.graphql_client.execute(
+            gql_get_me: GQLResponse = await gql_client.execute(
                 query=GetMeQuery.to_gql(),
                 variable_values={},
                 cookies=actual_cookies
@@ -66,7 +69,7 @@ async def get_me(
             if "errors" in gql_get_me.result:
                 raise Exception(gql_get_me.result["errors"][0]["message"])
 
-            result.user = Parse.user_from_dict(gql_get_me.result["me"])
+            result.user = ModelsParsers.user_from_dict(gql_get_me.result["me"])
 
         except Exception as err:
             error = COMMON_ERRORS_MAPPER.get(
@@ -83,6 +86,7 @@ async def get_me(
 
 async def refresh_tokens(
         request: Request,
+        gql_client: GraphQLClient,
         cookies: Optional[List[CookiesConfig]] = None
 ) -> RefreshTokensResponse:
     result: RefreshTokensResponse = RefreshTokensResponse()
@@ -93,7 +97,7 @@ async def refresh_tokens(
             actual_cookies[cookie.KEY] = cookie.VALUE
 
     try:
-        gql_refresh_tokens: GQLResponse = await config.graphql_client.execute(
+        gql_refresh_tokens: GQLResponse = await gql_client.execute(
             query=RefreshTokensMutation.to_gql(),
             variable_values={},
             cookies=actual_cookies

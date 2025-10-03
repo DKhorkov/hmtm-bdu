@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Set
 
 REDIS_ERRORS: Dict[str, str] = {
     "Error 111": "Подключение к Redis не удалось, проверьте состояние сервера!",
@@ -7,3 +7,7 @@ REDIS_ERRORS: Dict[str, str] = {
 }
 
 DEFAULT_REDIS_ERROR_MESSAGE: str = "Неизвестная ошибка Redis"
+
+EXCLUDE_CACHE_KWARGS: Set[str] = {
+    "request", "response", "all_toys_categories", "all_toys_tags"
+}

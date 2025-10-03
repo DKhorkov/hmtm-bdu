@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 
 from src.domains.sso.models import UserInfo
-from src.domains.profile.models import Master
+from src.domains.profile.schemas import Master
 from src.core.common.dto import BoolResponse
 
 

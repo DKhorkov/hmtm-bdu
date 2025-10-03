@@ -5,8 +5,9 @@ from fastapi.templating import Jinja2Templates
 from src.core.common.cookies import set_cookie
 from src.core.common.dto import GetMeResponse
 from src.core.common.dependencies import get_me as get_me_dependency
-from src.core.common.utils import Extract, Cryptography
-from src.core.config import config
+from src.core.common.extractors import UrlExtractors
+from src.core.common.encryptor import Cryptography
+from src.core.state import GlobalAppState
 
 router = APIRouter(tags=["Main"])
 templates = Jinja2Templates(directory="templates")
@@ -16,14 +17,14 @@ templates = Jinja2Templates(directory="templates")
 async def home_page(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor),
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography),
 ):
     response: Response = templates.TemplateResponse(
         request=request,
         name="homepage.html",
         context={
             "user": current_user.user,
-            "error_message": Extract.error_from_url(request=request, cryptography=encryptor),
+            "error_message": UrlExtractors.error_from_url(request=request, cryptography=encryptor),
         }
     )
 

@@ -10,7 +10,7 @@ from graphql_client.client import GraphQLClient
 from graphql_client.interface import GraphQLInterface
 from src.core.cache.redis import Redis
 from src.core.cache.schemas import RedisConfig
-from src.core.common.utils import Cryptography
+from src.core.common.encryptor import Cryptography
 from src.core.logger.dto import LogFormatDTO, LogsFolderDTO
 from src.core.logger.logger import Logger
 from src.core.logger.settings import LoggerSettings
@@ -30,10 +30,10 @@ class Config:
     graphql_client: GraphQLInterface
     redis_as_cache: Redis
     logger: Logger
-    encryptor_key: str
+    cryptography_key: str
 
     def get_encryptor(self) -> Cryptography:
-        return Cryptography(secret_key=self.encryptor_key)
+        return Cryptography(secret_key=self.cryptography_key)
 
 
 config: Config = Config(
@@ -56,5 +56,5 @@ config: Config = Config(
             ),
         )
     ),
-    encryptor_key=getenv("FERNET_KEY", default=Fernet.generate_key().decode("utf8"))
+    cryptography_key=getenv("FERNET_KEY", default=Fernet.generate_key().decode("utf8"))
 )

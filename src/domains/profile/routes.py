@@ -5,11 +5,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from src.core.common.cookies import set_cookie
 from src.core.common.dependencies import get_me as get_me_dependency
-from src.core.config import config
+from src.core.state import GlobalAppState
 from src.domains.profile.dependencies import (
     change_password as change_password_dependency,
     update_user_profile as update_user_profile_dependency,
-    master_by_user as master_by_user_dependency,
+    user_with_master as user_with_master_dependency,
     update_master as update_master_info_dependency,
     register_master as register_master_dependency
 )
@@ -17,14 +17,12 @@ from src.core.common.dto import GetMeResponse
 from src.domains.profile.dto import (
     UpdateUserProfileResponse,
     ChangePasswordResponse,
-    GetUserIsMasterResponse,
     UpdateMasterResponse,
     RegisterMasterResponse
 )
-from src.core.common.utils import (
-    Extract,
-    Cryptography
-)
+from src.core.common.extractors import UrlExtractors
+from src.core.common.encryptor import Cryptography
+from src.domains.profile.schemas import GetUserWithMasterResponse
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter(prefix="/profile", tags=["Profile"])
@@ -33,41 +31,35 @@ router = APIRouter(prefix="/profile", tags=["Profile"])
 @router.get("/me", response_class=HTMLResponse, name="profile")
 async def profile_page(
         request: Request,
-        current_user: GetMeResponse = Depends(get_me_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor),
+        result: GetUserWithMasterResponse = Depends(user_with_master_dependency),
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
-    if current_user.user is not None:
-        master: GetUserIsMasterResponse = await master_by_user_dependency(
-            user_id=current_user.user.id,
-            request=request,
-            cookies=current_user.cookies,
-        )
+    if not result.user:
+        return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
 
-        response: Response = templates.TemplateResponse(
-            request=request,
-            name="profile.html",
-            context={
-                "tab": request.query_params.get("tab") if request.query_params.get("tab") else "main",
-                "user": current_user.user,
-                "master": master.master if master.master else None,
-                "error_message": Extract.error_from_url(request=request, cryptography=encryptor),
-                "success_message": Extract.success_message_from_url(request=request, cryptography=encryptor)
-            }
-        )
+    response: Response = templates.TemplateResponse(
+        request=request,
+        name="profile.html",
+        context={
+            "tab": request.query_params.get("tab") if request.query_params.get("tab") else "main",
+            "user": result.user,
+            "master": result.master if result.master else None,
+            "error_message": UrlExtractors.error_from_url(request=request, cryptography=encryptor),
+            "success_message": UrlExtractors.success_message_from_url(request=request, cryptography=encryptor)
+        }
+    )
 
-        for cookie in current_user.cookies:
-            set_cookie(response, cookie)
+    for cookie in result.cookies:
+        set_cookie(response, cookie)
 
-        return response
-
-    return RedirectResponse(url="/sso/login", status_code=status.HTTP_303_SEE_OTHER)
+    return response
 
 
 @router.post("/change-password", response_class=HTMLResponse, name="change-password")
 async def process_change_password(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: ChangePasswordResponse = Depends(change_password_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     """ Ручка авторизованного пользователя для смены пароля - Процесс """
     if current_user.user is None:  # Нужен для Redirect на login-page, т.к ошибка из result - ошибка конкретной логики
@@ -98,7 +90,7 @@ async def process_change_password(
 async def process_update_user_profile(
         request: Request,
         result: UpdateUserProfileResponse = Depends(update_user_profile_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     """ Ручка авторизованного пользователя для изменения данных о себе: никнейм, телеграм, телефон - Процесс """
     current_user: GetMeResponse = await get_me_dependency(request=request, cookies=result.cookies)
@@ -131,7 +123,7 @@ async def process_update_user_profile(
 async def process_update_master(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: UpdateMasterResponse = Depends(update_master_info_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     if current_user.user is None:  # Нужен для Redirect на login-page, т.к ошибка из result - ошибка конкретной логики
         encrypted_error: str = encryptor.encrypt(str(current_user.error))
@@ -161,7 +153,7 @@ async def process_update_master(
 async def register_master(
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: RegisterMasterResponse = Depends(register_master_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     if current_user.user is None:  # Нужен для Redirect на login-page, т.к ошибка из result - ошибка конкретной логики
         encrypted_error: str = encryptor.encrypt(str(current_user.error))

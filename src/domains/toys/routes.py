@@ -3,9 +3,9 @@ from fastapi import Response, Request, Depends, status, APIRouter
 from starlette.templating import Jinja2Templates
 
 from src.core.common.cookies import set_cookie
-from src.core.common.utils import Cryptography
+from src.core.common.encryptor import Cryptography
 from src.core.common.dto import GetMeResponse
-from src.core.config import config
+from src.core.state import GlobalAppState
 from src.domains.toys.dto import ToysCatalogResponse, ToyByIDResponse
 from src.core.common.dependencies import get_me as get_me_dependency
 from src.domains.toys.dependencies import (
@@ -22,7 +22,7 @@ async def toys_catalog(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: ToysCatalogResponse = Depends(toys_catalog_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     if result.error is not None:
         encrypted_error: str = encryptor.encrypt(result.error)
@@ -57,7 +57,7 @@ async def toy_by_id(
         request: Request,
         current_user: GetMeResponse = Depends(get_me_dependency),
         result: ToyByIDResponse = Depends(toy_by_id_dependency),
-        encryptor: Cryptography = Depends(config.get_encryptor)
+        encryptor: Cryptography = Depends(GlobalAppState.cryptography)
 ):
     if result.error is not None:
         encrypted_error: str = encryptor.encrypt(result.error)
