@@ -1,6 +1,6 @@
 # General
 .venv
-__pycache__
+__pycache__/
 *.pyc
 
 # Tests
@@ -15,7 +15,7 @@ pyproject.toml
 README.md
 pytest.ini
 requirements.txt
-scripts/Taskfile.yml
+Taskfile.yml
 
 # env
 .env*

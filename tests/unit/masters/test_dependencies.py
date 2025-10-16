@@ -1,14 +1,14 @@
 import pytest
 
 from graphql_client.dto import GQLResponse
-from src.domains.masters.dto import MasterForCatalog
+from src.domains.masters.core.dto import MasterForCatalog
 
 pytestmark = pytest.mark.usefixtures("mock_gql_client")
 
 from unittest.mock import AsyncMock, MagicMock
 
 from src.domains.masters.dependencies import masters_catalog
-from src.domains.masters.dto import MastersCatalogResponse
+from src.domains.masters.core.dto import MastersCatalogResponse
 
 
 class TestMastersCatalog:

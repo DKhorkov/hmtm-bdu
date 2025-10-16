@@ -1,126 +1,122 @@
-from typing import Optional, List, Dict
+from typing import Dict
 
 from fastapi import Depends
 from fastapi.requests import Request
 
-from graphql_client import extract_error_message, ResponseProcessor as GQLResponseProcessor, GraphQLClient
+from graphql_client.bff_client import BFFGQLClient
 from graphql_client.mutations.common import RefreshTokensMutation
 from graphql_client.queries.common import GetMeQuery
 from graphql_client.dto import GQLResponse
-from src.core.common.constants import DEFAULT_ERROR_MESSAGE, COMMON_ERRORS_MAPPER
-from src.core.common.cookies import CookiesConfig
 from src.core.common.dto import GetMeResponse, RefreshTokensResponse
-from src.core.common.parsers import ModelsParsers
+from src.core.exc.exceptions import UserNotFoundError, RedirectViaException
+from src.core.common.parsers import ModelParser
+from src.core.cookies.processors import CookieProcessor
 from src.core.state import GlobalAppState
 
 
-async def get_me(
-        request: Request,
-        gql_client: GraphQLClient = Depends(GlobalAppState.gql_client),
-        cookies: Optional[List[CookiesConfig]] = None,
-) -> GetMeResponse:
-    result: GetMeResponse = GetMeResponse()
+class CommonAuthBaseRepository:
 
-    if not cookies and len(request.cookies) == 0:
-        result.error = "Пользователь не найден"
-        return result
+    @staticmethod
+    async def get_me(
+            request: Request,
+            gql_client: BFFGQLClient = Depends(GlobalAppState.bff_gql_client),
+    ) -> GetMeResponse:
+        result: GetMeResponse = GetMeResponse()
 
-    actual_cookies: Dict[str, str] = request.cookies
-    if cookies:
-        for cookie in cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
+        if not request.cookies:
+            return result
 
-    try:
-        if request.cookies:
-            gql_response: GQLResponse = await gql_client.execute(
+        try:
+            me: GQLResponse = await gql_client.execute(
                 query=GetMeQuery.to_gql(),
                 variable_values={},
-                cookies=actual_cookies
+                cookies=request.cookies
             )
-            if "errors" in gql_response.result:
-                raise Exception
 
-            result.user = ModelsParsers.user_from_dict(gql_response.result["me"])
+            if "errors" in me.result or me.error:
+                raise UserNotFoundError
 
-    except Exception:
-        try:
-            refreshed_tokens: RefreshTokensResponse = await refresh_tokens(
-                request=request,
-                cookies=cookies,
+            result.user = ModelParser.user_from_dict(me.result["me"])
+
+        except UserNotFoundError:
+            refreshed_tokens: RefreshTokensResponse = await CommonAuthBaseRepository._refresh_tokens(
+                cookies=request.cookies,
                 gql_client=gql_client
             )
 
-            if refreshed_tokens.error is not None:
-                raise Exception(refreshed_tokens.error)
+            if refreshed_tokens.error:
+                return result
 
-            result.headers = refreshed_tokens.headers
             result.cookies = refreshed_tokens.cookies
 
-            actual_cookies = {}
+            actual_cookies: Dict[str, str] = {}
             for cookie in refreshed_tokens.cookies:
                 actual_cookies[cookie.KEY] = cookie.VALUE
 
-            gql_get_me: GQLResponse = await gql_client.execute(
+            me: GQLResponse = await gql_client.execute(  # type: ignore
                 query=GetMeQuery.to_gql(),
                 variable_values={},
                 cookies=actual_cookies
             )
 
-            if "errors" in gql_get_me.result:
-                raise Exception(gql_get_me.result["errors"][0]["message"])
+            if "errors" in me.result or me.error:
+                return result
 
-            result.user = ModelsParsers.user_from_dict(gql_get_me.result["me"])
+            result.user = ModelParser.user_from_dict(me.result["me"])
 
-        except Exception as err:
-            error = COMMON_ERRORS_MAPPER.get(
-                extract_error_message(
-                    error=str(err),
-                    default_message="Ошибка проверки cookies"
-                ),
-                DEFAULT_ERROR_MESSAGE
-            )
-            result.error = error
+        return result
 
-    return result
+    @staticmethod
+    async def _refresh_tokens(
+            gql_client: BFFGQLClient,
+            cookies: Dict[str, str]
+    ) -> RefreshTokensResponse:
+        result: RefreshTokensResponse = RefreshTokensResponse()
 
-
-async def refresh_tokens(
-        request: Request,
-        gql_client: GraphQLClient,
-        cookies: Optional[List[CookiesConfig]] = None
-) -> RefreshTokensResponse:
-    result: RefreshTokensResponse = RefreshTokensResponse()
-
-    actual_cookies: Dict[str, str] = request.cookies
-    if cookies:
-        for cookie in cookies:
-            actual_cookies[cookie.KEY] = cookie.VALUE
-
-    try:
         gql_refresh_tokens: GQLResponse = await gql_client.execute(
             query=RefreshTokensMutation.to_gql(),
             variable_values={},
-            cookies=actual_cookies
+            cookies=cookies
         )
 
-        if "errors" in gql_refresh_tokens.result:
-            raise Exception(gql_refresh_tokens.result["errors"][0])
+        if gql_refresh_tokens.error is not None:
+            result.error = gql_refresh_tokens.error
+            return result
 
-        result.result = True
-        result.headers = gql_refresh_tokens.headers  # type: ignore[assignment]
+        if gql_refresh_tokens.headers:
+            result.cookies = CookieProcessor.get_cookies_from_gql_headers(gql_refresh_tokens.headers)
 
-        if gql_refresh_tokens.headers is not None:
-            result.cookies = GQLResponseProcessor(gql_response=gql_refresh_tokens).get_cookies()
+        return result
 
-    except Exception as err:
-        error: str = COMMON_ERRORS_MAPPER.get(
-            extract_error_message(
-                error=str(err),
-                default_message="Ошибка обновления токенов"
-            ),
-            DEFAULT_ERROR_MESSAGE
+
+class CommonAuthRedirectRepository:
+
+    @staticmethod
+    async def get_me_with_redirect_if_user(
+            request: Request,
+            gql_client: BFFGQLClient = Depends(GlobalAppState.bff_gql_client)
+    ) -> GetMeResponse:
+        result: GetMeResponse = await CommonAuthBaseRepository.get_me(
+            request=request,
+            gql_client=gql_client
         )
 
-        result.error = error
+        if result.user:
+            raise RedirectViaException(url="/", value="4020", cookies=result.cookies)
 
-    return result
+        return result
+
+    @staticmethod
+    async def get_me_with_redirect_if_not_user(
+            request: Request,
+            gql_client: BFFGQLClient = Depends(GlobalAppState.bff_gql_client)
+    ) -> GetMeResponse:
+        result: GetMeResponse = await CommonAuthBaseRepository.get_me(
+            request=request,
+            gql_client=gql_client
+        )
+
+        if not result.user:
+            raise RedirectViaException(url="/sso/login", value="4017", cookies=result.cookies)
+
+        return result

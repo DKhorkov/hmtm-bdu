@@ -1,0 +1,2 @@
+DEFAULT_GQL_ERROR: str = "Unknown error"
+GQL_SERVER_ERROR: str = "GQL_SERVER_ERROR"

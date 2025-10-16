@@ -6,14 +6,6 @@
 <div class="container">
     <div class="form-box">
         <h2>Регистрация</h2>
-        {% if error %}
-        <p class="error">{{ error }}</p>
-        {% endif %}
-        {% if errors %}
-        {% for error in errors %}
-        <p class="error">{{ error }}</p>
-        {% endfor %}
-        {% endif %}
         <form action="{{ url_for('register') }}" method="post">
             <input
                     type="text"

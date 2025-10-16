@@ -9,5 +9,5 @@ REDIS_ERRORS: Dict[str, str] = {
 DEFAULT_REDIS_ERROR_MESSAGE: str = "Неизвестная ошибка Redis"
 
 EXCLUDE_CACHE_KWARGS: Set[str] = {
-    "request", "response", "all_toys_categories", "all_toys_tags"
+    "request", "response", "all_toys_categories", "all_toys_tags", "redis"
 }

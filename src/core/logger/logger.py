@@ -6,8 +6,17 @@ from aiologger import Logger as AioLogger  # type: ignore[import-untyped]
 from aiologger.handlers.files import AsyncFileHandler  # type: ignore[import-untyped]
 from aiologger.formatters.base import Formatter  # type: ignore[import-untyped]
 
+from src.core.logger.dto import LogFormatDTO, LogsFolderDTO
 from src.core.logger.enums import Levels
 from src.core.logger.settings import LoggerSettings
+
+PROJECT_ROOT_FROM_LOGGER: Path = (
+    Path(__file__).resolve()  # src/core/logger/logger.py
+    .parent  # src/core/logger
+    .parent  # src/core
+    .parent  # src
+    .parent  # Project root
+)
 
 
 class Logger:
@@ -15,22 +24,21 @@ class Logger:
         self._settings: LoggerSettings = settings
         self._logger: Optional[AioLogger] = None
 
+        self.init_logger()  # Синхронная инициализация, т.к запись "логов" -> критически важная операция, без нее
+                            # сервис не запуститься  # noqa
+
     async def write_log(self, level: Levels, message: str) -> None:
-        try:
-            log_method = getattr(self._logger, level.value.lower())
-            await log_method(message)
+        log_method = getattr(self._logger, level.value.lower())
+        await log_method(message)
 
-        except AttributeError:  # Подавление приоритета исключения при других ошибках
-            pass
-
-    async def _create_folder(self) -> None:
+    def _create_folder(self) -> None:
         self._settings.dir.mkdir(mode=0o755, exist_ok=True)
 
-    async def init_logger(self, logger_name: str = "SERVICE") -> None:
+    def init_logger(self, logger_name: str = "SERVICE") -> None:
         if self._logger:
             return
 
-        await self._create_folder()
+        self._create_folder()
 
         log_file: Path = self._settings.dir / self._settings.filename
         self._logger = AioLogger(name=logger_name)
@@ -51,3 +59,13 @@ class Logger:
     async def shutdown(self):
         if self._logger:
             await self._logger.shutdown()
+
+
+logger: Logger = Logger(
+    settings=LoggerSettings(
+        log_format=LogFormatDTO(),
+        logs_folder=LogsFolderDTO(
+            path=PROJECT_ROOT_FROM_LOGGER
+        )
+    )
+)

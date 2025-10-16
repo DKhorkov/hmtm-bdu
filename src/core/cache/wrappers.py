@@ -2,12 +2,11 @@ from functools import wraps
 from typing import Callable, Any, Optional, TYPE_CHECKING
 
 from redis import RedisError
-from fastapi import Request
 
 from src.core.cache.schemas import RedisErrorValidationModel
 from src.core.logger.enums import Levels
-from src.core.logger.logger import Logger
 from src.core.cache.constants import EXCLUDE_CACHE_KWARGS
+from src.core.logger import LOGGER
 
 if TYPE_CHECKING:
     from src.core.cache.redis import Redis
@@ -27,27 +26,25 @@ class RedisWrappers:
                 key: str = (
                     f"{func.__name__}:"
                     f"{':'.join(str(value) for key, value in kwargs.items() if key not in EXCLUDE_CACHE_KWARGS)}"
-                )  # Чистый ключ без доп. лишних параметров
+                )  # Чистый ключ без доп-ых лишних параметров
 
-                request: Optional[Request] = kwargs.get("request")
-
-                redis: Redis = request.app.state.redis  # type: ignore
-                logger: Logger = request.app.state.logger  # type: ignore
+                redis: Optional[Redis] = kwargs.get("redis")
+                assert redis is not None
 
                 try:
 
                     await redis.ping()
-                    redis_response: Optional[Any] = await redis.get(key=key, request=request)  # type: ignore
+                    response: Optional[Any] = await redis.get(key=key)
 
-                    if redis_response is not None:
-                        return redis_response
+                    if response is not None:
+                        return response
 
                     func_response: Any = await func(*args, **kwargs)
-                    await redis.set(key=key, data=func_response, ttl=ttl, request=request)  # type: ignore
+                    await redis.set(key=key, data=func_response, ttl=ttl)
                     return func_response
 
                 except Exception as error:
-                    await logger.write_log(level=Levels.ERROR, message=str(error))
+                    await LOGGER.write_log(level=Levels.ERROR, message=f"Redis cache error | Detail: {error}")
                     return await func(*args, **kwargs)
 
             return wrapper
@@ -62,23 +59,21 @@ class RedisWrappers:
             def __getattribute__(self, name: str):
                 func = super().__getattribute__(name)
 
-                if name in ["ping", "close"]:
+                if name == "close":
                     return func
 
                 if callable(func) and not name.startswith("__"):
                     @wraps(func)
                     async def wrapper(*args, **kwargs) -> Any:
-                        request: Optional[Request] = kwargs.get("request")
-                        logger: Logger = request.app.state.logger  # type: ignore
-
                         try:
                             return await func(*args, **kwargs)
 
                         except Exception as error:
-                            error_validator: RedisErrorValidationModel = RedisErrorValidationModel(error=str(error))
+                            error_validator: RedisErrorValidationModel = RedisErrorValidationModel(
+                                orig_error=str(error))
 
-                            await logger.write_log(level=Levels.ERROR, message=error_validator.error)
-                            raise RedisError(error_validator.error)
+                            await LOGGER.write_log(level=Levels.ERROR, message=error_validator.message())
+                            raise RedisError(error_validator.message())
 
                     return wrapper
                 return func

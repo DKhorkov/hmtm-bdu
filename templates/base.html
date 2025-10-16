@@ -45,9 +45,7 @@
             <!-- Боковое всплывающее меню -->
             <div class="sidebar-menu">
                 <div class="menu-content">
-                    <form method="get" action="{{ url_for('find_users') }}">
-                        <button class="menu-btn">Найти пользователя</button>
-                    </form>
+                    {# Формы с кнопками #}
                 </div>
             </div>
             <div class="overlay"></div>
@@ -70,7 +68,9 @@
         <div class="nav-buttons">
             {% if user %}
             <a href="{{ url_for('profile') }}" class="btn">Профиль</a>
-            <a href="{{ url_for('logout') }}" class="btn">Выйти</a>
+            <form action="{{ url_for('logout') }}" method="post" style="display: inline;">
+                <button type="submit" class="btn">Выйти</button>
+            </form>
             {% else %}
             <a href="{{ url_for('login') }}" class="btn">Вход</a>
             <a href="{{ url_for('register') }}" class="btn">Регистрация</a>

@@ -1,0 +1,15 @@
+version: '3'
+
+tasks:
+  create_docker_network:
+    desc: "Create docker network for project."
+    aliases:
+      - network
+    cmd: sudo docker network create hmtm_network
+
+  build_docker:
+    desc: "Run service in docker."
+    aliases:
+      - docker
+      - container
+    cmd: sudo docker compose -f deploy/docker-compose.yml up -d --build

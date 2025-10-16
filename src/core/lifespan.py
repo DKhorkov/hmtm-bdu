@@ -4,28 +4,26 @@ from fastapi import FastAPI
 
 from src.core.logger.enums import Levels
 from src.core.config import config
+from src.core.logger import LOGGER
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.gql_client = config.graphql_client  # noqa
+    app.state.bff_gql_client = config.bff_gql_client  # noqa
     app.state.redis = config.redis_as_cache  # noqa
-    app.state.logger = config.logger  # noqa
-    app.state.cryptography = config.get_encryptor()  # noqa
 
     try:
         await config.redis_as_cache.ping()
-        await config.logger.init_logger()
-        await config.logger.write_log(level=Levels.INFO, message="SERVICE WAS LAUNCHED CORRECTLY")
+        await LOGGER.write_log(level=Levels.INFO, message="SERVICE WAS LAUNCHED CORRECTLY")
 
         yield
 
-        await config.logger.write_log(level=Levels.INFO, message="SERVICE HAS BEEN STOPPED!")
+        await LOGGER.write_log(level=Levels.INFO, message="SERVICE HAS BEEN STOPPED!")
 
     except Exception as error:
-        await config.logger.write_log(level=Levels.ERROR, message=str(error))
+        await LOGGER.write_log(level=Levels.ERROR, message=str(error))
         raise
 
     finally:
-        await config.logger.shutdown()
+        await LOGGER.shutdown()
         await config.redis_as_cache.close()

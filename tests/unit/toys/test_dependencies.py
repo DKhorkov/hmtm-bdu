@@ -11,7 +11,7 @@ from src.domains.toys.dependencies import (
     toys_tags,
     toys_categories,
 )
-from src.domains.toys.dto import (
+from src.domains.toys.core.dto import (
     ToysCategoriesResponse,
     ToysTagsResponse,
     ToyByIDResponse,

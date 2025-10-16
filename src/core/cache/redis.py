@@ -6,7 +6,6 @@ from redis.asyncio import (
     Redis as AsyncRedis,
     ConnectionPool as AsyncRedisConnectionPool
 )
-from fastapi import Request
 
 from src.core.cache.schemas import RedisConfig
 from src.core.cache.wrappers import RedisWrappers
@@ -25,17 +24,17 @@ class Redis:
         async with self._redis as redis_pool:  # ping может использовать pool
             await redis_pool.ping()
 
-    async def get(self, key: str, request: Request) -> Optional[Any]:  # noqa
+    async def get(self, key: str) -> Optional[Any]:  # noqa
         async with self._redis as redis_pool:
             result: Optional[Any] = await redis_pool.get(key)
             return pickle_loads(result) if result else None
 
-    async def set(self, key: str, data: Any, ttl: int, request: Request) -> None:  # noqa
+    async def set(self, key: str, data: Any, ttl: int) -> None:  # noqa
         """Универсальная функция установки любых данных или набора данных (Удобно для кеширования схем)"""
         async with self._redis as redis_pool:
             await redis_pool.set(name=key, value=pickle_dumps(data), ex=ttl)
 
-    async def delete(self, key: str, request: Request) -> None:  # noqa
+    async def delete(self, key: str) -> None:  # noqa
         async with self._redis as redis_pool:
             await redis_pool.delete(key)
 

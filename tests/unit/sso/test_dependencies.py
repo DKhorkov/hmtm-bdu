@@ -15,8 +15,8 @@ from fastapi.requests import Request
 from graphql import DocumentNode
 from typing import Dict
 
-from src.domains.sso.constants import FORGET_PASSWORD_TOKEN_NAME
-from src.domains.sso.dependencies import (
+from src.domains.sso.core.constants import FORGET_PASSWORD_TOKEN_NAME
+from src.domains.sso.core.dependencies import (
     process_register,
     process_login,
     verify_email,
@@ -26,7 +26,7 @@ from src.domains.sso.dependencies import (
     get_user_info,
 )
 from graphql_client.dto import GQLResponse
-from src.domains.sso.dependencies import (
+from src.domains.sso.core.dependencies import (
     LoginResponse,
     RegisterResponse,
     VerifyEmailResponse,

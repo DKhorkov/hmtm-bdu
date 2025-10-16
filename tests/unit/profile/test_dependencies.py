@@ -1,6 +1,6 @@
 import pytest
 
-from src.domains.profile.schemas import GetUserWithMasterResponse
+from src.domains.profile.core.schemas import GetUserWithMasterResponse
 
 pytestmark = pytest.mark.usefixtures("mock_get_me", "mock_gql_client")
 
@@ -17,7 +17,7 @@ from src.domains.profile.dependencies import (
     register_master
 )
 from graphql_client.dto import GQLResponse
-from src.domains.profile.dto import (
+from src.domains.profile.core.dto import (
     UpdateUserProfileResponse,
     ChangePasswordResponse,
     GetUserIsMasterResponse,
