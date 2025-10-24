@@ -4,8 +4,8 @@ from src.core.logger.dto import LogFormatDTO, LogsFolderDTO
 
 
 class LoggerSettings:
-    def __init__(self, log_format: LogFormatDTO, logs_folder: LogsFolderDTO):
+    def __init__(self, log_format: LogFormatDTO, logs_folder: LogsFolderDTO, filename: str = "hmtm_bdu"):
         self.dir: Path = logs_folder.path / logs_folder.name
         self.entry_format: str = log_format.separator.join(str(arg.value) for arg in log_format.entry_format)
         self.datetime_format: str = log_format.datetime_format
-        self.filename: str = "hmtm_bdu.log"
+        self.filename: str = filename + ".log"

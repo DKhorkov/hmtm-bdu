@@ -22,4 +22,4 @@ class TestDatetimeParser:
             expectation
     ) -> None:
         with expectation:
-            assert DatetimeParser.parse_iso_format(iso_date_str) == expected_result
+            assert DatetimeParser.iso_to_str(iso_date_str) == expected_result

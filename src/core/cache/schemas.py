@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from src.core.cache.constants import REDIS_ERRORS, DEFAULT_REDIS_ERROR_MESSAGE
 
 
-class RedisErrorValidationModel(BaseModel):
+class RedisErrorValidation(BaseModel):
     orig_error: str
 
     def message(self) -> str:  # type: ignore

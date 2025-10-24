@@ -14,6 +14,7 @@ from src.core.common.parsers import ModelParser
 from src.core.cookies.processors import CookieProcessor
 from src.core.exc.exceptions_handlers import set_error_key
 from src.core.state import GlobalAppState
+from src.domains.profile.core.constants import DEFAULT_PROFILE_ATTR_VALUE
 from src.domains.profile.core.dto import UpdateUserProfileResponse
 from src.domains.profile.core.schemas import GetUserWithMasterResponse
 
@@ -44,8 +45,8 @@ class UserProfileDependenciesRepository:
             query=UpdateUserProfileMutation().to_gql(),
             variable_values=UpdateUserProfileVariables(
                 display_name=username,
-                phone=phone if phone and phone != "Отсутствует" else None,
-                telegram=telegram if telegram and telegram != "Отсутствует" else None,
+                phone=phone if phone and phone != DEFAULT_PROFILE_ATTR_VALUE else None,
+                telegram=telegram if telegram and telegram != DEFAULT_PROFILE_ATTR_VALUE else None,
                 avatar=upload_file,
             ).to_dict(),
             upload_files=True,

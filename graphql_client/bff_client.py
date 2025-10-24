@@ -8,7 +8,7 @@ from graphql_client.constants import GQL_SERVER_ERROR
 from graphql_client.dto import GQLResponse
 from aiohttp import ServerDisconnectedError, ClientConnectionError
 
-from src.core.logger import LOGGER
+from src.core.logger import logger
 from src.core.logger.enums import Levels
 
 
@@ -42,7 +42,7 @@ class BFFGQLClient:
 
             except Exception as error:
                 if isinstance(error, (ServerDisconnectedError, ClientConnectionError)):
-                    await LOGGER.write_log(
+                    await logger.write(
                         level=Levels.CRITICAL,
                         message=f"GQL_SERVER_ERROR | {error}",
                     )

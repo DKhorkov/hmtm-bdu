@@ -75,7 +75,7 @@ class MastersCatalogDependenciesRepository:
                     MasterForCatalog(
                         id=master["id"],
                         info=master["info"],
-                        created_at=DatetimeParser.parse_iso_format(master["createdAt"]),
+                        created_at=DatetimeParser.iso_to_str(master["createdAt"]),
                     )
                 )
 

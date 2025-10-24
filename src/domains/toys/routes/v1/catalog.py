@@ -33,6 +33,7 @@ async def toys_catalog(
             "error_message": RequestProcessor.get_operation_info(key=ERROR_OPERATION_KEY, request=request),
             "success_message": RequestProcessor.get_operation_info(key=SUCCESS_OPERATION_KEY, request=request)
         }
+
         response: Response = TOYS_TEMPLATES.TemplateResponse(  # type: ignore
             request=request,
             name="toys-catalog.html",

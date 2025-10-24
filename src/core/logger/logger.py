@@ -24,17 +24,17 @@ class Logger:
         self._settings: LoggerSettings = settings
         self._logger: Optional[AioLogger] = None
 
-        self.init_logger()  # Синхронная инициализация, т.к запись "логов" -> критически важная операция, без нее
-                            # сервис не запуститься  # noqa
+        self._init_logger()  # Синхронная инициализация, т.к запись "логов" -> критически важная операция, без нее
+                             # сервис не запуститься  # noqa
 
-    async def write_log(self, level: Levels, message: str) -> None:
+    async def write(self, level: Levels, message: str) -> None:
         log_method = getattr(self._logger, level.value.lower())
         await log_method(message)
 
     def _create_folder(self) -> None:
         self._settings.dir.mkdir(mode=0o755, exist_ok=True)
 
-    def init_logger(self, logger_name: str = "SERVICE") -> None:
+    def _init_logger(self, logger_name: str = "SERVICE") -> None:
         if self._logger:
             return
 

@@ -1,3 +1,3 @@
-from .versions import ProfileV1Router
+from .v1 import ProfileV1Router
 
 PROFILE_V1_ROUTER = ProfileV1Router.router

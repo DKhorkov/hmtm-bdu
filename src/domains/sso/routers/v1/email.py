@@ -52,6 +52,7 @@ async def process_verify_email_letter(
         response: Response = RedirectResponse(
             url="/sso/verify-email-letter-form", status_code=status.HTTP_303_SEE_OTHER
         )
+
         context: Dict[str, str] = {ERROR_OPERATION_KEY: result.error, "email": result.email}  # type: ignore
         ResponseProcessor.set_bulk_operation_response(response=response, context=context)
 

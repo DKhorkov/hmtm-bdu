@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from src.core.logger.enums import Levels
 from src.core.config import config
-from src.core.logger import LOGGER
+from src.core.logger import logger
 
 
 @asynccontextmanager
@@ -14,16 +14,16 @@ async def lifespan(app: FastAPI):
 
     try:
         await config.redis_as_cache.ping()
-        await LOGGER.write_log(level=Levels.INFO, message="SERVICE WAS LAUNCHED CORRECTLY")
+        await logger.write(level=Levels.INFO, message="SERVICE WAS LAUNCHED CORRECTLY")
 
         yield
 
-        await LOGGER.write_log(level=Levels.INFO, message="SERVICE HAS BEEN STOPPED!")
+        await logger.write(level=Levels.INFO, message="SERVICE HAS BEEN STOPPED!")
 
     except Exception as error:
-        await LOGGER.write_log(level=Levels.ERROR, message=str(error))
+        await logger.write(level=Levels.ERROR, message=str(error))
         raise
 
     finally:
-        await LOGGER.shutdown()
+        await logger.shutdown()
         await config.redis_as_cache.close()

@@ -3,10 +3,10 @@ from typing import Callable, Any, Optional, TYPE_CHECKING
 
 from redis import RedisError
 
-from src.core.cache.schemas import RedisErrorValidationModel
+from src.core.cache.schemas import RedisErrorValidation
 from src.core.logger.enums import Levels
 from src.core.cache.constants import EXCLUDE_CACHE_KWARGS
-from src.core.logger import LOGGER
+from src.core.logger import logger
 
 if TYPE_CHECKING:
     from src.core.cache.redis import Redis
@@ -44,7 +44,7 @@ class RedisWrappers:
                     return func_response
 
                 except Exception as error:
-                    await LOGGER.write_log(level=Levels.ERROR, message=f"Redis cache error | Detail: {error}")
+                    await logger.write(level=Levels.ERROR, message=f"Redis cache error | Detail: {error}")
                     return await func(*args, **kwargs)
 
             return wrapper
@@ -69,10 +69,10 @@ class RedisWrappers:
                             return await func(*args, **kwargs)
 
                         except Exception as error:
-                            error_validator: RedisErrorValidationModel = RedisErrorValidationModel(
+                            error_validator: RedisErrorValidation = RedisErrorValidation(
                                 orig_error=str(error))
 
-                            await LOGGER.write_log(level=Levels.ERROR, message=error_validator.message())
+                            await logger.write(level=Levels.ERROR, message=error_validator.message())
                             raise RedisError(error_validator.message())
 
                     return wrapper

@@ -27,16 +27,16 @@ class CommonAuthBaseRepository:
             return result
 
         try:
-            me: GQLResponse = await gql_client.execute(
+            current_user: GQLResponse = await gql_client.execute(
                 query=GetMeQuery.to_gql(),
                 variable_values={},
                 cookies=request.cookies
             )
 
-            if "errors" in me.result or me.error:
+            if "errors" in current_user.result or current_user.error:
                 raise UserNotFoundError
 
-            result.user = ModelParser.user_from_dict(me.result["me"])
+            result.user = ModelParser.user_from_dict(current_user.result["me"])
 
         except UserNotFoundError:
             refreshed_tokens: RefreshTokensResponse = await CommonAuthBaseRepository._refresh_tokens(
@@ -53,16 +53,16 @@ class CommonAuthBaseRepository:
             for cookie in refreshed_tokens.cookies:
                 actual_cookies[cookie.KEY] = cookie.VALUE
 
-            me: GQLResponse = await gql_client.execute(  # type: ignore
+            current_user: GQLResponse = await gql_client.execute(  # type: ignore
                 query=GetMeQuery.to_gql(),
                 variable_values={},
                 cookies=actual_cookies
             )
 
-            if "errors" in me.result or me.error:
+            if "errors" in current_user.result or current_user.error:
                 return result
 
-            result.user = ModelParser.user_from_dict(me.result["me"])
+            result.user = ModelParser.user_from_dict(current_user.result["me"])
 
         return result
 
