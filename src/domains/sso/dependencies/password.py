@@ -23,7 +23,7 @@ class PasswordDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=SendForgetPasswordMessageMutation().to_gql(),
-            variable_values=SendForgetPasswordMessageVariables(
+            params=SendForgetPasswordMessageVariables(
                 email=email
             ).to_dict()
         )
@@ -48,7 +48,7 @@ class PasswordDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=ChangeForgetPasswordMutation().to_gql(),
-            variable_values=ForgetPasswordVariables(
+            params=ForgetPasswordVariables(
                 forget_password_token=forget_password_token,
                 new_password=new_password
             ).to_dict()

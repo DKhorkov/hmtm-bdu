@@ -29,7 +29,7 @@ class EmailDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=VerifyUserEmailMutation.to_gql(),
-            variable_values=VerifyUserEmailVariables(
+            params=VerifyUserEmailVariables(
                 verify_email_token=verify_email_token,
             ).to_dict()
         )
@@ -48,7 +48,7 @@ class EmailDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=SendVerifyEmailMessageMutation().to_gql(),
-            variable_values=SendVerifyEmailMessageVariables(
+            params=SendVerifyEmailMessageVariables(
                 email=email
             ).to_dict()
         )

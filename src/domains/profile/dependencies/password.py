@@ -32,7 +32,7 @@ class PasswordDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=ChangePasswordMutation().to_gql(),
-            variable_values=ChangePasswordVariables(
+            params=ChangePasswordVariables(
                 old_password=old_password,
                 new_password=new_password
             ).to_dict(),

@@ -36,7 +36,7 @@ class MasterUserDependenciesRepository:
         else:
             gql_response: GQLResponse = await gql_client.execute(
                 query=UpdateMasterMutation().to_gql(),
-                variable_values=UpdateMasterVariables(
+                params=UpdateMasterVariables(
                     id=user_with_master.master.id,
                     info=info
                 ).to_dict(),
@@ -62,7 +62,7 @@ class MasterUserDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=RegisterMasterMutation().to_gql(),
-            variable_values=RegisterMasterVariables(
+            params=RegisterMasterVariables(
                 info=info,
             ).to_dict(),
             cookies=actual_cookies,

@@ -52,7 +52,7 @@ class MastersCatalogDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=MastersCatalogQuery.to_gql(),
-            variable_values=MastersCatalogVariables(
+            params=MastersCatalogVariables(
                 limit=MASTERS_PER_PAGE,
                 offset=(search_page - 1) * MASTERS_PER_PAGE,
                 filters=result.filters
@@ -65,7 +65,7 @@ class MastersCatalogDependenciesRepository:
         else:
             total_masters_count: GQLResponse = await gql_client.execute(
                 query=MastersCounterQuery.to_gql(),
-                variable_values=MasterCounterVariables(
+                params=MasterCounterVariables(
                     filters=result.filters,
                 ).to_dict()
             )

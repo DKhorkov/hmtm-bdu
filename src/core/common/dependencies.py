@@ -29,7 +29,7 @@ class CommonAuthBaseRepository:
         try:
             current_user: GQLResponse = await gql_client.execute(
                 query=GetMeQuery.to_gql(),
-                variable_values={},
+                params={},
                 cookies=request.cookies
             )
 
@@ -55,7 +55,7 @@ class CommonAuthBaseRepository:
 
             current_user: GQLResponse = await gql_client.execute(  # type: ignore
                 query=GetMeQuery.to_gql(),
-                variable_values={},
+                params={},
                 cookies=actual_cookies
             )
 
@@ -75,7 +75,7 @@ class CommonAuthBaseRepository:
 
         gql_refresh_tokens: GQLResponse = await gql_client.execute(
             query=RefreshTokensMutation.to_gql(),
-            variable_values={},
+            params={},
             cookies=cookies
         )
 

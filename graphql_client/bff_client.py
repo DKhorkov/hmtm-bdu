@@ -19,7 +19,7 @@ class BFFGQLClient:
     async def execute(
             self,
             query: DocumentNode,
-            variable_values: Optional[Dict[str, Any]],
+            params: Optional[Dict[str, Any]],
             cookies: Optional[Dict[str, str]] = None,
             upload_files: bool = False,
     ) -> GQLResponse:
@@ -31,7 +31,7 @@ class BFFGQLClient:
             try:
                 gql_response: Dict[str, Any] | ExecutionResult = await client.execute(
                     document=query,
-                    variable_values=variable_values,
+                    variable_values=params,
                     upload_files=upload_files
                 )
 

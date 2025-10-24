@@ -43,7 +43,7 @@ class UserProfileDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=UpdateUserProfileMutation().to_gql(),
-            variable_values=UpdateUserProfileVariables(
+            params=UpdateUserProfileVariables(
                 display_name=username,
                 phone=phone if phone and phone != DEFAULT_PROFILE_ATTR_VALUE else None,
                 telegram=telegram if telegram and telegram != DEFAULT_PROFILE_ATTR_VALUE else None,
@@ -71,7 +71,7 @@ class UserProfileDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=GetMasterByUserQuery().to_gql(),
-            variable_values=GetMasterByUserVariables(
+            params=GetMasterByUserVariables(
                 id=current_user.user.id,  # type: ignore
             ).to_dict(),
             cookies=actual_cookies,

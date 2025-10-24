@@ -58,7 +58,7 @@ class ToysCatalogDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=ToysCatalogQuery.to_gql(),
-            variable_values=ToysCatalogVariables(
+            params=ToysCatalogVariables(
                 offset=(search_page - 1) * TOYS_PER_PAGE,
                 limit=TOYS_PER_PAGE,
                 filters=result.filters
@@ -74,7 +74,7 @@ class ToysCatalogDependenciesRepository:
 
             total_toys_count: GQLResponse = await gql_client.execute(
                 query=ToysCounterQuery.to_gql(),
-                variable_values=ToysCounterFiltersVariables(filters=result.filters).to_dict()
+                params=ToysCounterFiltersVariables(filters=result.filters).to_dict()
             )
 
             result.categories = all_toys_categories.categories

@@ -26,7 +26,7 @@ class AuthDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=RegisterUserMutation.to_gql(),
-            variable_values=RegisterUserVariables(
+            params=RegisterUserVariables(
                 display_name=display_name,
                 email=email,
                 password=password
@@ -49,7 +49,7 @@ class AuthDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=LoginUserMutation.to_gql(),
-            variable_values=LoginUserVariables(
+            params=LoginUserVariables(
                 email=email,
                 password=password
             ).to_dict()

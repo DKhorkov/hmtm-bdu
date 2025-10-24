@@ -16,7 +16,7 @@ class ToysMetadataDependenciesRepository:
     async def toys_categories(
             gql_client: BFFGQLClient = Depends(GlobalAppState.bff_gql_client)
     ) -> Optional[ToysCategoriesResponse]:
-        gql_response: GQLResponse = await gql_client.execute(query=AllToysCategoriesQuery.to_gql(), variable_values={})
+        gql_response: GQLResponse = await gql_client.execute(query=AllToysCategoriesQuery.to_gql(), params={})
 
         if gql_response.error:
             return None
@@ -27,7 +27,7 @@ class ToysMetadataDependenciesRepository:
     async def toys_tags(
             gql_client: BFFGQLClient = Depends(GlobalAppState.bff_gql_client)
     ) -> Optional[ToysTagsResponse]:
-        gql_response: GQLResponse = await gql_client.execute(query=AllToysTagsQuery.to_gql(), variable_values={})
+        gql_response: GQLResponse = await gql_client.execute(query=AllToysTagsQuery.to_gql(), params={})
 
         if gql_response.error:
             return None

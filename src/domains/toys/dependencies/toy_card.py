@@ -27,7 +27,7 @@ class ToyInfoDependenciesRepository:
 
         gql_response: GQLResponse = await gql_client.execute(
             query=ToyByIDQuery.to_gql(),
-            variable_values=ToyByIDVariables(
+            params=ToyByIDVariables(
                 id=toy_id,
             ).to_dict()
         )
