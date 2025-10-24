@@ -15,8 +15,8 @@ from fastapi.requests import Request
 from graphql import DocumentNode
 from typing import Dict
 
-from src.domains.sso.constants import FORGET_PASSWORD_TOKEN_NAME
-from src.domains.sso.dependencies import (
+from src.domains.sso.core.constants import FORGET_PASSWORD_TOKEN_NAME
+from src.domains.sso.core.dependencies import (
     process_register,
     process_login,
     verify_email,
@@ -26,7 +26,7 @@ from src.domains.sso.dependencies import (
     get_user_info,
 )
 from graphql_client.dto import GQLResponse
-from src.domains.sso.dependencies import (
+from src.domains.sso.core.dependencies import (
     LoginResponse,
     RegisterResponse,
     VerifyEmailResponse,
@@ -69,7 +69,7 @@ class TestProcessRegisterDependency:
         assert isinstance(call_kwargs["query"], DocumentNode)
 
         """Сверяем, что variables соответствуют возврату словаря с функции to_dict()"""
-        assert call_kwargs["variable_values"] == {
+        assert call_kwargs["params"] == {
             "input": {
                 "displayName": "Test User",
                 "email": "test@example.com",
@@ -119,7 +119,7 @@ class TestProcessLoginDependency:
 
         call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
         assert isinstance(call_kwargs["query"], DocumentNode)
-        assert call_kwargs["variable_values"] == {
+        assert call_kwargs["params"] == {
             "input": {
                 "email": "test@example.com",
                 "password": "password123"
@@ -167,7 +167,7 @@ class TestVerifyEmailDependency:
         call_kwargs: Dict[str, str] = mock_gql_client.call_args.kwargs
 
         assert isinstance(call_kwargs["query"], DocumentNode)
-        assert call_kwargs["variable_values"] == {
+        assert call_kwargs["params"] == {
             "input": {
                 "verifyEmailToken": "Test-token-1",
             }

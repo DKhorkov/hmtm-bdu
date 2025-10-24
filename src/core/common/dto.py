@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List
 
+from src.core.cookies.schemas import CookiesConfig
+
 
 @dataclass
 class User:
@@ -15,9 +17,6 @@ class User:
     avatar: Optional[str]
     created_at: str
     updated_at: str
-
-
-from src.core.common.cookies import CookiesConfig
 
 
 @dataclass

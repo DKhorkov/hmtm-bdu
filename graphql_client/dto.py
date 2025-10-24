@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 from multidict import CIMultiDictProxy
 
 
-@dataclass(frozen=True)
+@dataclass
 class GQLResponse:
-    result: Dict[str, Any]
-    headers: Optional[CIMultiDictProxy[str]]
+    result: Dict[str, Any] = field(default_factory=dict)
+    headers: Optional[CIMultiDictProxy[str]] = None
+    error: Optional[Any] = None

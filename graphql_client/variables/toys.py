@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, Union, List, Any
 
-from src.domains.toys.models import ToyFilters
+from src.domains.toys.core.models import ToyFilters
 
 
 @dataclass(frozen=True)

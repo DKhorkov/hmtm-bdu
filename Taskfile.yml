@@ -1,0 +1,56 @@
+version: '3'
+
+tasks:
+
+  create_docker_network:
+    desc: "Create docker network for project."
+    aliases:
+      - network
+    cmd: sudo docker network create hmtm_network
+
+  delete_docker_network:
+    desc: "Delete test network"
+    cmd: sudo docker network rm hmtm_network  && sudo docker network ls
+
+  build_docker:
+    desc: "Run service in docker."
+    aliases:
+      - docker
+      - container
+    cmd: sudo docker compose -f deploy/docker-compose.yml up -d --build
+
+  run_services:
+    desc: "Run services containers"
+    aliases:
+      - docker
+      - container
+      - run
+    cmd: sudo docker start hmtm_bdu hmtm_redis
+
+  stop_services:
+    desc: "Stop services containers"
+    aliases:
+      - docker
+      - container
+      - stop
+    cmd: sudo docker stop hmtm_bdu hmtm_redis
+
+  check_services:
+    desc: "Check services containers"
+    aliases:
+      - docker
+      - container
+      - check
+    cmd: sudo docker ps -a --filter "name=hmtm_bdu" --filter "name=hmtm_redis"
+
+  delete_containers:
+    desc: "Delete containers"
+    cmd: sudo docker rm -f name hmtm_redis && sudo docker rmi hmtm_bdu
+
+  stop_postgres_service:
+    desc: "Stop postgres"
+    cmd: sudo systemctl stop postgresql
+
+  start_postgres_service:
+    desc: "Start postgres"
+    cmd: sudo systemctl start postgresql

@@ -26,18 +26,17 @@ class TestRedis:
             key=TEST_REDIS_KEY,
             data=TEST_REDIS_RETURN_VALUE,
             ttl=CacheTTL.TEST.ONE_MINUTE,
-            request=mock_request
         )
 
-        get_redis_data = await mock_redis_connection.get(key=TEST_REDIS_KEY, request=mock_request)
+        get_redis_data = await mock_redis_connection.get(key=TEST_REDIS_KEY)
         assert get_redis_data == TEST_REDIS_RETURN_VALUE
 
-        await mock_redis_connection.delete(key=TEST_REDIS_KEY, request=mock_request)
+        await mock_redis_connection.delete(key=TEST_REDIS_KEY)
 
     @pytest.mark.asyncio
     async def test_get_empty_redis_data(self, mock_redis_connection: Redis):
         assert mock_redis_connection._redis is not None
 
         mock_request = MagicMock(spec=Request)
-        get_redis_data = await mock_redis_connection.get(key=TEST_REDIS_KEY, request=mock_request)
+        get_redis_data = await mock_redis_connection.get(key=TEST_REDIS_KEY)
         assert get_redis_data is None

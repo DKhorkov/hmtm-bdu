@@ -1,47 +1,47 @@
-### Run via docker:
+🔶 HMTM_BDU -> Client service
+---
+---
 
-To run app and it's dependencies in docker, use next command:
+## 🔹 Старт через Docker (Рекомендуется):
 
-```shell
-task -d scripts prod -v
+#### **Остановить postgres-сервис во избежание проблем с портами в контейнере:**
+
+```bash
+task stop_postgres_service
 ```
 
-Stop container
+#### **Создать сеть для контейнеров:**
 
-```shell
-task -d scripts stop -v
+```bash
+task create_docker_network
 ```
 
-### Quick start:
+#### **Собрать сборку:**
 
-1) Install requirements:
-
-```shell
-pip install -r requirements.txt
+```bash
+task build_docker
 ```
 
-2) Start:
+#### **Запустить остальные сервисы**
 
-```shell
-python src/main.py
-```
+---
 
-## Linters
+## 🔹 Дополнительные инструменты:
 
-To run linters, use next command:
+#### **Линтер:**:
 
-```shell
+```bash
 flake8 ./
 ```
 
-## Typiziter
+#### **Типизатор:**
 
-```shell
+```bash
 mypy ./
 ```
 
-## Tests
+#### **Тесты:**
 
-```shell
+```bash
 pytest -v
 ```

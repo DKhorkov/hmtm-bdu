@@ -1,16 +1,14 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from src.core.cache.constants import REDIS_ERRORS, DEFAULT_REDIS_ERROR_MESSAGE
 
 
-class RedisErrorValidationModel(BaseModel):
-    error: str
+class RedisErrorValidation(BaseModel):
+    orig_error: str
 
-    @field_validator("error", mode="before")  # noqa
-    @classmethod
-    def validate(cls, value: str) -> str:  # type: ignore
+    def message(self) -> str:  # type: ignore
         return REDIS_ERRORS.get(
-            " ".join(arg for arg in value.replace(".", "").split()[:2]),
+            " ".join(arg for arg in self.orig_error.replace(".", "").split()[:2]),
             DEFAULT_REDIS_ERROR_MESSAGE
         )
 

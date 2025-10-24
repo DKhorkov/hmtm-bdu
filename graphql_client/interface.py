@@ -10,7 +10,7 @@ class GraphQLInterface(Protocol):
     async def execute(
             self,
             query: DocumentNode,
-            variable_values: Dict[str, Any],
+            params: Dict[str, Any],
             cookies: Optional[Dict[str, str]] = None,
             upload_files: bool = False
     ) -> GQLResponse:
