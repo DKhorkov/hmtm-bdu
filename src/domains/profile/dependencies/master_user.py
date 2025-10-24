@@ -10,7 +10,7 @@ from src.core.common.dependencies import CommonAuthRedirectRepository
 from src.core.common.dto import GetMeResponse
 from src.core.cookies.processors import CookieProcessor
 from src.core.exc.exceptions_handlers import set_error_key
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.profile.core.dto import UpdateMasterResponse, RegisterMasterResponse
 from src.domains.profile.core.schemas import GetUserWithMasterResponse
 from src.domains.profile.dependencies.users import UserProfileDependenciesRepository

@@ -6,7 +6,7 @@ from graphql_client import BFFGQLClient
 from graphql_client.dto import GQLResponse
 from graphql_client.queries.toys import AllToysCategoriesQuery, AllToysTagsQuery
 
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.toys.core.dto import ToysCategoriesResponse, ToysTagsResponse
 
 

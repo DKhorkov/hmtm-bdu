@@ -7,7 +7,7 @@ from graphql_client.dto import GQLResponse
 from graphql_client.mutations.sso import ChangeForgetPasswordMutation, SendForgetPasswordMessageMutation
 from graphql_client.variables.sso import ForgetPasswordVariables, SendForgetPasswordMessageVariables
 from src.core.exc.exceptions_handlers import set_error_key
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.sso.core.constants import FORGET_PASSWORD_TOKEN_NAME
 from src.domains.sso.core.dto import ChangeForgetPasswordResponse, SendForgetPasswordMessageResponse
 

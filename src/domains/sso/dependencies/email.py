@@ -11,7 +11,7 @@ from graphql_client.variables.sso import (
     SendVerifyEmailMessageVariables
 )
 from src.core.exc.exceptions_handlers import set_error_key
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.sso.core.dto import (
     VerifyEmailResponse,
     SendVerifyEmailMessageResponse

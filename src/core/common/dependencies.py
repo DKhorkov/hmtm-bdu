@@ -11,7 +11,7 @@ from src.core.common.dto import GetMeResponse, RefreshTokensResponse
 from src.core.exc.exceptions import UserNotFoundError, RedirectViaException
 from src.core.common.parsers import ModelParser
 from src.core.cookies.processors import CookieProcessor
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 
 
 class CommonAuthBaseRepository:

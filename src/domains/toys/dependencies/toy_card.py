@@ -10,7 +10,7 @@ from src.core.cache.wrappers import RedisWrappers
 from src.core.cache.redis import Redis
 from src.core.common.parsers import ModelParser
 from src.core.exc.exceptions_handlers import set_error_key
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.toys.core.dto import ToyByIDResponse
 
 

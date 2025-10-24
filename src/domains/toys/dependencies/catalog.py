@@ -13,7 +13,7 @@ from src.core.cache.ttl_dto import CacheTTL
 from src.core.cache.wrappers import RedisWrappers
 from src.core.common.parsers import ModelParser
 from src.core.exc.exceptions_handlers import set_error_key
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.toys.core.constants import TOYS_PER_PAGE
 from src.domains.toys.core.dto import ToysCategoriesResponse, ToysCatalogResponse, ToysTagsResponse
 from src.domains.toys.core.models import ToyFilters

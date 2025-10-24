@@ -13,7 +13,7 @@ from src.core.common.dto import GetMeResponse
 from src.core.common.parsers import ModelParser
 from src.core.cookies.processors import CookieProcessor
 from src.core.exc.exceptions_handlers import set_error_key
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.profile.core.constants import DEFAULT_PROFILE_ATTR_VALUE
 from src.domains.profile.core.dto import UpdateUserProfileResponse
 from src.domains.profile.core.schemas import GetUserWithMasterResponse

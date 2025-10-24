@@ -16,7 +16,7 @@ from graphql_client.dto import GQLResponse
 from src.core.cache.redis import Redis
 from src.core.common.parsers import DatetimeParser
 from src.core.exc.exceptions_handlers import set_error_key
-from src.core.state import GlobalAppState
+from src.core.root.state import GlobalAppState
 from src.domains.masters.core.constants import MASTERS_PER_PAGE
 from src.domains.masters.core.dto import MastersCatalogResponse
 from src.domains.masters.core.models import (

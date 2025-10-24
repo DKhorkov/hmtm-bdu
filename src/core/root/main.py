@@ -9,10 +9,10 @@ from fastapi.staticfiles import StaticFiles
 
 from src.core.exc.exceptions import RedirectViaException
 from src.core.exc.exceptions_handlers import GlobalExceptionHandler
-from src.core.lifespan import lifespan
+from src.core.root.lifespan import lifespan
 from src.core.logger.middlewares import LoggerMiddleware
 
-from src.core.routes import router as main_router
+from src.core.root.routes import router as main_router
 from src.domains.sso.routers import SSO_V1_ROUTER
 from src.domains.masters.routes import MASTERS_V1_ROUTER
 from src.domains.toys.routes import TOYS_V1_ROUTER

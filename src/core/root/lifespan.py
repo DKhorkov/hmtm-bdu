@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from src.core.logger.enums import Levels
-from src.core.config import config
+from src.core.root.config import config
 from src.core.logger import logger
 
 
