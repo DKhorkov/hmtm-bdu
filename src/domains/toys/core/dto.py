@@ -2,7 +2,11 @@ from dataclasses import dataclass, field
 from typing import Optional, Dict, List
 
 from src.core.common.dto import BaseResponse, BoolResponse
+<<<<<<<< HEAD:src/domains/toys/core/dto.py
 from src.domains.toys.core.models import ToyForCatalog, ToyFilters, ToyForCard
+========
+from src.domains.toys.models import ToyForCatalog, ToyFilters, ToyForCard
+>>>>>>>> main:src/domains/toys/dto.py
 
 
 @dataclass

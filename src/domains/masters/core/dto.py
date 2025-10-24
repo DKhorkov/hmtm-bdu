@@ -1,8 +1,12 @@
 from typing import List, Optional
 from dataclasses import dataclass, field
 
+<<<<<<<< HEAD:src/domains/masters/core/dto.py
 from src.core.common.dto import BaseResponse
 from src.domains.masters.core.models import MasterForCatalog, MastersFilters
+========
+from src.domains.masters.models import MasterForCatalog, MastersFilters
+>>>>>>>> main:src/domains/masters/dto.py
 
 
 @dataclass

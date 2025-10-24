@@ -1,8 +1,13 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
+<<<<<<<< HEAD:src/domains/sso/core/dto.py
 from src.domains.sso.core.models import UserInfo
 from src.domains.profile.core.schemas import Master
+========
+from src.domains.sso.models import UserInfo
+from src.domains.profile.schemas import Master
+>>>>>>>> main:src/domains/sso/dto.py
 from src.core.common.dto import BoolResponse
 
 

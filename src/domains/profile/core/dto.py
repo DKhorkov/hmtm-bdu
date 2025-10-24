@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from typing import Optional
 
 from src.core.common.dto import BoolResponse
+<<<<<<<< HEAD:src/domains/profile/core/dto.py
 from src.domains.profile.core.schemas import Master
+========
+from src.domains.profile.schemas import Master
+>>>>>>>> main:src/domains/profile/dto.py
 
 
 @dataclass
